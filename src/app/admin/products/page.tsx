@@ -34,7 +34,7 @@ export default async function ProductsList({ searchParams }: ProductsListProps) 
 
   return (
     <ProductsClient
-      initialProducts={products as any}
+      initialProducts={products as any[]}
       initialBrandId={params.brandId}
       initialCategoryId={params.categoryId}
     />
