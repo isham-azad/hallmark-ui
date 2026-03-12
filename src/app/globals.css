@@ -1,0 +1,37 @@
+/* Globals CSS emptied to avoid conflicts with theme CSS */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Shimmer / skeleton loading */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--shimmer-bg, #f0f0f0) 0%,
+        var(--shimmer-highlight, #e8e8e8) 20%,
+        var(--shimmer-bg, #f0f0f0) 40%,
+        var(--shimmer-bg, #f0f0f0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+[data-bs-theme="dark"] .shimmer,
+.dark-background .shimmer {
+    --shimmer-bg: #2a2a2a;
+    --shimmer-highlight: #3a3a3a;
+}
