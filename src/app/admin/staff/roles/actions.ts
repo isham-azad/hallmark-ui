@@ -20,7 +20,7 @@ function toISO(val: any): string {
 export async function getRoles(): Promise<RoleData[]> {
     try {
         const snapshot = await db.collection("roles").orderBy("name", "asc").get();
-        return snapshot.docs.map(doc => {
+        return snapshot.docs.map((doc: any) => {
             const data = doc.data();
             return {
                 id: doc.id,
