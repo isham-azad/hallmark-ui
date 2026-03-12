@@ -9,10 +9,10 @@ export async function getRolePermissionsMap(): Promise<Record<string, string[]>>
             db.collection("permissions").get()
         ]);
 
-        const allPermissionKeys = permsSnap.docs.map(doc => doc.data().key);
+        const allPermissionKeys = permsSnap.docs.map((doc: any) => doc.data().key);
         const map: Record<string, string[]> = {};
 
-        rolesSnap.docs.forEach(doc => {
+        rolesSnap.docs.forEach((doc: any) => {
             const data = doc.data();
             const roleName = data.name;
 

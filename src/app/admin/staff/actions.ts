@@ -23,7 +23,7 @@ function toISO(val: any): string {
 export async function getStaff(): Promise<AdminUser[]> {
     try {
         const snapshot = await db.collection("admins").get();
-        return snapshot.docs.map(doc => {
+        return snapshot.docs.map((doc: any) => {
             const data = doc.data();
             return {
                 id: doc.id,
