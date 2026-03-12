@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
     try {
         const snapshot = await db.collection("products").orderBy("updatedAt", "desc").get();
-        const categoryIds = [...new Set(snapshot.docs.map((d) => d.data().categoryId).filter(Boolean))];
-        const brandIds = [...new Set(snapshot.docs.map((d) => d.data().brandId).filter(Boolean))];
+        const categoryIds = [...new Set(snapshot.docs.map((d: any) => d.data().categoryId).filter(Boolean))];
+        const brandIds = [...new Set(snapshot.docs.map((d: any) => d.data().brandId).filter(Boolean))];
 
         const [catSnap, brandSnap] = await Promise.all([
             categoryIds.length ? db.collection("categories").get() : Promise.resolve({ docs: [] }),
@@ -15,16 +15,16 @@ export async function GET() {
         ]);
 
         const categoryNames: Record<string, string> = {};
-        catSnap.docs.forEach((d) => {
+        catSnap.docs.forEach((d: any) => {
             categoryNames[d.id] = d.data().name as string;
         });
         const brandNames: Record<string, string> = {};
-        brandSnap.docs.forEach((d) => {
+        brandSnap.docs.forEach((d: any) => {
             brandNames[d.id] = d.data().name as string;
         });
 
         const products = snapshot.docs
-            .map((doc) => {
+            .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
                 const imageRaw = data.image as string | null;
