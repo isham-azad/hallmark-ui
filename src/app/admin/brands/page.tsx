@@ -26,7 +26,7 @@ export default async function BrandsManagement() {
         name: data.name as string,
         summary: data.summary as string,
         image: (data.image as string | null) ?? null,
-        status: data.status === "disabled" ? "disabled" : "active",
+        status: (data.status === "disabled" ? "disabled" : "active") as "active" | "disabled",
         _count: { products: productCountByBrand[doc.id] || 0 },
         _createdAt: createdAt,
       };
