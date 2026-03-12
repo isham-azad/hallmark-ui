@@ -26,7 +26,7 @@ function toISO(val: any): string {
 export async function getCustomers(): Promise<Customer[]> {
     try {
         const snapshot = await db.collection("customers").orderBy("updatedAt", "desc").get();
-        return snapshot.docs.map(doc => {
+        return snapshot.docs.map((doc: any) => {
             const data = doc.data();
             return {
                 id: doc.id,
