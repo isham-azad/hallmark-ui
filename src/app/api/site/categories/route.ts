@@ -7,7 +7,7 @@ export async function GET() {
     try {
         const snapshot = await db.collection("categories").get();
         const categories = snapshot.docs
-            .map((doc) => {
+            .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
                 return {

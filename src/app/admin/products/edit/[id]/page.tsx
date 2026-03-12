@@ -33,8 +33,8 @@ export default async function EditProductPage(props: { params: Promise<{ id: str
         db.collection("categories").orderBy("name", "asc").get(),
     ]);
 
-    const brands = brandsSnap.docs.map(d => ({ id: d.id, name: d.data().name }));
-    const categories = categoriesSnap.docs.map(d => ({ id: d.id, name: d.data().name }));
+    const brands = brandsSnap.docs.map((d: any) => ({ id: d.id, name: d.data().name }));
+    const categories = categoriesSnap.docs.map((d: any) => ({ id: d.id, name: d.data().name }));
 
     return <ProductEditClient product={product} brands={brands} categories={categories} />;
 }

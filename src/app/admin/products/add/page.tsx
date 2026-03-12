@@ -9,8 +9,8 @@ export default async function AddProductPage() {
     db.collection("categories").orderBy("name", "asc").get(),
   ]);
 
-  const brands = brandsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
-  const categories = categoriesSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+  const brands = brandsSnap.docs.map((doc: any) => ({ id: doc.id, name: doc.data().name }));
+  const categories = categoriesSnap.docs.map((doc: any) => ({ id: doc.id, name: doc.data().name }));
 
   return <ProductAddClient brands={brands} categories={categories} />;
 }

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     const snapshot = await db.collection("products").get();
     const bySku: Record<string, { id: string }> = {};
-    snapshot.docs.forEach((doc) => {
+    snapshot.docs.forEach((doc: any) => {
       const sku = (doc.data().sku as string)?.trim?.();
       if (sku) bySku[sku] = { id: doc.id };
     });

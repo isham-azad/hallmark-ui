@@ -12,7 +12,7 @@ export default async function OrdersPage() {
     return "UPI";
   };
 
-  const orders = snapshot.docs.map(doc => {
+  const orders = snapshot.docs.map((doc: any) => {
     const data = doc.data();
     const toISO = (val: unknown) => {
       if (val && typeof val === "object" && "toDate" in val) return (val as { toDate: () => Date }).toDate().toISOString();

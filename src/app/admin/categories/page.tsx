@@ -10,7 +10,7 @@ export default async function CategoriesManagement() {
   ]);
 
   const productCountByCategory: Record<string, number> = {};
-  productsSnap.docs.forEach(doc => {
+  productsSnap.docs.forEach((doc: any) => {
     const categoryId = doc.data().categoryId;
     if (categoryId) {
       productCountByCategory[categoryId] = (productCountByCategory[categoryId] || 0) + 1;
@@ -18,7 +18,7 @@ export default async function CategoriesManagement() {
   });
 
   const categories = categoriesSnap.docs
-    .map(doc => {
+    .map((doc: any) => {
       const data = doc.data();
       const createdAt = data.createdAt?.toMillis?.() ?? 0;
       return {
@@ -31,8 +31,8 @@ export default async function CategoriesManagement() {
         _createdAt: createdAt,
       };
     })
-    .sort((a, b) => b._createdAt - a._createdAt)
-    .map(({ _createdAt, ...rest }) => rest);
+    .sort((a: any, b: any) => b._createdAt - a._createdAt)
+    .map(({ _createdAt, ...rest }: any) => rest);
 
   return <CategoriesClient initialCategories={categories} />;
 }

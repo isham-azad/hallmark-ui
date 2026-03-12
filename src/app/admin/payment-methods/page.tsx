@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function PaymentMethodsPage() {
     const snapshot = await db.collection("paymentMethods").orderBy("name", "asc").get();
 
-    const paymentMethods = snapshot.docs.map((doc) => {
+    const paymentMethods = snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
             id: doc.id,
