@@ -12,7 +12,7 @@ export default async function PaymentMethodsPage() {
             id: doc.id,
             name: data.name as string,
             summary: data.summary as string,
-            status: data.status === "disabled" ? "disabled" : "active",
+            status: (data.status === "disabled" ? "disabled" : "active") as "active" | "disabled",
         };
     });
 
