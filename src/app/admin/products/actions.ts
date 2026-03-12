@@ -231,7 +231,7 @@ export async function bulkUpdatePrices(discountType: "percentage" | "fixed", val
         const snapshot = await db.collection("products").get();
         const batch = db.batch();
 
-        snapshot.docs.forEach((doc) => {
+        snapshot.docs.forEach((doc: any) => {
             const data = doc.data();
             if (!data.price) return;
 
