@@ -11,16 +11,16 @@ export default async function ProductsList({ searchParams }: ProductsListProps) 
   const params = await searchParams;
   const snapshot = await db.collection("products").orderBy("updatedAt", "desc").get();
 
-  const categoryIds = [...new Set(snapshot.docs.map(d => d.data().categoryId).filter(Boolean))];
+  const categoryIds = [...new Set(snapshot.docs.map((d: any) => d.data().categoryId).filter(Boolean))];
   const categoriesMap: Record<string, string> = {};
   if (categoryIds.length > 0) {
     const catDocs = await Promise.all(categoryIds.map(cid => db.collection("categories").doc(cid).get()));
-    catDocs.forEach(cd => {
+    catDocs.forEach((cd: any) => {
       if (cd.exists) categoriesMap[cd.id] = cd.data()!.name;
     });
   }
 
-  const products = snapshot.docs.map(doc => {
+  const products = snapshot.docs.map((doc: any) => {
     const data = doc.data();
     return {
       id: doc.id,

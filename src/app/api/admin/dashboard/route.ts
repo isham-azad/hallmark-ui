@@ -20,7 +20,7 @@ export async function GET() {
     const orderCount = ordersSnap.data().count;
 
     const ordersForRevenue = await db.collection("orders").select("total").get();
-    const totalRevenue = ordersForRevenue.docs.reduce((acc: number, doc) => {
+    const totalRevenue = ordersForRevenue.docs.reduce((acc: number, doc: any) => {
       const val = parseFloat(String(doc.data().total).replace(/[^0-9.]/g, '')) || 0;
       return acc + val;
     }, 0);
@@ -32,16 +32,16 @@ export async function GET() {
       { label: "Total Revenue", value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: "bi bi-currency-rupee", color: "#10b981" },
     ];
 
-    const brandIds = [...new Set(recentProductsSnap.docs.map(d => d.data().brandId).filter(Boolean))];
+    const brandIds = [...new Set(recentProductsSnap.docs.map((d: any) => d.data().brandId).filter(Boolean))];
     const brandsMap: Record<string, string> = {};
     if (brandIds.length > 0) {
-      const brandDocs = await Promise.all(brandIds.map(bid => db.collection("brands").doc(bid).get()));
-      brandDocs.forEach(bd => {
+      const brandDocs = await Promise.all(brandIds.map((bid: any) => db.collection("brands").doc(bid).get()));
+      brandDocs.forEach((bd: any) => {
         if (bd.exists) brandsMap[bd.id] = bd.data()!.name;
       });
     }
 
-    const recentProducts = recentProductsSnap.docs.map(doc => {
+    const recentProducts = recentProductsSnap.docs.map((doc: any) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -63,7 +63,7 @@ export async function GET() {
       return "UPI";
     };
 
-    const recentOrders = recentOrdersSnap.docs.map(doc => {
+    const recentOrders = recentOrdersSnap.docs.map((doc: any) => {
       const data = doc.data();
       const paymentMethod = (data.paymentMethod as string) || normalizePaymentMethod(data.payment);
       const paymentStatus = (data.paymentStatus as string) || "Pending";

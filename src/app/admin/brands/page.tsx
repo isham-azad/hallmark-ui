@@ -10,7 +10,7 @@ export default async function BrandsManagement() {
   ]);
 
   const productCountByBrand: Record<string, number> = {};
-  productsSnap.docs.forEach(doc => {
+  productsSnap.docs.forEach((doc: any) => {
     const brandId = doc.data().brandId;
     if (brandId) {
       productCountByBrand[brandId] = (productCountByBrand[brandId] || 0) + 1;
@@ -18,7 +18,7 @@ export default async function BrandsManagement() {
   });
 
   const brands = brandsSnap.docs
-    .map(doc => {
+    .map((doc: any) => {
       const data = doc.data();
       const createdAt = data.createdAt?.toMillis?.() ?? 0;
       return {
@@ -31,8 +31,8 @@ export default async function BrandsManagement() {
         _createdAt: createdAt,
       };
     })
-    .sort((a, b) => b._createdAt - a._createdAt)
-    .map(({ _createdAt, ...rest }) => rest);
+    .sort((a: any, b: any) => b._createdAt - a._createdAt)
+    .map(({ _createdAt, ...rest }: any) => rest);
 
   return <BrandsClient initialBrands={brands} />;
 }

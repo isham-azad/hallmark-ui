@@ -8,7 +8,7 @@ export async function GET() {
         const snapshot = await db.collection("paymentMethods").orderBy("name", "asc").get();
 
         const list = snapshot.docs
-            .map((doc) => {
+            .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
                 return {

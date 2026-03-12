@@ -15,7 +15,7 @@ export async function GET() {
 
     // 1. Checkout OTPs — phoneVerifications (doc ID = phone number)
     const checkoutSnap = await db.collection("phoneVerifications").get();
-    const checkoutOtps = checkoutSnap.docs.map(doc => ({
+    const checkoutOtps = checkoutSnap.docs.map((doc: any) => ({
       id: doc.id,
       mobile: doc.id,
       otp: (doc.data().otp as string) || "—",
@@ -28,8 +28,8 @@ export async function GET() {
     // 2. Admin Login OTPs — admins collection, only those with an active otp
     const adminsSnap = await db.collection("admins").where("otp", "!=", null).get();
     const adminOtps = adminsSnap.docs
-      .filter(doc => doc.data().otp)
-      .map(doc => ({
+      .filter((doc: any) => doc.data().otp)
+      .map((doc: any) => ({
         id: doc.id,
         mobile: (doc.data().phone as string) || "—",
         otp: (doc.data().otp as string) || "—",
@@ -42,11 +42,11 @@ export async function GET() {
     // 3. Delivery OTPs — orderVerifications (doc ID = orderId)
     const deliverySnap = await db.collection("orderVerifications").get();
     // Fetch matching order details for mobile number
-    const orderIds = deliverySnap.docs.map(d => d.id);
+    const orderIds = deliverySnap.docs.map((d: any) => d.id);
     const orderMobileMap: Record<string, { mobile: string; orderNo: string }> = {};
     if (orderIds.length > 0) {
-      const orderDocs = await Promise.all(orderIds.map(oid => db.collection("orders").doc(oid).get()));
-      orderDocs.forEach(od => {
+      const orderDocs = await Promise.all(orderIds.map((oid: any) => db.collection("orders").doc(oid).get()));
+      orderDocs.forEach((od: any) => {
         if (od.exists) {
           const data = od.data()!;
           orderMobileMap[od.id] = {
@@ -56,7 +56,7 @@ export async function GET() {
         }
       });
     }
-    const deliveryOtps = deliverySnap.docs.map(doc => ({
+    const deliveryOtps = deliverySnap.docs.map((doc: any) => ({
       id: doc.id,
       mobile: orderMobileMap[doc.id]?.mobile || "—",
       otp: (doc.data().otp as string) || "—",
@@ -67,7 +67,7 @@ export async function GET() {
     }));
 
     const all = [...adminOtps, ...checkoutOtps, ...deliveryOtps].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      (a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
 
     return NextResponse.json({ otps: all });
