@@ -510,33 +510,35 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                     </table>
                 </div>
                 {totalPages > 1 && (
-                    <div className="pagination-wrap">
-                        <p className="pagination-info">
-                            Showing {startIndex + 1}–{Math.min(startIndex + PAGE_SIZE, filteredOrders.length)} of {filteredOrders.length}
-                        </p>
-                        <div className="pagination-controls">
+                    <div className="pagination">
+                        <button
+                            type="button"
+                            className="pager-btn"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage((p) => p - 1)}
+                            aria-label="Previous page"
+                        >
+                            <i className="bi bi-chevron-left"></i>
+                        </button>
+                        {[...Array(totalPages)].map((_, i) => (
                             <button
+                                key={i + 1}
                                 type="button"
-                                className="pagination-btn"
-                                disabled={currentPage === 1}
-                                onClick={() => setCurrentPage((p) => p - 1)}
-                                aria-label="Previous page"
+                                className={`pager-btn ${currentPage === i + 1 ? "active" : ""}`}
+                                onClick={() => setCurrentPage(i + 1)}
                             >
-                                <i className="bi bi-chevron-left"></i>
+                                {i + 1}
                             </button>
-                            <span className="pagination-pages">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <button
-                                type="button"
-                                className="pagination-btn"
-                                disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage((p) => p + 1)}
-                                aria-label="Next page"
-                            >
-                                <i className="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
+                        ))}
+                        <button
+                            type="button"
+                            className="pager-btn"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage((p) => p + 1)}
+                            aria-label="Next page"
+                        >
+                            <i className="bi bi-chevron-right"></i>
+                        </button>
                     </div>
                 )}
             </div>
@@ -627,7 +629,49 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         .payment-save-btn { background: #16a34a !important; }
         .payment-save-btn:hover { background: #15803d !important; }
 
-        .pagination-pages { font-size: 0.875rem; font-weight: 500; color: #475569; }
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 1.5rem;
+          background: #fafbfc;
+          border-top: 1px solid #f1f5f9;
+          flex-wrap: wrap;
+        }
+        .pager-btn {
+          min-width: 40px;
+          height: 40px;
+          padding: 0 0.5rem;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #64748b;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: 0.2s;
+          flex-shrink: 0;
+        }
+        .pager-btn:hover:not(:disabled) {
+          border-color: #ffc451;
+          color: #ffc451;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 196, 81, 0.2);
+        }
+        .pager-btn.active {
+          background: #ffc451;
+          border-color: #ffc451;
+          color: #fff;
+          box-shadow: 0 4px 10px rgba(255, 196, 81, 0.25);
+        }
+        .pager-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background: #f8fafc;
+        }
 
         @media (max-width: 768px) {
             .orders-header {
@@ -754,14 +798,14 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                 font-size: 0.85rem;
             }
             
-            .pagination-wrap {
+            .pagination {
                 flex-direction: column;
                 text-align: center;
                 gap: 1.25rem;
                 background: #fff;
-                padding: 1.5rem;
+                margin-top: 1.5rem;
                 border-radius: 16px;
-                margin-top: 1rem;
+                padding: 1.5rem;
             }
         }
         

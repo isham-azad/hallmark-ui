@@ -1,14 +1,23 @@
-export async function sendSmsOtp(phone: string, otp: string): Promise<boolean> {
+export async function sendSms(phone: string, message: string): Promise<boolean> {
+    const isProduction = process.env.NODE_ENV === "production";
     const apiKey = process.env.FAST2SMS_API_KEY;
-    const apiUrl = process.env.FAST2SMS_API_URL;
+    const apiUrl = process.env.FAST2SMS_API_URL || "https://www.fast2sms.com/dev/bulkV2";
+
+    if (!isProduction) {
+        console.log("------------------------------------------");
+        console.log(`[LOCAL DEV] SMS TO: ${phone}`);
+        console.log(`[LOCAL DEV] MESSAGE: ${message}`);
+        console.log("------------------------------------------");
+        return true;
+    }
 
     if (!apiKey) {
-        console.warn("FAST2SMS_API_KEY is not configured. Simulating SMS to " + phone + " with OTP " + otp);
-        return true; // Simulate success if no key for local dev
+        console.error("FAST2SMS_API_KEY is missing in production environment.");
+        return false;
     }
 
     try {
-        const response = await fetch(apiUrl!, {
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 "authorization": apiKey,
@@ -16,7 +25,7 @@ export async function sendSmsOtp(phone: string, otp: string): Promise<boolean> {
             },
             body: JSON.stringify({
                 route: "q",
-                message: `Your OTP is ${otp}`,
+                message: message,
                 numbers: phone
             })
         });
@@ -33,4 +42,8 @@ export async function sendSmsOtp(phone: string, otp: string): Promise<boolean> {
         console.error("Error sending SMS via Fast2SMS:", error);
         return false;
     }
+}
+
+export async function sendSmsOtp(phone: string, otp: string): Promise<boolean> {
+    return sendSms(phone, `Your OTP Is ${otp}`);
 }

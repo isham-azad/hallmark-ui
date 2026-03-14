@@ -64,7 +64,7 @@ export default function BrandPage() {
 
     return (
         <div className="brand-page mt-5 pt-4">
-            <section id="brand-header" className="section light-background" style={{ padding: "60px 0" }}>
+            <section id="brand-header" className="section light-background py-5">
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-4 text-center mb-4 mb-lg-0">
@@ -93,7 +93,7 @@ export default function BrandPage() {
 
             <section id="brand-products" className="section">
                 <div className="container">
-                    <div className="section-title text-center mb-5">
+                    <div className="section-title text-center mb-2">
                         <h2>Our {brand.name} Products</h2>
                         <p>Quality essentials from {brand.name}</p>
                     </div>
@@ -101,7 +101,7 @@ export default function BrandPage() {
                     <div className="row gy-4">
                         {products.length > 0 ? (
                             products.map((product, index) => (
-                                <div key={product.id} className="col-lg-3 col-md-6 d-flex align-items-stretch">
+                                <div key={product.id} className="col-lg-3 col-md-6 col-6 d-flex align-items-stretch">
                                     <ProductCard product={product} index={index} />
                                 </div>
                             ))
