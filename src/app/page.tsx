@@ -84,48 +84,48 @@ export default function Home() {
         <div className="container">
           <div className="row justify-content-center text-center" data-aos="fade-up" data-aos-delay="100">
             <div className="col-xl-6 col-lg-8">
-              <h2><span>Hallmark</span> Enterprises</h2>
-              <p>"All because we understand you better"</p>
+              <h2 className="responsive-h2"><span>Hallmark</span> Enterprises</h2>
+              <p className="responsive-p">"All because we understand you better"</p>
             </div>
           </div>
-          <div className="row flex-wrap flex-lg-nowrap justify-content-center mt-5 gx-2 gy-3" data-aos="fade-up" data-aos-delay="200">
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
+          <div className="row flex-wrap flex-lg-nowrap justify-content-center mt-5 gx-2 gy-3 hero-icon-grid" data-aos="fade-up" data-aos-delay="200">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
               <div className="icon-box">
                 <i className="bi bi-house-door-fill"></i>
                 <h3><a href="">Home Care</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="400">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="400">
               <div className="icon-box">
                 <i className="fa fa-shirt"></i>
                 <h3><a href="">Fabric Care</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="500">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="500">
               <div className="icon-box">
                 <i className="bi bi-person-hearts"></i>
                 <h3><a href="">Personal Care</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="600">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="600">
               <div className="icon-box">
                 <i className="bi bi-droplet-fill"></i>
                 <h3><a href="">Cleaning Liquids</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="700">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="700">
               <div className="icon-box">
                 <i className="bi bi-stars"></i>
                 <h3><a href="">Fancy Supplies</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="800">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="800">
               <div className="icon-box">
                 <i className="bi bi-cup-straw"></i>
                 <h3><a href="">Food &amp; Beverages</a></h3>
               </div>
             </div>
-            <div className="col-6 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="900">
+            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="900">
               <div className="icon-box">
                 <i className="bi bi-sun"></i>
                 <h3><a href="">Ritual Essentials</a></h3>
@@ -273,7 +273,7 @@ export default function Home() {
 
       {/* Products Section */}
       <section id="services" className="services section">
-        <div className="container section-title" data-aos="fade-up" style={{ paddingBottom: '30px' }}>
+        <div className="container section-title" data-aos="fade-up">
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h2>Our Products</h2>

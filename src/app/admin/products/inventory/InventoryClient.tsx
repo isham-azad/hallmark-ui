@@ -242,7 +242,7 @@ export default function InventoryClient({ products }: InventoryClientProps) {
                     <div className="product-info-cell">
                       <div className="product-img">
                         {item.image ? (
-                          <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                          <img src={item.image.split(',')[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                         ) : (
                           <div className="no-img-text">{item.title[0]}</div>
                         )}

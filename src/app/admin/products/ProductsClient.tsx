@@ -175,7 +175,7 @@ export default function ProductsClient({
                     <div className="product-info-cell">
                       <div className="product-img">
                         {p.image ? (
-                          <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                          <img src={p.image.split(',')[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                         ) : (
                           <div className="no-img-text">{p.title[0]}</div>
                         )}
@@ -230,33 +230,35 @@ export default function ProductsClient({
         </div>
 
         {totalPages > 1 && (
-          <div className="pagination-wrap">
-            <p className="pagination-info">
-              Showing {startIndex + 1}–{Math.min(startIndex + PAGE_SIZE, filteredProducts.length)} of {filteredProducts.length}
-            </p>
-            <div className="pagination-controls">
+          <div className="pagination">
+            <button
+              type="button"
+              className="pager-btn"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              aria-label="Previous page"
+            >
+              <i className="bi bi-chevron-left"></i>
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
               <button
+                key={i + 1}
                 type="button"
-                className="pagination-btn"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                aria-label="Previous page"
+                className={`pager-btn ${currentPage === i + 1 ? "active" : ""}`}
+                onClick={() => setCurrentPage(i + 1)}
               >
-                <i className="bi bi-chevron-left"></i>
+                {i + 1}
               </button>
-              <span className="pagination-pages">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                type="button"
-                className="pagination-btn"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                aria-label="Next page"
-              >
-                <i className="bi bi-chevron-right"></i>
-              </button>
-            </div>
+            ))}
+            <button
+              type="button"
+              className="pager-btn"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              aria-label="Next page"
+            >
+              <i className="bi bi-chevron-right"></i>
+            </button>
           </div>
         )}
       </div>
@@ -536,58 +538,49 @@ export default function ProductsClient({
           color: #fff;
           border-color: #ffc451;
           transform: translateY(-2px);
-        }
-
-        .pagination-wrap {
+        }        .pagination {
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           align-items: center;
+          gap: 0.5rem;
           padding: 1.5rem;
           background: #fafbfc;
           border-top: 1px solid #f1f5f9;
+          flex-wrap: wrap;
         }
-
-        .pagination-info {
-          margin: 0;
-          font-size: 0.875rem;
-          color: #64748b;
-        }
-
-        .pagination-controls {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .pagination-btn {
-          width: 36px;
-          height: 36px;
+        .pager-btn {
+          min-width: 40px;
+          height: 40px;
+          padding: 0 0.5rem;
           border-radius: 10px;
           border: 1px solid #e2e8f0;
           background: #fff;
           color: #64748b;
-          cursor: pointer;
-          display: flex;
+          font-weight: 600;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
           transition: 0.2s;
+          flex-shrink: 0;
         }
-
-        .pagination-btn:hover:not(:disabled) {
-          background: #ffc451;
-          color: #fff;
+        .pager-btn:hover:not(:disabled) {
           border-color: #ffc451;
+          color: #ffc451;
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(255, 196, 81, 0.2);
         }
-
-        .pagination-btn:disabled {
+        .pager-btn.active {
+          background: #ffc451;
+          border-color: #ffc451;
+          color: #fff;
+          box-shadow: 0 4px 10px rgba(255, 196, 81, 0.25);
+        }
+        .pager-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           background: #f8fafc;
         }
-
-        .pagination-pages { font-size: 0.875rem; font-weight: 600; color: #475569; }
 
         @media (max-width: 768px) {
             .products-list-header {
@@ -662,7 +655,7 @@ export default function ProductsClient({
             }
             .icon-btn { width: 32px; height: 32px; font-size: 0.9rem; border-radius: 8px; }
             
-            .pagination-wrap {
+            .pagination {
                 flex-direction: column;
                 text-align: center;
                 gap: 1.25rem;
