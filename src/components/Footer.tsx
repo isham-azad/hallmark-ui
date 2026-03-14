@@ -49,7 +49,7 @@ export default function Footer() {
                             </div>
                         </div>
 
-                        <div className="col-lg-2 col-md-3 footer-links">
+                        <div className="col-lg-2 col-md-3 col-6 footer-links">
                             <h4>Quick Links</h4>
                             <ul>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#hero"> Home</a></li>
@@ -60,7 +60,7 @@ export default function Footer() {
                             </ul>
                         </div>
 
-                        <div className="col-lg-2 col-md-3 footer-links">
+                        <div className="col-lg-2 col-md-3 col-6 footer-links">
                             <h4>Our Brands</h4>
                             <ul>
                                 {brandsLoading ? (

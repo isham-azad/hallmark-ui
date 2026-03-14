@@ -33,7 +33,7 @@ function mapApiProductToShop(p: {
         category: p.category,
         price: priceNum,
         oldPrice: oldPriceNum,
-        image: p.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
+        image: p.image?.split(',')[0] || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
         description: p.desc || "",
     };
 }
@@ -221,43 +221,60 @@ export default function ShopPage() {
             {/* Shop Section */}
             <section id="shop" className="shop section">
                 <div className="container">
-                    <div className="row mb-4">
-                        <div className="col-lg-6">
-                            <h2>Our Products</h2>
-                            <p>High quality, affordable essentials for every home</p>
-                        </div>
-                        <div className="col-lg-6 text-end">
-                            <div className="shop-filters">
+                    <div className="shop-header mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h2 className="shop-title mb-0">
+                                {selectedCategory === 'all' ? 'All Products' : categories.find(c => c.id === selectedCategory)?.name}
+                            </h2>
+                            <div className="shop-controls d-flex align-items-center gap-3">
+                                <span className="d-none d-md-inline text-muted small">Sort By</span>
                                 <select
-                                    className="form-select"
-                                    value={selectedCategory}
-                                    onChange={(e) => {
-                                        setSelectedCategory(e.target.value);
-                                        setDisplayCount(8);
-                                    }}
-                                    style={{ maxWidth: "200px", display: "inline-block" }}
-                                >
-                                    <option value="all">All Categories</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="form-select ms-2"
+                                    className="form-select sort-select"
                                     value={sortOrder}
                                     onChange={(e) => {
                                         setSortOrder(e.target.value);
                                         setDisplayCount(8);
                                     }}
-                                    style={{ maxWidth: "200px", display: "inline-block" }}
                                 >
-                                    <option value="default">Sort by: Default</option>
+                                    <option value="default">Most Popular</option>
                                     <option value="name-asc">Name: A to Z</option>
                                     <option value="name-desc">Name: Z to A</option>
                                     <option value="price-asc">Price: Low to High</option>
                                     <option value="price-desc">Price: High to Low</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="filter-scroll-wrapper">
+                            <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
+                                <span
+                                    role="button"
+                                    onClick={() => { setSelectedCategory("all"); setDisplayCount(8); }}
+                                    className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
+                                >
+                                    {selectedCategory === "all" && <i className="bi bi-check2 me-1"></i>}
+                                    All Products
+                                </span>
+                                {categories.map((c) => (
+                                    <span
+                                        key={c.id}
+                                        role="button"
+                                        onClick={() => { setSelectedCategory(c.id); setDisplayCount(8); }}
+                                        className={`filter-chip ${selectedCategory === c.id ? "active" : ""}`}
+                                    >
+                                        {selectedCategory === c.id && (
+                                            <span onClick={(e) => { e.stopPropagation(); setSelectedCategory("all"); }} className="me-2 text-muted">
+                                                <i className="bi bi-x-lg" style={{ fontSize: '0.7rem' }}></i>
+                                            </span>
+                                        )}
+                                        {c.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="results-info mt-3">
+                            <span className="text-muted small">{filteredProducts.length} Results for <strong>"{selectedCategory === 'all' ? 'All Products' : categories.find(c => c.id === selectedCategory)?.name}"</strong></span>
                         </div>
                     </div>
 

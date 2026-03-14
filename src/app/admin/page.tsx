@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
   const categoryCount = categoriesSnap.data().count;
   const orderCount = ordersSnap.data().count;
 
-  const ordersForRevenue = await db.collection("orders").select("total").get();
+  const ordersForRevenue = await db.collection("orders").where("paymentStatus", "==", "Paid").select("total").get();
   const totalRevenue = ordersForRevenue.docs.reduce((acc: number, doc: any) => {
     const val = parseFloat(String(doc.data().total).replace(/[^0-9.]/g, '')) || 0;
     return acc + val;

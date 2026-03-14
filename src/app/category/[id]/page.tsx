@@ -73,7 +73,7 @@ export default function CategoryPage() {
                         style={{ objectFit: "cover", opacity: 0.3, zIndex: 0 }}
                     />
                 ) : null}
-                <div className="container position-relative" style={{ zIndex: 1, padding: "80px 0" }}>
+                <div className="container position-relative responsive-banner-container" style={{ zIndex: 1, padding: "80px 0" }}>
                     <div className="row justify-content-center text-center">
                         <div className="col-lg-8">
                             <h1 className="display-4" style={{ fontWeight: 800 }}>{category.name}</h1>
@@ -85,7 +85,7 @@ export default function CategoryPage() {
 
             <section id="category-products" className="section">
                 <div className="container mt-5">
-                    <div className="section-title text-center mb-5">
+                    <div className="section-title text-center mb-2">
                         <h2>Explore {category.name}</h2>
                         <p>Premium selection for your daily needs</p>
                     </div>
@@ -93,7 +93,7 @@ export default function CategoryPage() {
                     <div className="row gy-4">
                         {products.length > 0 ? (
                             products.map((product, index) => (
-                                <div key={product.id} className="col-lg-3 col-md-6 d-flex align-items-stretch">
+                                <div key={product.id} className="col-lg-3 col-md-6 col-6 d-flex align-items-stretch">
                                     <ProductCard product={product} index={index} />
                                 </div>
                             ))

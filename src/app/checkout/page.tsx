@@ -282,7 +282,7 @@ export default function CheckoutPage() {
                                 <div className="checkout-form bg-white p-4 rounded shadow-sm border">
                                     {checkoutStep === "mobile" && (
                                         <div className="checkout-section py-4">
-                                            <h3 className="mb-4 fw-bold border-bottom pb-2">Login with Mobile</h3>
+                                            <h3 className="mb-4 fw-bold border-bottom pb-2">Verify with Mobile</h3>
                                             {submitError && <div className="alert alert-danger mb-4">{submitError}</div>}
                                             <div className="mb-4">
                                                 <label className="form-label fw-semibold">Mobile Number <span className="text-danger">*</span></label>
@@ -400,23 +400,24 @@ export default function CheckoutPage() {
                                                             Pincode <span className="text-danger">*</span>
                                                         </label>
                                                         <p className="small text-muted mb-3">Enter your 6-digit pincode to confirm we deliver to your area.</p>
-                                                        <div className="d-flex flex-wrap gap-2 align-items-center">
+                                                        <div className="d-flex gap-2 align-items-center">
                                                             <input
                                                                 type="text"
                                                                 inputMode="numeric"
                                                                 className="form-control"
                                                                 required
-                                                                style={{ backgroundColor: "#fff", width: "min(100%, 160px)" }}
+                                                                style={{ backgroundColor: "#fff", flex: "1", minWidth: "80px" }}
                                                                 value={form.zip}
                                                                 onChange={handleChange("zip")}
-                                                                placeholder="e.g. 679577"
+                                                                placeholder="679577"
                                                                 maxLength={6}
                                                             />
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-primary px-4"
+                                                                className="btn btn-primary px-3 text-nowrap flex-shrink-0"
                                                                 onClick={checkPincode}
                                                                 disabled={zipDigits !== 6 || pincodeStatus === "checking"}
+                                                                style={{ height: "45px" }}
                                                             >
                                                                 {pincodeStatus === "checking" ? (
                                                                     <span className="spinner-border spinner-border-sm" role="status" />
@@ -518,7 +519,7 @@ export default function CheckoutPage() {
                             </div>
 
                             <div className="col-lg-4">
-                                <div className="order-summary p-4 border rounded shadow-sm bg-white sticky-lg-top" style={{ top: "120px", zIndex: 10 }}>
+                                <div className="order-summary p-4 border rounded shadow-sm bg-white sticky-lg-top" style={{ zIndex: 10 }}>
                                     <h4 className="mb-4 fw-bold">Order Summary</h4>
                                     <div className="order-items mb-3 overflow-auto" style={{ maxHeight: "300px" }}>
                                         {cart.map((item) => (

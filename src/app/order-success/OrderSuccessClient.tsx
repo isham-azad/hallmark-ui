@@ -89,7 +89,7 @@ export default function OrderSuccessClient() {
                                 </div>
 
                                 <p className="success-footer-note">
-                                    <i className="bi bi-envelope-check" aria-hidden /> You will receive an email confirmation shortly with your order details.
+                                    <i className="bi bi-envelope-check" aria-hidden /> You will receive an SMS confirmation shortly with your order details.
                                 </p>
                             </div>
                         </div>

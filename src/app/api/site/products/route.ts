@@ -28,12 +28,11 @@ export async function GET() {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
                 const imageRaw = data.image as string | null;
-                const image = imageRaw ? imageRaw.split(",")[0].trim() : "";
                 return {
                     id: doc.id,
                     title: data.title as string,
                     desc: (data.desc as string) ?? "",
-                    image: image || undefined,
+                    image: imageRaw || undefined,
                     price: (data.price as string) ?? undefined,
                     wasPrice: (data.wasPrice as string) ?? undefined,
                     category: data.categoryId as string,

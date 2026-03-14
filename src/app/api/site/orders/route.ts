@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
+import { sendSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,17 @@ export async function POST(request: NextRequest) {
                 });
             } else {
                 await customerSnap.docs[0].ref.update(customerData);
+            }
+        }
+
+        // Send confirmation SMS to customer
+        if (phone) {
+            try {
+                const smsMessage = `Thank you for your order! Your order ${orderNo} of ${orderData.total} has been placed successfully. - HallMark`;
+                await sendSms(String(phone).trim(), smsMessage);
+            } catch (smsError) {
+                console.warn("Failed to send order confirmation SMS:", smsError);
+                // Don't fail the request if SMS fails
             }
         }
 
