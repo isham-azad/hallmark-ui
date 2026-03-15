@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
+import { withAdminAuth } from "@/lib/api-middleware";
+import { PERMISSIONS } from "@/lib/permissions";
 
 function parseCSV(text: string): { sku: string; price: string; wasPrice: string }[] {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
@@ -24,8 +26,7 @@ function parseCSV(text: string): { sku: string; price: string; wasPrice: string 
   return rows;
 }
 
-export async function POST(request: Request) {
-  try {
+async function handler(request: Request, { logAction }: { logAction: any }) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     if (!file || file.size === 0) {
@@ -81,16 +82,14 @@ export async function POST(request: Request) {
     if (ops > 0) await batch.commit();
 
     revalidatePath("/admin/products/prices");
+
+    await logAction("BULK_PRICE_UPDATE", { updatedCount: updated, errorCount: errors.length });
+
     return NextResponse.json({
       success: true,
       updated,
       errors: errors.slice(0, 50),
     });
-  } catch (error) {
-    console.error("Bulk prices update failed:", error);
-    return NextResponse.json(
-      { success: false, error: "Bulk update failed." },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withAdminAuth(handler, PERMISSIONS.MANAGE_PRICES);

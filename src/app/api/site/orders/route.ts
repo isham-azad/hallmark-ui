@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
             paymentMethodId?: string;
             paymentMethodName?: string;
             shipping?: number;
-            items?: Array<{ id: string; name?: string; quantity: number; packSize?: string; price?: number }>;
+            items?: Array<{ id: string; name?: string; quantity: number; packSize?: string; price?: number; image?: string }>;
         };
 
         if (!email || !items?.length) {
@@ -56,8 +56,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Rate limiting: Prevent duplicate orders/SMS spam (60-second window)
+        if (phone) {
+            const normalizedPhone = String(phone).trim();
+            const recentOrders = await db.collection("orders")
+                .where("phone", "==", normalizedPhone)
+                .orderBy("createdAt", "desc")
+                .limit(1)
+                .get();
+
+            if (!recentOrders.empty) {
+                const lastOrder = recentOrders.docs[0].data();
+                const lastCreatedAt = lastOrder.createdAt?.toDate?.() || new Date(0);
+                const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
+                
+                if (secondsSinceLast < 60) {
+                    return NextResponse.json({ 
+                        success: false, 
+                        error: "Please wait a minute before placing another order." 
+                    }, { status: 429 });
+                }
+            }
+        }
+
         const shippingAmount = shipping != null ? Number(shipping) : 0;
-        const orderItems: { id: string; name: string; sku: string | null; qty: number; price: string; createdAt: string }[] = [];
+        const orderItems: { id: string; name: string; sku: string | null; qty: number; price: string; image: string | null; createdAt: string }[] = [];
         const itemCreatedAt = new Date().toISOString();
         let subtotalNum = 0;
 
@@ -71,25 +94,42 @@ export async function POST(request: NextRequest) {
                 const data = productDoc.exists ? productDoc.data() : null;
                 const priceStr = data?.price as string | undefined;
                 priceNum = priceStr != null ? parseFloat(String(priceStr).replace(/[^0-9.]/g, "")) || 0 : 0;
+                
+                // Use the string price from the DB for display in admin
+                const displayPrice = priceStr || (item.price != null ? `₹${item.price}` : "₹0");
+
                 if (priceNum <= 0 && item.price != null) {
                     const fromItem = typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price);
                     priceNum = fromItem || 0;
                 }
                 name = (data?.title as string) || item.name || "Product";
+                const image = (data?.image as string)?.split(',')[0] || item.image || null;
+
+                orderItems.push({
+                    id: itemId,
+                    name,
+                    sku: item.packSize ?? null,
+                    qty,
+                    price: displayPrice,
+                    image,
+                    createdAt: itemCreatedAt,
+                });
             } catch (e) {
                 console.warn("Product lookup for item:", itemId, e);
                 const fromItem = item.price != null ? (typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price)) : 0;
                 priceNum = fromItem || 0;
-                name = item.name || "Product";
+                const displayPrice = item.price != null ? `₹${item.price}` : "₹0";
+
+                orderItems.push({
+                    id: itemId,
+                    name: item.name || "Product",
+                    sku: item.packSize ?? null,
+                    qty,
+                    price: displayPrice,
+                    image: item.image || null,
+                    createdAt: itemCreatedAt,
+                });
             }
-            orderItems.push({
-                id: itemId,
-                name,
-                sku: item.packSize ?? null,
-                qty,
-                price: String(priceNum),
-                createdAt: itemCreatedAt,
-            });
             subtotalNum += priceNum * qty;
         }
 

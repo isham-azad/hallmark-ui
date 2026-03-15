@@ -1,6 +1,9 @@
 "use server";
 
 import db from "@/lib/firebase";
+import { getAdminSession } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
 export interface Customer {
     id: string;
@@ -25,6 +28,17 @@ function toISO(val: any): string {
 
 export async function getCustomers(): Promise<Customer[]> {
     try {
+        const session = await getAdminSession();
+        if (!session) return [];
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_CUSTOMERS)) {
+            return [];
+        }
+
         const snapshot = await db.collection("customers").orderBy("updatedAt", "desc").get();
         return snapshot.docs.map((doc: any) => {
             const data = doc.data();

@@ -4,6 +4,25 @@ import db from "@/lib/firebase";
 import cloudinary from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
+import { getAdminSession, logAction } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
+
+async function verifyAuth(permission?: string) {
+    const session = await getAdminSession();
+    if (!session) throw new Error("Unauthorized");
+
+    if (permission) {
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(permission)) {
+            throw new Error("Access Denied");
+        }
+    }
+    return session;
+}
 
 const MAX_IMAGES = 5;
 
@@ -71,6 +90,8 @@ async function deleteImagesFromCloudinary(imageField: string | null): Promise<vo
 
 export async function createProductWithUpload(formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
+        
         const title = (formData.get("title") as string)?.trim();
         const desc = (formData.get("desc") as string)?.trim() ?? "";
         const brandId = (formData.get("brandId") as string) ?? "";
@@ -78,6 +99,7 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
         const price = (formData.get("price") as string)?.trim() || null;
         const sku = (formData.get("sku") as string)?.trim() || null;
         const stock = parseInt((formData.get("stock") as string) || "0", 10) || 0;
+        const howToUse = (formData.get("howToUse") as string)?.trim() ?? "";
 
         if (!title || !brandId || !categoryId) {
             return { success: false, error: "Title, Brand and Category are required." };
@@ -100,21 +122,25 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
             stock,
             brandId,
             categoryId,
+            howToUse,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
 
+        await logAction(session.email, session.name, "CREATE_PRODUCT", { title, productId });
+
         revalidatePath("/admin/products");
         revalidatePath("/admin");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create product with upload:", error);
-        return { success: false, error: "Failed to create product." };
+        return { success: false, error: error.message || "Failed to create product." };
     }
 }
 
-export async function createProduct(formData: { id: string; title: string; desc: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
+export async function createProduct(formData: { id: string; title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         const docId = formData.id || formData.title.toLowerCase().replace(/\s+/g, "-");
 
         await db.collection("products").doc(docId).set({
@@ -127,21 +153,25 @@ export async function createProduct(formData: { id: string; title: string; desc:
             stock: formData.stock || 0,
             brandId: formData.brandId,
             categoryId: formData.categoryId,
+            howToUse: formData.howToUse ?? "",
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
 
+        await logAction(session.email, session.name, "CREATE_PRODUCT", { title: formData.title, docId });
+
         revalidatePath("/admin/products");
         revalidatePath("/admin");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create product:", error);
-        return { success: false, error: "Failed to create product." };
+        return { success: false, error: error.message || "Failed to create product." };
     }
 }
 
-export async function updateProduct(id: string, formData: { title: string; desc: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
+export async function updateProduct(id: string, formData: { title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         await db.collection("products").doc(id).update({
             title: formData.title,
             desc: formData.desc,
@@ -152,34 +182,42 @@ export async function updateProduct(id: string, formData: { title: string; desc:
             stock: formData.stock || 0,
             brandId: formData.brandId,
             categoryId: formData.categoryId,
+            howToUse: formData.howToUse ?? "",
             updatedAt: FieldValue.serverTimestamp(),
         });
+
+        await logAction(session.email, session.name, "UPDATE_PRODUCT", { id, title: formData.title });
 
         revalidatePath("/admin/products");
         revalidatePath(`/admin/products/edit/${id}`);
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update product:", error);
-        return { success: false, error: "Failed to update product." };
+        return { success: false, error: error.message || "Failed to update product." };
     }
 }
 
 export async function setProductStatus(id: string, status: "active" | "disabled") {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         await db.collection("products").doc(id).update({
             status,
             updatedAt: FieldValue.serverTimestamp(),
         });
+
+        await logAction(session.email, session.name, "SET_PRODUCT_STATUS", { id, status });
+
         revalidatePath("/admin/products");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update product status:", error);
-        return { success: false, error: "Failed to update status." };
+        return { success: false, error: error.message || "Failed to update status." };
     }
 }
 
 export async function deleteProduct(id: string) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         const doc = await db.collection("products").doc(id).get();
         if (doc.exists) {
             const data = doc.data();
@@ -187,47 +225,59 @@ export async function deleteProduct(id: string) {
         }
 
         await db.collection("products").doc(id).delete();
+
+        await logAction(session.email, session.name, "DELETE_PRODUCT", { id });
+
         revalidatePath("/admin/products");
         revalidatePath("/admin");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to delete product:", error);
-        return { success: false, error: "Failed to delete product." };
+        return { success: false, error: error.message || "Failed to delete product." };
     }
 }
 
 export async function updateProductPrice(id: string, price: string, wasPrice?: string) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRICES);
         await db.collection("products").doc(id).update({
             price,
             wasPrice: wasPrice || null,
             updatedAt: FieldValue.serverTimestamp(),
         });
+
+        await logAction(session.email, session.name, "UPDATE_PRODUCT_PRICE", { id, price });
+
         revalidatePath("/admin/products/prices");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update price:", error);
-        return { success: false, error: "Failed to update price." };
+        return { success: false, error: error.message || "Failed to update price." };
     }
 }
 
 export async function updateProductStock(id: string, sku: string, stock: number) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_INVENTORY);
         await db.collection("products").doc(id).update({
             sku: sku || null,
             stock: stock || 0,
             updatedAt: FieldValue.serverTimestamp(),
         });
+
+        await logAction(session.email, session.name, "UPDATE_PRODUCT_STOCK", { id, sku, stock });
+
         revalidatePath("/admin/products/inventory");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update stock:", error);
-        return { success: false, error: "Failed to update inventory." };
+        return { success: false, error: error.message || "Failed to update inventory." };
     }
 }
 
 export async function bulkUpdatePrices(discountType: "percentage" | "fixed", value: number) {
     try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_PRICES);
         const snapshot = await db.collection("products").get();
         const batch = db.batch();
 
@@ -255,10 +305,13 @@ export async function bulkUpdatePrices(discountType: "percentage" | "fixed", val
         });
 
         await batch.commit();
+
+        await logAction(session.email, session.name, "BULK_UPDATE_PRICES", { discountType, value });
+
         revalidatePath("/admin/products/prices");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to bulk update prices:", error);
-        return { success: false, error: "Failed to apply bulk discount." };
+        return { success: false, error: error.message || "Failed to apply bulk discount." };
     }
 }

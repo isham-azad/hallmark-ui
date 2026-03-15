@@ -39,6 +39,7 @@ export async function GET() {
                     brand: data.brandId as string,
                     categoryName: categoryNames[data.categoryId as string],
                     brandName: brandNames[data.brandId as string],
+                    howToUse: (data.howToUse as string) ?? "",
                 };
             })
             .filter(Boolean);

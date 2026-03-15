@@ -1,8 +1,10 @@
 "use server";
 
 import db from "@/lib/firebase";
-import { Role } from "@/lib/permissions";
+import { Role, PERMISSIONS } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
+import { getAdminSession, logAction } from "@/lib/auth";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
 export interface AdminUser {
     id: string;
@@ -43,12 +45,23 @@ export async function getStaff(): Promise<AdminUser[]> {
 
 export async function addStaff(name: string, email: string, phone: string, role: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ADMINS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         const existing = await db.collection("admins").where("email", "==", email).get();
         if (!existing.empty) {
             return { success: false, error: "Admin with this email already exists" };
         }
 
-        await db.collection("admins").add({
+        const docRef = await db.collection("admins").add({
             name,
             email,
             phone,
@@ -56,6 +69,8 @@ export async function addStaff(name: string, email: string, phone: string, role:
             createdAt: new Date(),
             updatedAt: new Date()
         });
+
+        await logAction(session.email, session.name, "ADD_STAFF", { staffEmail: email, staffRole: role, staffId: docRef.id });
 
         revalidatePath("/admin/staff");
         return { success: true };
@@ -67,6 +82,17 @@ export async function addStaff(name: string, email: string, phone: string, role:
 
 export async function editStaff(id: string, name: string, email: string, phone: string, role: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ADMINS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         const existing = await db.collection("admins").where("email", "==", email).get();
         if (!existing.empty && existing.docs[0].id !== id) {
             return { success: false, error: "Admin with this email already exists" };
@@ -80,6 +106,8 @@ export async function editStaff(id: string, name: string, email: string, phone: 
             updatedAt: new Date()
         });
 
+        await logAction(session.email, session.name, "EDIT_STAFF", { staffId: id, staffEmail: email, staffRole: role });
+
         revalidatePath("/admin/staff");
         return { success: true };
     } catch (error) {
@@ -90,10 +118,24 @@ export async function editStaff(id: string, name: string, email: string, phone: 
 
 export async function updateStaffRole(id: string, role: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ADMINS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("admins").doc(id).update({
             role,
             updatedAt: new Date()
         });
+
+        await logAction(session.email, session.name, "UPDATE_STAFF_ROLE", { staffId: id, newRole: role });
+
         revalidatePath("/admin/staff");
         return { success: true };
     } catch (error) {
@@ -104,8 +146,29 @@ export async function updateStaffRole(id: string, role: string) {
 
 export async function deleteStaff(id: string) {
     try {
-        // Prevent deleting the last super admin if possible, but for now simple delete
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ADMINS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
+        // Prevent self-deletion
+        if (session.email) {
+            const adminDoc = await db.collection("admins").doc(id).get();
+            if (adminDoc.exists && adminDoc.data()?.email === session.email) {
+                return { success: false, error: "You cannot delete yourself." };
+            }
+        }
+
         await db.collection("admins").doc(id).delete();
+        
+        await logAction(session.email, session.name, "DELETE_STAFF", { staffId: id });
+
         revalidatePath("/admin/staff");
         return { success: true };
     } catch (error) {

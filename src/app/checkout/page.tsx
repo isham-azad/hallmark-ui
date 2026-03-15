@@ -527,12 +527,20 @@ export default function CheckoutPage() {
                                     <h4 className="mb-4 fw-bold">Order Summary</h4>
                                     <div className="order-items mb-3 overflow-auto" style={{ maxHeight: "300px" }}>
                                         {cart.map((item) => (
-                                            <div key={`${item.id}-${item.packSize}`} className="order-item d-flex justify-content-between mb-3 border-bottom pb-2">
-                                                <div style={{ maxWidth: "70%" }}>
-                                                    <div className="fw-bold small">{item.name}</div>
+                                            <div key={`${item.id}-${item.packSize}`} className="order-item d-flex align-items-center gap-3 mb-3 border-bottom pb-2">
+                                                <div className="flex-shrink-0 bg-light rounded" style={{ width: "50px", height: "50px", overflow: "hidden", border: "1px solid #f1f5f9" }}>
+                                                    <img 
+                                                        src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} 
+                                                        alt={item.name} 
+                                                        className="img-fluid w-100 h-100" 
+                                                        style={{ objectFit: "cover" }} 
+                                                    />
+                                                </div>
+                                                <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                                    <div className="fw-bold small text-truncate" title={item.name}>{item.name}</div>
                                                     <p className="small text-muted mb-0">Qty: {item.quantity} {item.packSize && ` | ${item.packSize}`}</p>
                                                 </div>
-                                                <span className="fw-bold small">₹{item.price * item.quantity}</span>
+                                                <span className="fw-bold small flex-shrink-0 text-nowrap">₹{item.price * item.quantity}</span>
                                             </div>
                                         ))}
                                     </div>
