@@ -240,11 +240,15 @@ export default function CheckoutPage() {
 
     if (cart.length === 0) {
         return (
-            <div className="container text-center py-5 mt-5">
-                <i className="bi bi-cart-x text-muted" style={{ fontSize: "64px", opacity: 0.3 }}></i>
-                <h2 className="mt-4">Your cart is empty</h2>
-                <p className="text-muted">You cannot checkout with an empty cart.</p>
-                <Link href="/shop" className="btn btn-primary mt-3">Go to Shop</Link>
+            <div className="container text-center d-flex flex-column align-items-center justify-content-center" style={{ minHeight: "70vh", paddingTop: "120px", paddingBottom: "60px" }}>
+                <div className="empty-cart-icon-wrapper mb-4">
+                    <i className="bi bi-cart-x text-muted" style={{ fontSize: "80px", opacity: 0.2 }}></i>
+                </div>
+                <h2 className="fw-bold">Your cart is empty</h2>
+                <p className="text-muted mb-4">You cannot checkout with an empty cart. Please add some products first.</p>
+                <Link href="/shop" className="btn btn-primary btn-lg px-5 shadow-sm">
+                    <i className="bi bi-arrow-left me-2"></i>Go to Shop
+                </Link>
             </div>
         );
     }

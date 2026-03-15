@@ -124,7 +124,7 @@ export default function ShopProductDetailPage() {
     const categoryName = category?.name ?? product.categoryName ?? product.category;
     const brandName = brand?.name ?? product.brandName ?? product.brand;
     
-    const images = product.image ? product.image.split(',').filter(Boolean) : ["/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
+    const images = product.image ? product.image.split(',').filter(Boolean) : ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
     const imageUrl = images[activeImageIndex];
     
     const nextImage = () => setActiveImageIndex((prev) => (prev + 1) % images.length);
@@ -390,7 +390,7 @@ export default function ShopProductDetailPage() {
                                             >
                                                 {categories.find((c) => c.id === p.category)?.name ?? p.categoryName}
                                             </span>
-                                            <img src={p.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} alt={p.title} className="img-fluid" />
+                                            <img src={p.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} alt={p.title} className="img-fluid" />
                                             <div className="product-overlay">
                                                 <Link href={`/shop/product/${p.id}`} className="btn btn-sm btn-primary add-to-cart-btn">
                                                     View Product

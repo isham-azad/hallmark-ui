@@ -33,7 +33,7 @@ function mapApiProductToShop(p: {
         category: p.category,
         price: priceNum,
         oldPrice: oldPriceNum,
-        image: p.image?.split(',')[0] || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
+        image: p.image?.split(',')[0] || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
         description: p.desc || "",
     };
 }

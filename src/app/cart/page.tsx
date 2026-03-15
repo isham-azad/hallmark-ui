@@ -86,7 +86,7 @@ export default function CartPage() {
                                                 <div className="row align-items-center">
                                                     <div className="col-3 col-md-2">
                                                         <img 
-                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
+                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
                                                             alt={item.nameFromDb} 
                                                             className="img-fluid rounded border" 
                                                         />

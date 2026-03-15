@@ -58,7 +58,7 @@ export default function ServiceDetailsPage() {
                         </div>
 
                         <div className="col-lg-8 ps-lg-5" data-aos="fade-up" data-aos-delay="200">
-                            <img src="/assets/img/services.jpg" alt="" className="img-fluid services-img mb-4 rounded" />
+                            <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566391/hallmark/assets/img/services.jpg" alt="" className="img-fluid services-img mb-4 rounded" />
                             <h3>Premium Wholesale and Food Processing Services</h3>
                             <p>
                                 At HallMark Enterprises, we pride ourselves on delivering top-tier wholesale distribution and food processing services. Our commitment to quality and efficiency ensures that our clients receive the best products in the most timely manner.
