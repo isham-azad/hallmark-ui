@@ -30,6 +30,10 @@ const raleway = Raleway({
 export const metadata: Metadata = {
   title: "HallMark Enterprises",
   description: "A Wholesale Distributor & Food Processing Co.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 import { CartProvider } from "@/context/CartContext";
