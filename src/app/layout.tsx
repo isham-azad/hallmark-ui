@@ -9,6 +9,7 @@ import BodyClassManager from "@/components/BodyClassManager";
 import Preloader from "@/components/Preloader";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -71,6 +72,7 @@ export default function RootLayout({
             <CartOffcanvas />
             <EnquiryOffcanvas />
             <SpeedInsights />
+            <Analytics />
           </EnquiryProvider>
         </CartProvider>
 

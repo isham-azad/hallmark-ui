@@ -14,7 +14,7 @@ export interface CartItem {
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: any, quantity: number, packSize?: string) => void;
+    addToCart: (product: any, quantity: number, packSize?: string, openCart?: boolean) => void;
     removeFromCart: (id: number | string, packSize?: string) => void;
     updateQuantity: (id: number | string, quantity: number, packSize?: string) => void;
     clearCart: () => void;
@@ -48,7 +48,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("hallmark-cart", JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = (product: any, quantity: number, packSize?: string) => {
+    const addToCart = (product: any, quantity: number, packSize?: string, openCart: boolean = true) => {
         setCart((prevCart) => {
             const existingItemIndex = prevCart.findIndex(
                 (item) => item.id === product.id && item.packSize === packSize
@@ -74,8 +74,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ];
         });
 
-        // Auto open cart when item added
-        setIsCartOpen(true);
+        // Auto open cart when item added (unless suppressed)
+        if (openCart) {
+            setIsCartOpen(true);
+        }
     };
 
     const removeFromCart = (id: number | string, packSize?: string) => {
