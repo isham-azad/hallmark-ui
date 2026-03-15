@@ -8,6 +8,7 @@ import CartOffcanvas from "@/components/CartOffcanvas";
 import BodyClassManager from "@/components/BodyClassManager";
 import Preloader from "@/components/Preloader";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -65,6 +66,7 @@ export default function RootLayout({
           <Footer />
           <ScrollTop />
           <CartOffcanvas />
+          <SpeedInsights />
         </CartProvider>
 
         {/* Vendor JS Files using Next.js Script component */}
