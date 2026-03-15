@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getOrderById } from "@/app/admin/orders/actions";
 import { Role, PERMISSIONS } from "@/lib/permissions";
 import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
+import { AdminLayoutShimmer, AdminDashboardShimmer } from "@/components/Shimmer";
 
 interface NavItem {
   name: string;
@@ -192,7 +193,7 @@ export default function AdminLayoutClient({
     }
   }, [pathname]);
 
-  if (loading) return null;
+  if (loading) return <AdminLayoutShimmer />;
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
@@ -346,9 +347,8 @@ export default function AdminLayoutClient({
         </header>
         <div className="content-inner">
           {authorized === "loading" ? (
-            <div className="auth-loading">
-              <div className="spinner"></div>
-              <p>Verifying permissions...</p>
+            <div className="w-100 h-100">
+              <AdminDashboardShimmer />
             </div>
           ) : authorized ? children : (
             <div className="access-denied">
