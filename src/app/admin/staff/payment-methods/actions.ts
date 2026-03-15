@@ -13,7 +13,7 @@ export async function createPaymentMethod(formData: { id: string; name: string; 
             summary: formData.summary,
         });
 
-        revalidatePath("/admin/payment-methods");
+        revalidatePath("/admin/staff/payment-methods");
         return { success: true };
     } catch (error) {
         console.error("Failed to create payment method:", error);
@@ -28,8 +28,8 @@ export async function updatePaymentMethod(id: string, formData: { name: string; 
             summary: formData.summary,
         });
 
-        revalidatePath("/admin/payment-methods");
-        revalidatePath(`/admin/payment-methods/edit/${id}`);
+        revalidatePath("/admin/staff/payment-methods");
+        revalidatePath(`/admin/staff/payment-methods/edit/${id}`);
         return { success: true };
     } catch (error) {
         console.error("Failed to update payment method:", error);
@@ -43,7 +43,7 @@ export async function setPaymentMethodStatus(id: string, status: "active" | "dis
             status,
             updatedAt: FieldValue.serverTimestamp(),
         });
-        revalidatePath("/admin/payment-methods");
+        revalidatePath("/admin/staff/payment-methods");
         return { success: true };
     } catch (error) {
         console.error("Failed to update payment method status:", error);
@@ -54,7 +54,7 @@ export async function setPaymentMethodStatus(id: string, status: "active" | "dis
 export async function deletePaymentMethod(id: string) {
     try {
         await db.collection("paymentMethods").doc(id).delete();
-        revalidatePath("/admin/payment-methods");
+        revalidatePath("/admin/staff/payment-methods");
         return { success: true };
     } catch (error) {
         console.error("Failed to delete payment method:", error);

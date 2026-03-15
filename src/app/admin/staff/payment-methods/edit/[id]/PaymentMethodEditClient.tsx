@@ -37,7 +37,7 @@ export default function PaymentMethodEditClient({ paymentMethod }: PaymentMethod
 
         if (result.success) {
             showToast("Payment method updated successfully!");
-            setTimeout(() => router.push("/admin/payment-methods"), 1000);
+            setTimeout(() => router.push("/admin/staff/payment-methods"), 1000);
         } else {
             showToast(result.error || "Failed to update payment method", "error");
         }
@@ -47,7 +47,7 @@ export default function PaymentMethodEditClient({ paymentMethod }: PaymentMethod
         <div className="edit-pm-container">
             {ToastComponent}
             <div className="header-actions mb-4">
-                <Link href="/admin/payment-methods" className="back-link">
+                <Link href="/admin/staff/payment-methods" className="back-link">
                     <i className="bi bi-arrow-left"></i>
                     Back to Payment Methods
                 </Link>
@@ -82,7 +82,7 @@ export default function PaymentMethodEditClient({ paymentMethod }: PaymentMethod
                 </div>
 
                 <div className="form-actions">
-                    <button type="button" onClick={() => router.push("/admin/payment-methods")} className="cancel-btn">
+                    <button type="button" onClick={() => router.push("/admin/staff/payment-methods")} className="cancel-btn">
                         Cancel
                     </button>
                     <button type="submit" className="save-btn" disabled={loading}>

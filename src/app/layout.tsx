@@ -38,6 +38,8 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/context/CartContext";
+import { EnquiryProvider } from "@/context/EnquiryContext";
+import EnquiryOffcanvas from "@/components/EnquiryOffcanvas";
 
 export default function RootLayout({
   children,
@@ -57,16 +59,19 @@ export default function RootLayout({
       </head>
       <body className={`${roboto.variable} ${poppins.variable} ${raleway.variable}`} suppressHydrationWarning>
         <CartProvider>
-          <Preloader />
-          <BodyClassManager />
-          <Header />
-          <main className="main">
-            {children}
-          </main>
-          <Footer />
-          <ScrollTop />
-          <CartOffcanvas />
-          <SpeedInsights />
+          <EnquiryProvider>
+            <Preloader />
+            <BodyClassManager />
+            <Header />
+            <main className="main">
+              {children}
+            </main>
+            <Footer />
+            <ScrollTop />
+            <CartOffcanvas />
+            <EnquiryOffcanvas />
+            <SpeedInsights />
+          </EnquiryProvider>
         </CartProvider>
 
         {/* Vendor JS Files using Next.js Script component */}

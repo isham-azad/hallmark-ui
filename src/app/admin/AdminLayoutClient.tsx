@@ -67,7 +67,6 @@ export default function AdminLayoutClient({
       href: "#",
       subItems: [
         { name: "Orders List", href: "/admin/orders", permission: PERMISSIONS.MANAGE_ORDERS },
-        { name: "Allowed Pincodes", href: "/admin/orders/allowed-pincodes", permission: PERMISSIONS.MANAGE_PINCODES },
       ],
     },
     {
@@ -82,17 +81,12 @@ export default function AdminLayoutClient({
       href: "#",
       subItems: [
         { name: "Admins List", href: "/admin/staff", permission: PERMISSIONS.MANAGE_ADMINS },
+        { name: "Enquiries", href: "/admin/staff/enquiries", permission: PERMISSIONS.MANAGE_ENQUIRIES },
+        { name: "Allowed Pincodes", href: "/admin/staff/allowed-pincodes", permission: PERMISSIONS.MANAGE_PINCODES },
+        { name: "Payment Methods", href: "/admin/staff/payment-methods", permission: PERMISSIONS.MANAGE_PAYMENTS },
         { name: "Roles", href: "/admin/staff/roles", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "Permissions", href: "/admin/staff/permissions", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "OTP Verifications", href: "/admin/otp-verifications", permission: PERMISSIONS.VIEW_OTP_VERIFICATIONS },
-      ],
-    },
-    {
-      name: "Payment",
-      icon: "bi bi-credit-card-fill",
-      href: "#",
-      subItems: [
-        { name: "Payment Methods", href: "/admin/payment-methods", permission: PERMISSIONS.MANAGE_PAYMENTS },
       ],
     },
   ];
@@ -174,7 +168,7 @@ export default function AdminLayoutClient({
   useEffect(() => {
     const segments = pathname.split("/");
     const subPage = segments[3];
-    const isAllowedPincodes = pathname === "/admin/orders/allowed-pincodes";
+    const isAllowedPincodes = pathname === "/admin/staff/allowed-pincodes";
     const isOrderDetail = pathname.startsWith("/admin/orders/") && segments[2] === "orders" && subPage && subPage !== "allowed-pincodes";
     const orderId = isOrderDetail ? subPage : null;
 
@@ -182,6 +176,10 @@ export default function AdminLayoutClient({
       setHeaderTitle("Allowed Pincodes");
     } else if (pathname === "/admin/staff") {
       setHeaderTitle("Admins List");
+    } else if (pathname === "/admin/staff/enquiries") {
+      setHeaderTitle("Product Enquiries");
+    } else if (pathname === "/admin/staff/payment-methods" || pathname.includes("/admin/staff/payment-methods/")) {
+      setHeaderTitle("Payment Methods");
     } else if (orderId) {
       setHeaderTitle(null);
       getOrderById(orderId).then((order) => {
