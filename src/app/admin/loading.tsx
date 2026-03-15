@@ -16,7 +16,8 @@ import {
     AdminPermissionsShimmer,
     AdminPincodesShimmer,
     AdminOrdersListShimmer,
-    AdminProductsListShimmer
+    AdminProductsListShimmer,
+    AdminLogsShimmer
 } from "@/components/Shimmer";
 
 export default function AdminLoading() {
@@ -65,6 +66,9 @@ export default function AdminLoading() {
     }
     if (pathname === "/admin/staff/enquiries") {
         return <AdminTabbedTableShimmer />;
+    }
+    if (pathname === "/admin/staff/logs") {
+        return <AdminLogsShimmer />;
     }
 
     // Order Detail Page (e.g. /admin/orders/[id])

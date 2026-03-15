@@ -49,8 +49,6 @@ export default function AdminLogin() {
             });
             const data = await res.json();
             if (res.ok) {
-                localStorage.setItem("admin_auth", "true");
-                localStorage.setItem("admin_user", JSON.stringify(data.admin));
                 showToast("Login successful!", "success");
                 setTimeout(() => router.push("/admin"), 500);
             } else {

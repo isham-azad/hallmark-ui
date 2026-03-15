@@ -12,6 +12,7 @@ interface OrderItemType {
     sku: string | null;
     qty: number;
     price: string;
+    image?: string | null;
 }
 
 interface OrderType {
@@ -137,8 +138,16 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                             <tr key={item.id}>
                                 <td className="td-product">
                                     <div className="product-info">
-                                        <div className="product-name">{item.name}</div>
-                                        <div className="product-sku mobile-only-sku">{item.sku || "—"}</div>
+                                        <div className="invoice-product-thumb">
+                                            <img 
+                                                src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} 
+                                                alt={item.name} 
+                                            />
+                                        </div>
+                                        <div className="product-details">
+                                            <div className="product-name">{item.name}</div>
+                                            <div className="product-sku mobile-only-sku">{item.sku || "—"}</div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td className="td-sku">{item.sku || "—"}</td>
@@ -204,6 +213,10 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                 .td-qty { text-align: right; font-weight: 700; color: #0f172a; width: 60px; }
                 .td-price { text-align: right; font-weight: 600; color: #0f172a; width: 100px; }
                 
+                .product-info { display: flex; align-items: center; gap: 1rem; }
+                .invoice-product-thumb { width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid #f1f5f9; background: #f8fafc; flex-shrink: 0; }
+                .invoice-product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+                
                 .invoice-summary { margin-top: 1rem; border-top: 2px solid #0f172a; padding-top: 1.5rem; }
                 .invoice-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; }
                 .invoice-summary-row.total { padding-top: 1rem; border-top: 1px dashed #e2e8f0; margin-top: 0.5rem; }
@@ -217,6 +230,7 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                     .invoice-page { padding: 0 !important; max-width: none !important; margin: 0 !important; width: 100% !important; }
                     .invoice-paper { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
                     .invoice-actions { display: none !important; }
+                    .invoice-product-thumb { width: 40px !important; height: 40px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 }
 
                 @media (max-width: 768px) {
@@ -244,6 +258,7 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                     .mobile-only-sku { display: block; }
                     .td-qty { width: 40px; }
                     .td-price { width: 80px; }
+                    .invoice-product-thumb { width: 36px; height: 36px; }
                     
                     .invoice-summary { padding-top: 1rem; }
                     .summary-value { font-size: 1.35rem; color: #0f172a; }

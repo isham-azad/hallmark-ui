@@ -22,6 +22,7 @@ interface Product {
     categoryId: string;
     sku: string | null;
     stock: number;
+    howToUse: string;
 }
 
 interface ProductEditClientProps {
@@ -49,6 +50,7 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         stock: product.stock.toString(),
         brandId: product.brandId,
         categoryId: product.categoryId,
+        howToUse: product.howToUse || "",
     });
     const [existingImageUrls, setExistingImageUrls] = useState<string[]>(initialExisting);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -92,6 +94,7 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         form.set("desc", formData.desc);
         form.set("brandId", formData.brandId);
         form.set("categoryId", formData.categoryId);
+        form.set("howToUse", formData.howToUse);
         form.set("price", formData.price);
         form.set("wasPrice", formData.wasPrice);
         form.set("sku", formData.sku);
@@ -150,6 +153,15 @@ export default function ProductEditClient({ product, brands, categories }: Produ
                                 value={formData.desc}
                                 onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
                                 required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>How to Use</label>
+                            <textarea
+                                rows={4}
+                                placeholder="Instructions on how to use the product..."
+                                value={formData.howToUse}
+                                onChange={(e) => setFormData({ ...formData, howToUse: e.target.value })}
                             />
                         </div>
                     </div>

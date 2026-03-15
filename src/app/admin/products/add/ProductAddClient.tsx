@@ -29,6 +29,7 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
         stock: "0",
         brandId: brands[0]?.id ?? "",
         categoryId: categories[0]?.id ?? "",
+        howToUse: "",
     });
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -64,6 +65,7 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
         form.set("desc", formData.desc);
         form.set("brandId", formData.brandId);
         form.set("categoryId", formData.categoryId);
+        form.set("howToUse", formData.howToUse);
         form.set("price", formData.price);
         form.set("sku", formData.sku);
         form.set("stock", formData.stock);
@@ -122,6 +124,15 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
                                 value={formData.desc}
                                 onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
                                 required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>How to Use</label>
+                            <textarea
+                                rows={4}
+                                placeholder="Instructions on how to use the product..."
+                                value={formData.howToUse}
+                                onChange={(e) => setFormData({ ...formData, howToUse: e.target.value })}
                             />
                         </div>
                     </div>

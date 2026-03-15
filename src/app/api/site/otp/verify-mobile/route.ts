@@ -21,7 +21,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No OTP found for this number" }, { status: 401 });
         }
 
+        const attempts = verificationData.attempts || 0;
+        if (attempts >= 5) {
+            return NextResponse.json({ error: "Too many failed attempts. Please request a new OTP." }, { status: 401 });
+        }
+
         if (verificationData.otp !== otp) {
+            await db.collection("phoneVerifications").doc(phone).update({
+                attempts: attempts + 1
+            });
             return NextResponse.json({ error: "Invalid OTP" }, { status: 401 });
         }
 

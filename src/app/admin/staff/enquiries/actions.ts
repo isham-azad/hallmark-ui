@@ -2,6 +2,9 @@
 
 import db from "@/lib/firebase";
 import { revalidatePath } from "next/cache";
+import { getAdminSession, logAction } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
 export interface Enquiry {
     id: string;
@@ -28,6 +31,17 @@ function toISO(val: unknown): string {
 
 export async function getEnquiries(): Promise<Enquiry[]> {
     try {
+        const session = await getAdminSession();
+        if (!session) return [];
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ENQUIRIES)) {
+            return [];
+        }
+
         const snapshot = await db.collection("enquiries").orderBy("createdAt", "desc").get();
         return snapshot.docs.map((doc: any) => {
             const data = doc.data();
@@ -50,10 +64,24 @@ export async function getEnquiries(): Promise<Enquiry[]> {
 
 export async function updateEnquiryStatus(id: string, status: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ENQUIRIES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("enquiries").doc(id).update({ 
             status,
             updatedAt: new Date()
         });
+
+        await logAction(session.email, session.name, "UPDATE_ENQUIRY_STATUS", { enquiryId: id, status });
+
         revalidatePath("/admin/staff/enquiries");
         return { success: true };
     } catch (error) {
@@ -64,7 +92,21 @@ export async function updateEnquiryStatus(id: string, status: string) {
 
 export async function deleteEnquiry(id: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ENQUIRIES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("enquiries").doc(id).delete();
+
+        await logAction(session.email, session.name, "DELETE_ENQUIRY", { enquiryId: id });
+
         revalidatePath("/admin/staff/enquiries");
         return { success: true };
     } catch (error) {
