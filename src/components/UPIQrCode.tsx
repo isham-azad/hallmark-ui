@@ -21,7 +21,7 @@ export default function UPIQrCode({ amount, orderNo, size = 200, showHeading = t
     const [dataUrl, setDataUrl] = useState<string | null>(null);
     const [error, setError] = useState(false);
 
-    const upiLink = buildUpiLink(amount);
+    const upiLink = buildUpiLink(amount, orderNo);
 
     useEffect(() => {
         if (!upiLink || amount <= 0) {
@@ -33,7 +33,7 @@ export default function UPIQrCode({ amount, orderNo, size = 200, showHeading = t
         QRCode.toDataURL(upiLink, { width: size, margin: 2 })
             .then(setDataUrl)
             .catch(() => setDataUrl(null));
-    }, [upiLink, amount, size]);
+    }, [upiLink, amount, size, orderNo]);
 
     if (!process.env.NEXT_PUBLIC_UPI_ID) {
         return (
