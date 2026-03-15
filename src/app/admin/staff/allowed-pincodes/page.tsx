@@ -1,4 +1,4 @@
-import { getAllowedPincodes } from "../actions";
+import { getAllowedPincodes } from "@/app/admin/orders/actions";
 import AllowedPincodesClient from "./AllowedPincodesClient";
 
 export const dynamic = "force-dynamic";

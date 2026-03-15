@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addAllowedPincode, removeAllowedPincode } from "../actions";
+import { addAllowedPincode, removeAllowedPincode } from "@/app/admin/orders/actions";
 import { useAdminToast } from "@/components/AdminToast";
 
 interface AllowedPincodesClientProps {

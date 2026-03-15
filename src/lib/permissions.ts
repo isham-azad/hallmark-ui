@@ -21,6 +21,7 @@ export const PERMISSIONS = {
     VIEW_REPORTS: "view_reports",
     EXPORT_REPORTS: "export_reports",
     VIEW_OTP_VERIFICATIONS: "view_otp_verifications",
+    MANAGE_ENQUIRIES: "manage_enquiries",
 } as const;
 
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
