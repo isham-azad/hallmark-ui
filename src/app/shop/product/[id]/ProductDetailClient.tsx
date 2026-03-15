@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { ShopProductDetailShimmer } from "@/components/Shimmer";
@@ -31,6 +31,7 @@ interface Category {
 
 export default function ProductDetailClient() {
     const { id } = useParams();
+    const router = useRouter();
     const { addToCart } = useCart();
     const [product, setProduct] = useState<SiteProduct | null>(null);
 
@@ -139,6 +140,11 @@ export default function ProductDetailClient() {
         price: priceNum,
         image: imageUrl,
         category: categoryName,
+    };
+
+    const handleBuyNow = () => {
+        addToCart(cartProduct, quantity, selectedPack, false);
+        router.push("/checkout");
     };
 
     return (
@@ -313,9 +319,12 @@ export default function ProductDetailClient() {
                                     >
                                         <i className="bi bi-cart-plus me-2"></i>Add to Cart
                                     </button>
-                                    <Link href="/checkout" className="btn btn-outline-primary btn-lg w-100 mb-3 text-center d-block">
+                                    <button 
+                                        onClick={handleBuyNow}
+                                        className="btn btn-outline-primary btn-lg w-100 mb-3 text-center d-block"
+                                    >
                                         <i className="bi bi-bag-check me-2"></i>Buy Now
-                                    </Link>
+                                    </button>
                                 </div>
 
                                 <div className="pincode-checker mt-4 pt-4 border-top">
