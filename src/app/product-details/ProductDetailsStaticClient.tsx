@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
 const relatedProducts = [
@@ -49,11 +50,17 @@ const mainProduct = {
 };
 
 export default function ProductDetailsStaticClient() {
+    const router = useRouter();
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedPack, setSelectedPack] = useState("500ml");
     const [pincode, setPincode] = useState("");
     const [pincodeStatus, setPincodeStatus] = useState<"none" | "available" | "unavailable" | "checking">("none");
+
+    const handleBuyNow = () => {
+        addToCart(mainProduct, quantity, selectedPack, false);
+        router.push("/checkout");
+    };
 
     const checkPincode = async () => {
         const normalized = pincode.trim().replace(/\D/g, "");
@@ -257,9 +264,12 @@ export default function ProductDetailsStaticClient() {
                                     >
                                         <i className="bi bi-cart-plus me-2"></i>Add to Cart
                                     </button>
-                                    <Link href="/checkout" className="btn btn-outline-primary btn-lg w-100 mb-3 text-center">
+                                    <button 
+                                        onClick={handleBuyNow}
+                                        className="btn btn-outline-primary btn-lg w-100 mb-3 text-center"
+                                    >
                                         <i className="bi bi-bag-check me-2"></i>Buy Now
-                                    </Link>
+                                    </button>
                                 </div>
 
                                 {/* Pincode Checker */}
