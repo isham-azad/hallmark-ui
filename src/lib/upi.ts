@@ -11,10 +11,16 @@ export function parseOrderTotal(totalStr: string | undefined): number {
  * Build UPI deep link for payment.
  * Uses NEXT_PUBLIC_UPI_ID and NEXT_PUBLIC_UPI_BUSINESS_NAME from env.
  */
-export function buildUpiLink(amount: number): string | null {
+export function buildUpiLink(amount: number, orderNo?: string): string | null {
     const pa = process.env.NEXT_PUBLIC_UPI_ID?.trim();
     const pn = process.env.NEXT_PUBLIC_UPI_BUSINESS_NAME?.trim() || "Merchant";
     if (!pa) return null;
     const am = amount > 0 ? amount.toFixed(2) : "0";
-    return `upi://pay?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR`;
+    // Normalize order number (strip leading # for the reference ID)
+    const ref = orderNo ? orderNo.replace(/^#/, "").trim() : "";
+    const note = ref ? `Order ${ref}` : "Payment";
+    let link = `upi://pay?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR`;
+    link += `&tn=${encodeURIComponent(note)}`; // transaction note shown in UPI app
+    if (ref) link += `&tr=${encodeURIComponent(ref)}`; // transaction reference ID
+    return link;
 }
