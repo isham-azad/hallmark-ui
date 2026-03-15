@@ -11,7 +11,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         <div className="product-card service-item position-relative d-flex flex-column h-100" style={{ padding: '0', overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--default-color), transparent 90%)', borderRadius: '15px', transition: 'all 0.4s ease', backgroundColor: 'var(--surface-color)', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
             <Link href={`/product/${product.id}`} className="product-card-img" style={{ overflow: 'hidden', position: 'relative', display: 'block' }}>
                 <img
-                    src={product.image ? product.image.split(',').filter(Boolean)[0] : `/assets/img/masonry-portfolio/masonry-portfolio-${(index % 9) + 1}.jpg`}
+                    src={product.image ? product.image.split(',').filter(Boolean)[0] : "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
                     alt={product.title}
                     className="img-fluid"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}

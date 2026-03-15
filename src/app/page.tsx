@@ -59,7 +59,7 @@ export default function Home() {
   const [currentFeature, setCurrentFeature] = useState(0);
   const [products, setProducts] = useState<SiteProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
-  const featureImages = ["/assets/img/value.png", "/assets/img/satisfaction.png", "/assets/img/happiness.png"];
+  const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
 
   useEffect(() => {
     fetch("/api/site/products")
@@ -80,7 +80,7 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section id="hero" className="hero section dark-background">
-        <img src="/assets/img/hero-bg-2.png" alt="" className="img-fluid" data-aos="fade-in" />
+        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566373/hallmark/assets/img/hero-bg-2.png" alt="" className="img-fluid" data-aos="fade-in" />
         <div className="container">
           <div className="row justify-content-center text-center" data-aos="fade-up" data-aos-delay="100">
             <div className="col-xl-6 col-lg-8">
@@ -140,7 +140,7 @@ export default function Home() {
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4">
             <div className="col-lg-6 order-1 order-lg-2">
-              <img src="/assets/img/about.jpg" className="img-fluid" alt="" />
+              <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg" className="img-fluid" alt="" />
             </div>
             <div className="col-lg-6 order-2 order-lg-1 content">
               <h3>Hallmark Enterprises</h3>
@@ -205,8 +205,17 @@ export default function Home() {
               `}
             </script>
             <div className="swiper-wrapper align-items-center">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <div key={i} className="swiper-slide"><img src={`/assets/img/clients/client-${i}.png`} className="img-fluid" alt="" /></div>
+              {[
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566353/hallmark/assets/img/clients/client-1.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566354/hallmark/assets/img/clients/client-2.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566355/hallmark/assets/img/clients/client-3.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566356/hallmark/assets/img/clients/client-4.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566357/hallmark/assets/img/clients/client-5.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566358/hallmark/assets/img/clients/client-6.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566359/hallmark/assets/img/clients/client-7.png",
+                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566360/hallmark/assets/img/clients/client-8.png",
+              ].map((src, i) => (
+                <div key={i} className="swiper-slide"><img src={src} className="img-fluid" alt="" /></div>
               ))}
             </div>
             <div className="swiper-pagination"></div>
@@ -353,7 +362,7 @@ export default function Home() {
 
       {/* Call To Action Section */}
       <section id="call-to-action" className="call-to-action section dark-background">
-        <img src="/assets/img/cta-bg.jpg" alt="" className="img-fluid" />
+        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566361/hallmark/assets/img/cta-bg.jpg" alt="" className="img-fluid" />
         <div className="container">
           <div className="row justify-content-center" data-aos="zoom-in" data-aos-delay="100">
             <div className="col-xl-10">
@@ -372,7 +381,7 @@ export default function Home() {
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4 align-items-center justify-content-between">
             <div className="col-lg-5">
-              <img src="/assets/img/stats-img.jpg" alt="" className="img-fluid" />
+              <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566392/hallmark/assets/img/stats-img.jpg" alt="" className="img-fluid" />
             </div>
             <div className="col-lg-6">
               <h3 className="fw-bold fs-2 mb-3">Trusted by homes across India &amp; the Gulf</h3>
@@ -404,7 +413,7 @@ export default function Home() {
 
       {/* Testimonials Section */}
       <section id="testimonials" className="testimonials section dark-background">
-        <img src="/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
+        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566402/hallmark/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="swiper init-swiper">
             <script type="application/json" className="swiper-config">
@@ -459,7 +468,13 @@ export default function Home() {
               ].map((t, i) => (
                 <div key={i} className="swiper-slide">
                   <div className="testimonial-item">
-                    <img src={`/assets/img/testimonials/testimonials-${t.img}.jpg`} className="testimonial-img" alt="" />
+                    <img src={[
+                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566396/hallmark/assets/img/testimonials/testimonials-1.jpg",
+                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566397/hallmark/assets/img/testimonials/testimonials-2.jpg",
+                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566398/hallmark/assets/img/testimonials/testimonials-3.jpg",
+                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566399/hallmark/assets/img/testimonials/testimonials-4.jpg",
+                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566401/hallmark/assets/img/testimonials/testimonials-5.jpg",
+                    ][t.img - 1]} className="testimonial-img" alt="" />
                     <h3>{t.name}</h3>
                     <h4>{t.role}</h4>
                     <div className="stars">

@@ -69,7 +69,7 @@ export default function AdminLogin() {
             {ToastComponent}
             <div className="login-card">
                 <div className="login-header">
-                    <img src="/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
+                    <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
                     <p>{step === 1 ? "Enter your email to receive OTP" : "Enter the 6-digit code sent to your email"}</p>
                 </div>
 

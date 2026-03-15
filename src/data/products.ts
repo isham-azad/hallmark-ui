@@ -23,24 +23,24 @@ export interface Category {
 }
 
 export const brands: Brand[] = [
-    { id: "soph", name: "Soph", summary: "Soph offers a range of high-quality home care and fabric care products designed for effective cleaning and long-lasting freshness.", image: "/assets/img/clients/client-1.png" },
-    { id: "emitol", name: "Emitol", summary: "Emitol specializes in powerful cleaning liquids that ensure a germ-free environment for your home.", image: "/assets/img/clients/client-2.png" },
-    { id: "fabritt", name: "Fabritt", summary: "Fabritt provides premium fabric softeners that leave your clothes silky smooth and delicately scented.", image: "/assets/img/clients/client-3.png" },
-    { id: "foline", name: "Foline", summary: "Foline is your go-to brand for versatile multipurpose cleaners and essential bleaching products.", image: "/assets/img/clients/client-4.png" },
-    { id: "pdm-maharaja", name: "PDM Maharaja", summary: "PDM Maharaja brings you the finest selection of handpicked spices and dry fruits, preserving authentic flavors.", image: "/assets/img/clients/client-5.png" },
-    { id: "vita-rich", name: "Vita Rich", summary: "Vita Rich offers a nutritious range of pulses, masala items, and daily staples for a healthy lifestyle.", image: "/assets/img/clients/client-6.png" },
-    { id: "river-hill-tea", name: "River Hill Tea", summary: "River Hill Tea delivers a rich and bold flavor, making every cup a refreshing experience.", image: "/assets/img/clients/client-7.png" },
-    { id: "desam", name: "Desam / ദേശം", summary: "Desam provides pure lamp oils and ritual essentials for your spiritual journey.", image: "/assets/img/clients/client-8.png" },
+    { id: "soph", name: "Soph", summary: "Soph offers a range of high-quality home care and fabric care products designed for effective cleaning and long-lasting freshness.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566353/hallmark/assets/img/clients/client-1.png" },
+    { id: "emitol", name: "Emitol", summary: "Emitol specializes in powerful cleaning liquids that ensure a germ-free environment for your home.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566354/hallmark/assets/img/clients/client-2.png" },
+    { id: "fabritt", name: "Fabritt", summary: "Fabritt provides premium fabric softeners that leave your clothes silky smooth and delicately scented.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566355/hallmark/assets/img/clients/client-3.png" },
+    { id: "foline", name: "Foline", summary: "Foline is your go-to brand for versatile multipurpose cleaners and essential bleaching products.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566356/hallmark/assets/img/clients/client-4.png" },
+    { id: "pdm-maharaja", name: "PDM Maharaja", summary: "PDM Maharaja brings you the finest selection of handpicked spices and dry fruits, preserving authentic flavors.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566357/hallmark/assets/img/clients/client-5.png" },
+    { id: "vita-rich", name: "Vita Rich", summary: "Vita Rich offers a nutritious range of pulses, masala items, and daily staples for a healthy lifestyle.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566358/hallmark/assets/img/clients/client-6.png" },
+    { id: "river-hill-tea", name: "River Hill Tea", summary: "River Hill Tea delivers a rich and bold flavor, making every cup a refreshing experience.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566359/hallmark/assets/img/clients/client-7.png" },
+    { id: "desam", name: "Desam / ദേശം", summary: "Desam provides pure lamp oils and ritual essentials for your spiritual journey.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566360/hallmark/assets/img/clients/client-8.png" },
 ];
 
 export const categories: Category[] = [
-    { id: "home-care", name: "Home Care", summary: "Essential products for a clean and happy home.", image: "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg" },
-    { id: "fabric-care", name: "Fabric Care", summary: "Gentle yet powerful care for all your favorite garments.", image: "/assets/img/masonry-portfolio/masonry-portfolio-2.jpg" },
-    { id: "personal-care", name: "Personal Care", summary: "Refined products for your daily hygiene and well-being.", image: "/assets/img/masonry-portfolio/masonry-portfolio-3.jpg" },
-    { id: "cleaning-liquids", name: "Cleaning Liquids", summary: "Specialized formulas for sparkling surfaces and deep cleaning.", image: "/assets/img/masonry-portfolio/masonry-portfolio-4.jpg" },
-    { id: "fancy-supplies", name: "Fancy Supplies", summary: "A curated selection of high-quality essential supplies.", image: "/assets/img/masonry-portfolio/masonry-portfolio-5.jpg" },
-    { id: "food-beverages", name: "Food & Beverages", summary: "Authentic tastes and healthy ingredients for your kitchen.", image: "/assets/img/masonry-portfolio/masonry-portfolio-6.jpg" },
-    { id: "ritual-essentials", name: "Ritual Essentials", summary: "Purity and devotion in every product for your daily rituals.", image: "/assets/img/masonry-portfolio/masonry-portfolio-7.jpg" },
+    { id: "home-care", name: "Home Care", summary: "Essential products for a clean and happy home.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg" },
+    { id: "fabric-care", name: "Fabric Care", summary: "Gentle yet powerful care for all your favorite garments.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566377/hallmark/assets/img/masonry-portfolio/masonry-portfolio-2.jpg" },
+    { id: "personal-care", name: "Personal Care", summary: "Refined products for your daily hygiene and well-being.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566379/hallmark/assets/img/masonry-portfolio/masonry-portfolio-3.jpg" },
+    { id: "cleaning-liquids", name: "Cleaning Liquids", summary: "Specialized formulas for sparkling surfaces and deep cleaning.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566380/hallmark/assets/img/masonry-portfolio/masonry-portfolio-4.jpg" },
+    { id: "fancy-supplies", name: "Fancy Supplies", summary: "A curated selection of high-quality essential supplies.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566381/hallmark/assets/img/masonry-portfolio/masonry-portfolio-5.jpg" },
+    { id: "food-beverages", name: "Food & Beverages", summary: "Authentic tastes and healthy ingredients for your kitchen.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566382/hallmark/assets/img/masonry-portfolio/masonry-portfolio-6.jpg" },
+    { id: "ritual-essentials", name: "Ritual Essentials", summary: "Purity and devotion in every product for your daily rituals.", image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566383/hallmark/assets/img/masonry-portfolio/masonry-portfolio-7.jpg" },
 ];
 
 export const products: Product[] = [

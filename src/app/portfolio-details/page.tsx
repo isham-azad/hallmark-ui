@@ -33,7 +33,7 @@ export default function PortfolioDetailsPage() {
                             <div className="portfolio-details-slider swiper init-swiper">
                                 <div className="swiper-wrapper align-items-center">
                                     <div className="swiper-slide">
-                                        <img src="/assets/img/portfolio/app-1.jpg" alt="" className="img-fluid rounded" />
+                                        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566386/hallmark/assets/img/portfolio/app-1.jpg" alt="" className="img-fluid rounded" />
                                     </div>
                                 </div>
                                 <div className="swiper-pagination"></div>
