@@ -87,6 +87,7 @@ export default function AdminLayoutClient({
         { name: "Roles", href: "/admin/staff/roles", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "Permissions", href: "/admin/staff/permissions", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "OTP Verifications", href: "/admin/otp-verifications", permission: PERMISSIONS.VIEW_OTP_VERIFICATIONS },
+        { name: "Activity Logs", href: "/admin/staff/logs", permission: PERMISSIONS.VIEW_LOGS },
       ],
     },
   ];
@@ -118,46 +119,48 @@ export default function AdminLayoutClient({
   };
 
   useEffect(() => {
-    const auth = localStorage.getItem("admin_auth");
-    const userStr = localStorage.getItem("admin_user");
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/admin/me");
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(true);
+          setAdminUser(data.user);
 
-    if (!auth && pathname !== "/admin/login") {
-      router.push("/admin/login");
-    } else if (auth) {
-      setIsAuthenticated(true);
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          setAdminUser(user);
           // Fetch dynamic permissions map
-          getRolePermissionsMap().then(map => {
-            setRolePermissions(map);
+          const map = await getRolePermissionsMap();
+          setRolePermissions(map);
 
-            // If on root dashboard or unauthorized page, check for redirect
-            if (pathname === "/admin") {
-              const isSuperAdmin = user.role === "Super Admin" || user.role === "super_admin";
-              const userPermissions = map[user.role] || [];
-              const hasDashboard = isSuperAdmin || userPermissions.includes(PERMISSIONS.VIEW_DASHBOARD);
+          // Redirect logic if on root dashboard
+          if (pathname === "/admin") {
+            const isSuperAdmin = data.user.role === "Super Admin" || data.user.role === "super_admin";
+            const userPermissions = map[data.user.role] || [];
+            const hasDashboard = isSuperAdmin || userPermissions.includes(PERMISSIONS.VIEW_DASHBOARD);
 
-              if (!hasDashboard) {
-                const authorizedItems = getFilteredItemsForUser(user.role, map);
-                const firstItem = authorizedItems[0];
-
-                if (firstItem) {
-                  const targetHref = firstItem.href !== "#" ? firstItem.href : firstItem.subItems?.[0]?.href;
-                  if (targetHref && targetHref !== "/admin") {
-                    router.replace(targetHref);
-                  }
+            if (!hasDashboard) {
+              const authorizedItems = getFilteredItemsForUser(data.user.role, map);
+              const firstItem = authorizedItems[0];
+              if (firstItem) {
+                const targetHref = firstItem.href !== "#" ? firstItem.href : firstItem.subItems?.[0]?.href;
+                if (targetHref && targetHref !== "/admin") {
+                  router.replace(targetHref);
                 }
               }
             }
-          });
-        } catch (e) {
-          console.error("Failed to parse admin user", e);
+          }
+        } else {
+          if (pathname !== "/admin/login") {
+            router.push("/admin/login");
+          }
         }
+      } catch (e) {
+        console.error("Auth check failed", e);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    checkAuth();
   }, [pathname, router]);
 
   // Close mobile menu on route change
@@ -180,6 +183,8 @@ export default function AdminLayoutClient({
       setHeaderTitle("Product Enquiries");
     } else if (pathname === "/admin/staff/payment-methods" || pathname.includes("/admin/staff/payment-methods/")) {
       setHeaderTitle("Payment Methods");
+    } else if (pathname === "/admin/staff/logs") {
+      setHeaderTitle("Activity Logs");
     } else if (orderId) {
       setHeaderTitle(null);
       getOrderById(orderId).then((order) => {
@@ -314,8 +319,12 @@ export default function AdminLayoutClient({
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={() => {
-            localStorage.removeItem("admin_auth");
+          <button className="logout-btn" onClick={async () => {
+            await fetch("/api/admin/logout", { method: "POST" });
+            localStorage.removeItem("admin_auth"); // Cleanup old legacy storage
+            localStorage.removeItem("admin_user");
+            setIsAuthenticated(false);
+            setAdminUser(null);
             router.push("/admin/login");
           }}>
             <i className="bi bi-box-arrow-right"></i>

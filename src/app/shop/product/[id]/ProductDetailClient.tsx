@@ -17,6 +17,7 @@ interface SiteProduct {
     wasPrice?: string;
     categoryName?: string;
     brandName?: string;
+    howToUse?: string;
 }
 
 interface Brand {
@@ -243,9 +244,11 @@ export default function ProductDetailClient() {
                                     <li className="nav-item" role="presentation">
                                         <button className="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">Product Details</button>
                                     </li>
-                                    <li className="nav-item" role="presentation">
-                                        <button className="nav-link" id="howto-tab" data-bs-toggle="tab" data-bs-target="#howto" type="button" role="tab">How to Use</button>
-                                    </li>
+                                    {product.howToUse && (
+                                        <li className="nav-item" role="presentation">
+                                            <button className="nav-link" id="howto-tab" data-bs-toggle="tab" data-bs-target="#howto" type="button" role="tab">How to Use</button>
+                                        </li>
+                                    )}
                                 </ul>
                                 <div className="tab-content border border-top-0 p-4 rounded-bottom" id="productTabContent">
                                     <div className="tab-pane fade show active" id="description" role="tabpanel">
@@ -260,9 +263,11 @@ export default function ProductDetailClient() {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="tab-pane fade" id="howto" role="tabpanel">
-                                        <p>Use as directed on the pack. For best results, follow the instructions specific to the product type. Contact us for detailed usage guidance.</p>
-                                    </div>
+                                    {product.howToUse && (
+                                        <div className="tab-pane fade" id="howto" role="tabpanel">
+                                            <div style={{ whiteSpace: 'pre-line' }}>{product.howToUse}</div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

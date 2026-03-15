@@ -15,6 +15,7 @@ interface OrderItemType {
     sku: string | null;
     qty: number;
     price: string;
+    image?: string | null;
 }
 
 interface OrderType {
@@ -127,7 +128,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
 
     const handleOtpChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return;
-        
+
         const newOtp = [...otpValues];
         newOtp[index] = value.substring(value.length - 1);
         setOtpValues(newOtp);
@@ -407,7 +408,17 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                             <tbody>
                                 {order.items.map((item) => (
                                     <tr key={item.id}>
-                                        <td className="item-name">{item.name}</td>
+                                        <td className="item-name">
+                                            <div className="product-info-cell">
+                                                <div className="product-thumb">
+                                                    <img
+                                                        src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
+                                                        alt={item.name}
+                                                    />
+                                                </div>
+                                                <span>{item.name}</span>
+                                            </div>
+                                        </td>
                                         <td className="item-sku">{item.sku || "—"}</td>
                                         <td className="item-qty">{item.qty}</td>
                                         <td className="item-price">{item.price}</td>
@@ -427,8 +438,16 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                             {order.items.map((item) => (
                                 <div key={item.id} className="item-card">
                                     <div className="item-card-header">
-                                        <span className="item-card-name">{item.name}</span>
-                                        <span className="item-card-qty">x{item.qty}</span>
+                                        <div className="item-card-img">
+                                            <img
+                                                src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
+                                                alt={item.name}
+                                            />
+                                        </div>
+                                        <div className="item-card-title-wrap">
+                                            <span className="item-card-name">{item.name}</span>
+                                            <span className="item-card-qty">x{item.qty}</span>
+                                        </div>
                                     </div>
                                     <div className="item-card-body">
                                         <span className="item-card-sku">SKU: {item.sku || "—"}</span>
@@ -554,16 +573,22 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                 .items-total-label { color: #64748b; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; }
                 .items-total-value { color: #0f172a; font-size: 1.125rem; text-align: right; min-width: 6rem; }
                 .item-name { font-weight: 600; color: #0f172a; text-align: left; }
+                .product-info-cell { display: flex; align-items: center; gap: 1rem; }
                 .item-sku { color: #94a3b8; font-size: 0.8125rem; text-align: left; }
                 .item-qty { font-weight: 700; color: #0f172a; text-align: right; }
                 .item-price { font-weight: 600; color: #0f172a; text-align: right; }
+                .product-thumb { width: 44px; height: 44px; border-radius: 8px; overflow: hidden; border: 1px solid #f1f5f9; background: #f8fafc; flex-shrink: 0; }
+                .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
                 /* Mobile Items View (Hidden on Desktop) */
                 .items-cards { display: none; flex-direction: column; gap: 1rem; }
-                .item-card { background: #f8fafc; border-radius: 16px; padding: 1.25rem; border: 1px solid #f1f5f9; }
-                .item-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
-                .item-card-name { font-weight: 700; color: #1e293b; line-height: 1.4; flex: 1; }
-                .item-card-qty { font-weight: 800; color: #ffc451; background: #fff; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.875rem; border: 1px solid #f1f5f9; }
+                .item-card { background: #fff; border-radius: 16px; padding: 1.25rem; border: 1px solid #f1f5f9; }
+                .item-card-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+                .item-card-img { width: 50px; height: 50px; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 1px solid #f1f5f9; }
+                .item-card-img img { width: 100%; height: 100%; object-fit: cover; }
+                .item-card-title-wrap { flex: 1; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+                .item-card-name { font-weight: 700; color: #1e293b; line-height: 1.4; }
+                .item-card-qty { font-weight: 800; color: #ffc451; background: #f8fafc; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; border: 1px solid #e2e8f0; }
                 .item-card-body { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; }
                 .item-card-sku { color: #94a3b8; font-size: 0.75rem; font-family: monospace; }
                 .item-card-price { font-weight: 600; color: #475569; font-size: 0.9375rem; }

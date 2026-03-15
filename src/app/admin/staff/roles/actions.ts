@@ -2,6 +2,9 @@
 
 import db from "@/lib/firebase";
 import { revalidatePath } from "next/cache";
+import { getAdminSession, logAction } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
 export interface RoleData {
     id: string;
@@ -38,11 +41,25 @@ export async function getRoles(): Promise<RoleData[]> {
 
 export async function addRole(name: string, permissionKeys: string[]) {
     try {
-        await db.collection("roles").add({
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ROLES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
+        const docRef = await db.collection("roles").add({
             name,
             permissionKeys,
             createdAt: new Date()
         });
+
+        await logAction(session.email, session.name, "ADD_ROLE", { roleName: name, roleId: docRef.id });
+
         revalidatePath("/admin/staff/roles");
         return { success: true };
     } catch (error) {
@@ -52,11 +69,25 @@ export async function addRole(name: string, permissionKeys: string[]) {
 
 export async function updateRole(id: string, name: string, permissionKeys: string[]) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ROLES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("roles").doc(id).update({
             name,
             permissionKeys,
             updatedAt: new Date()
         });
+
+        await logAction(session.email, session.name, "UPDATE_ROLE", { roleId: id, roleName: name });
+
         revalidatePath("/admin/staff/roles");
         return { success: true };
     } catch (error) {
@@ -66,7 +97,21 @@ export async function updateRole(id: string, name: string, permissionKeys: strin
 
 export async function deleteRole(id: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ROLES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("roles").doc(id).delete();
+
+        await logAction(session.email, session.name, "DELETE_ROLE", { roleId: id });
+
         revalidatePath("/admin/staff/roles");
         return { success: true };
     } catch (error) {

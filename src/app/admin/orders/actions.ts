@@ -3,6 +3,9 @@
 import db from "@/lib/firebase";
 import { sendSmsOtp } from "@/lib/sms";
 import { revalidatePath } from "next/cache";
+import { getAdminSession, logAction } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
 interface OrderItem {
     id: string;
@@ -10,6 +13,7 @@ interface OrderItem {
     sku: string | null;
     qty: number;
     price: string;
+    image?: string | null;
     createdAt: string;
 }
 
@@ -75,6 +79,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
                 sku: (item.sku as string | null) ?? null,
                 qty: item.qty as number,
                 price: item.price as string,
+                image: (item.image as string | null) ?? null,
                 createdAt: toISO(item.createdAt),
             })),
         };
@@ -86,7 +91,21 @@ export async function getOrderById(id: string): Promise<Order | null> {
 
 export async function updateOrderStatus(id: string, status: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ORDERS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("orders").doc(id).update({ status });
+        
+        await logAction(session.email, session.name, "UPDATE_ORDER_STATUS", { orderId: id, status });
+
         revalidatePath("/admin/orders");
         revalidatePath(`/admin/orders/${id}`);
         return { success: true };
@@ -102,11 +121,25 @@ export async function updatePayment(
     paymentStatus: "Pending" | "Paid"
 ) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ORDERS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         await db.collection("orders").doc(id).update({
             payment: paymentMethod,
             paymentMethod,
             paymentStatus,
         });
+
+        await logAction(session.email, session.name, "UPDATE_ORDER_PAYMENT", { orderId: id, paymentMethod, paymentStatus });
+
         revalidatePath("/admin/orders");
         revalidatePath(`/admin/orders/${id}`);
         return { success: true };
@@ -120,6 +153,17 @@ const ALLOWED_PINCODES_DOC = "delivery";
 
 export async function getAllowedPincodes(): Promise<string[]> {
     try {
+        const session = await getAdminSession();
+        if (!session) return [];
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_PINCODES)) {
+            return [];
+        }
+
         const doc = await db.collection("settings").doc(ALLOWED_PINCODES_DOC).get();
         const data = doc.data();
         const list = (data?.allowedPincodes as string[] | undefined) ?? [];
@@ -136,14 +180,29 @@ export async function addAllowedPincode(pincode: string): Promise<{ success: boo
         return { success: false, error: "Pincode must be 6 digits." };
     }
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_PINCODES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         const ref = db.collection("settings").doc(ALLOWED_PINCODES_DOC);
         const doc = await ref.get();
         const current = (doc.data()?.allowedPincodes as string[] | undefined) ?? [];
         if (current.includes(normalized)) {
             return { success: false, error: "This pincode is already in the list." };
         }
+
         await ref.set({ allowedPincodes: [...current, normalized].sort() }, { merge: true });
-        revalidatePath("/admin/orders/allowed-pincodes");
+        
+        await logAction(session.email, session.name, "ADD_PINCODE", { pincode: normalized });
+
+        revalidatePath("/admin/staff/allowed-pincodes");
         return { success: true };
     } catch (error) {
         console.error("Failed to add allowed pincode:", error);
@@ -154,12 +213,27 @@ export async function addAllowedPincode(pincode: string): Promise<{ success: boo
 export async function removeAllowedPincode(pincode: string): Promise<{ success: boolean; error?: string }> {
     const normalized = String(pincode).trim().replace(/\D/g, "");
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_PINCODES)) {
+            return { success: false, error: "Access Denied" };
+        }
+
         const ref = db.collection("settings").doc(ALLOWED_PINCODES_DOC);
         const doc = await ref.get();
         const current = (doc.data()?.allowedPincodes as string[] | undefined) ?? [];
         const next = current.filter((p) => p !== normalized);
+        
         await ref.set({ allowedPincodes: next }, { merge: true });
-        revalidatePath("/admin/orders/allowed-pincodes");
+
+        await logAction(session.email, session.name, "REMOVE_PINCODE", { pincode: normalized });
+
+        revalidatePath("/admin/staff/allowed-pincodes");
         return { success: true };
     } catch (error) {
         console.error("Failed to remove allowed pincode:", error);
@@ -172,13 +246,26 @@ export async function sendOrderDeliveryOtp(orderId: string, emailOrPhone: string
         return { success: false, error: "Customer contact info is required to send OTP." };
     }
     try {
+        const ref = db.collection("orderVerifications").doc(orderId);
+        const doc = await ref.get();
+        const existing = doc.data();
+
+        if (existing) {
+            const lastRequested = existing.updatedAt?.toDate?.() || new Date(0);
+            const secondsSinceLast = (Date.now() - lastRequested.getTime()) / 1000;
+            if (secondsSinceLast < 60) {
+                return { success: false, error: `Please wait ${Math.ceil(60 - secondsSinceLast)} seconds before requesting again.` };
+            }
+        }
+
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        await db.collection("orderVerifications").doc(orderId).set({
+        await ref.set({
             otp,
             otpExpiry,
             updatedAt: new Date(),
+            attempts: 0
         });
 
         console.log(`[DELIVERY OTP] Sending via Fast2SMS to ${emailOrPhone} for order ${orderId}: ${otp}`);
@@ -204,7 +291,19 @@ export async function verifyOrderDeliveryOtp(orderId: string, otp: string) {
         }
         
         const data = doc.data();
-        if (!data || data.otp !== otp) {
+        if (!data) {
+            return { success: false, error: "No pending OTP found for this order." };
+        }
+
+        const attempts = data.attempts || 0;
+        if (attempts >= 5) {
+            return { success: false, error: "Too many failed attempts. Please request a new OTP." };
+        }
+        
+        if (data.otp !== otp) {
+            await ref.update({
+                attempts: attempts + 1
+            });
             return { success: false, error: "Invalid OTP." };
         }
         

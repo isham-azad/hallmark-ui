@@ -16,6 +16,7 @@ interface SiteProduct {
     price?: string;
     categoryName?: string;
     brandName?: string;
+    howToUse?: string;
 }
 
 interface Brand {
@@ -180,6 +181,15 @@ export default function ProductDetailPage() {
                                     {product.desc}
                                 </p>
                             </div>
+                            
+                            {product.howToUse && (
+                                <div className="product-how-to-use mb-5">
+                                    <h5 className="fw-bold mb-3">How to Use</h5>
+                                    <p style={{ whiteSpace: "pre-line", color: "color-mix(in srgb, var(--default-color), transparent 20%)", lineHeight: "1.8" }}>
+                                        {product.howToUse}
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="d-flex gap-3 mb-5">
                                 <button

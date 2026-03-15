@@ -26,12 +26,23 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No mobile number registered for this admin" }, { status: 400 });
         }
 
+        // Rate limiting: 60 seconds between OTP requests
+        const lastRequested = adminData.otpRequestedAt?.toDate?.() || new Date(0);
+        const secondsSinceLast = (Date.now() - lastRequested.getTime()) / 1000;
+        if (secondsSinceLast < 60) {
+            return NextResponse.json({ 
+                error: `Please wait ${Math.ceil(60 - secondsSinceLast)} seconds before requesting again.` 
+            }, { status: 429 });
+        }
+
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         await adminDoc.ref.update({
             otp,
             otpExpiry,
+            otpRequestedAt: new Date(),
+            otpAttempts: 0, // Reset attempts for the new OTP
         });
 
         console.log(`[AUTH] Generating OTP ${otp} for ${email} (${phone})`);

@@ -794,3 +794,39 @@ export function AdminProductsListShimmer() {
         </div>
     );
 }
+
+/** Shimmer for Activity/Audit Logs page */
+export function AdminLogsShimmer() {
+    return (
+        <div className="admin-logs-shimmer">
+            <div className="d-flex justify-content-between align-items-start mb-5">
+                <div>
+                    <ShimmerBox style={{ height: 32, width: 220, marginBottom: 8 }} />
+                    <ShimmerBox style={{ height: 16, width: 400 }} />
+                </div>
+                <ShimmerBox style={{ height: 44, width: 140, borderRadius: 12 }} />
+            </div>
+
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div className="logs-list">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="p-4 border-bottom d-flex gap-3">
+                            <ShimmerBox style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }} />
+                            <div className="flex-grow-1">
+                                <div className="d-flex gap-2 mb-2 align-items-center">
+                                    <ShimmerBox style={{ height: 16, width: 120 }} />
+                                    <ShimmerBox style={{ height: 22, width: 100, borderRadius: 20 }} />
+                                </div>
+                                <ShimmerBox style={{ height: 60, width: '100%', borderRadius: 8, marginBottom: 12, background: '#f8fafc' }} />
+                                <div className="d-flex gap-2">
+                                    <ShimmerBox style={{ height: 12, width: 150 }} />
+                                    <ShimmerBox style={{ height: 12, width: 100 }} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
