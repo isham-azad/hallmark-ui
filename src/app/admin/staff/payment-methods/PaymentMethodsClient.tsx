@@ -100,7 +100,7 @@ export default function PaymentMethodsClient({ initialPaymentMethods }: PaymentM
                 </div>
                 <button
                     className="add-pm-btn"
-                    onClick={() => router.push("/admin/payment-methods/add")}
+                    onClick={() => router.push("/admin/staff/payment-methods/add")}
                     style={{ textDecoration: "none" }}
                 >
                     <i className="bi bi-plus-lg"></i>
@@ -134,7 +134,7 @@ export default function PaymentMethodsClient({ initialPaymentMethods }: PaymentM
                                 <button
                                     className="icon-btn"
                                     title="Edit"
-                                    onClick={() => router.push(`/admin/payment-methods/edit/${pm.id}`)}
+                                    onClick={() => router.push(`/admin/staff/payment-methods/edit/${pm.id}`)}
                                 >
                                     <i className="bi bi-pencil"></i>
                                 </button>

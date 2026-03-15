@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useEnquiry } from "@/context/EnquiryContext";
 import { ProductDetailShimmer } from "@/components/Shimmer";
 
 interface SiteProduct {
@@ -29,6 +30,7 @@ interface Category {
 
 export default function ProductDetailPage() {
     const { id } = useParams();
+    const { openEnquiry } = useEnquiry();
     const [product, setProduct] = useState<SiteProduct | null>(null);
     const [brands, setBrands] = useState<Brand[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -180,13 +182,18 @@ export default function ProductDetailPage() {
                             </div>
 
                             <div className="d-flex gap-3 mb-5">
-                                <Link
-                                    href="/#contact"
-                                    className="btn btn-primary px-5 py-3"
-                                    style={{ borderRadius: "30px", fontWeight: "600" }}
+                                <button
+                                    onClick={() => openEnquiry({
+                                        id: product.id,
+                                        name: product.title,
+                                        category: category?.name ?? product.categoryName ?? product.category,
+                                        image: images[0]
+                                    })}
+                                    className="btn btn-enquiry px-5 py-3 d-flex align-items-center justify-content-center gap-2 shadow"
                                 >
-                                    <i className="bi bi-envelope me-2"></i> Enquire Now
-                                </Link>
+                                    <i className="bi bi-envelope fs-5"></i>
+                                    <span className="fw-bold">Enquire Now</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -210,6 +217,22 @@ export default function ProductDetailPage() {
                 }
                 .thumbnail-item:hover {
                     transform: scale(1.05);
+                }
+                .btn-enquiry {
+                    background-color: #2b71ff;
+                    color: white;
+                    border-radius: 50px;
+                    border: none;
+                    transition: all 0.3s ease;
+                }
+                .btn-enquiry:hover {
+                    background-color: #1a5cd8;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(43, 113, 255, 0.3) !important;
+                    color: white;
+                }
+                .btn-enquiry:active {
+                    transform: translateY(0);
                 }
             `}</style>
         </div>

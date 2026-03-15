@@ -36,7 +36,7 @@ export default function AdminLoading() {
     if (pathname === "/admin/products/prices") {
         return <AdminPricingShimmer />;
     }
-    if (pathname === "/admin/payment-methods") {
+    if (pathname === "/admin/staff/payment-methods") {
         return <AdminPaymentMethodsShimmer />;
     }
     if (pathname === "/admin/otp-verifications") {
@@ -60,8 +60,11 @@ export default function AdminLoading() {
     if (pathname === "/admin/staff/permissions") {
         return <AdminPermissionsShimmer />;
     }
-    if (pathname === "/admin/orders/allowed-pincodes") {
+    if (pathname === "/admin/staff/allowed-pincodes") {
         return <AdminPincodesShimmer />;
+    }
+    if (pathname === "/admin/staff/enquiries") {
+        return <AdminTabbedTableShimmer />;
     }
 
     // Order Detail Page (e.g. /admin/orders/[id])
