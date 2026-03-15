@@ -9,9 +9,9 @@ export default function CartPage() {
     const { cart, removeFromCart, updateQuantity } = useCart();
     const { cartWithDetails, cartTotalFromDb, loading } = useCartWithProducts(cart);
 
-    const shipping = cart.length > 0 ? 50.00 : 0;
+    const shipping = 0;
     const subtotal = loading ? 0 : cartTotalFromDb;
-    const total = subtotal + shipping;
+    const total = subtotal;
 
     return (
         <>
@@ -85,7 +85,11 @@ export default function CartPage() {
                                                 )}
                                                 <div className="row align-items-center">
                                                     <div className="col-3 col-md-2">
-                                                        <img src={item.imageFromDb || item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} alt={item.nameFromDb} className="img-fluid rounded border" />
+                                                        <img 
+                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
+                                                            alt={item.nameFromDb} 
+                                                            className="img-fluid rounded border" 
+                                                        />
                                                     </div>
                                                     <div className="col-9 col-md-4">
                                                         <h5 className="mb-1 fw-bold">{item.nameFromDb}</h5>
@@ -135,10 +139,7 @@ export default function CartPage() {
                                     <span>Subtotal:</span>
                                     <span className="fw-bold">{loading ? "—" : `₹${subtotal.toFixed(2)}`}</span>
                                 </div>
-                                <div className="summary-item d-flex justify-content-between mb-2">
-                                    <span>Shipping:</span>
-                                    <span className="text-muted">₹{shipping.toFixed(2)}</span>
-                                </div>
+
                                 <hr />
                                 <div className="summary-total d-flex justify-content-between mb-4 mt-3">
                                     <span className="h5 fw-bold mb-0">Total:</span>

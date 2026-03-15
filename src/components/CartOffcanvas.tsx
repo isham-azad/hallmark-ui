@@ -68,7 +68,12 @@ export default function CartOffcanvas() {
                             {cartWithDetails.map((item) => (
                                 <div key={`${item.id}-${item.packSize}`} className="cart-item d-flex align-items-center py-3 border-bottom">
                                     <div className="item-img me-3" style={{ width: "70px", height: "70px", flexShrink: 0 }}>
-                                        <img src={item.imageFromDb || item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} alt={item.nameFromDb} className="img-fluid rounded" style={{ objectFit: "cover", width: "100%", height: "100%" }} />
+                                        <img 
+                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
+                                            alt={item.nameFromDb} 
+                                            className="img-fluid rounded" 
+                                            style={{ objectFit: "cover", width: "100%", height: "100%" }} 
+                                        />
                                     </div>
                                     <div className="item-info flex-grow-1">
                                         {!item.available && <span className="badge bg-warning text-dark mb-1">Unavailable</span>}
@@ -113,7 +118,7 @@ export default function CartOffcanvas() {
                         <div className="cart-total d-flex justify-content-between align-items-center mb-4">
                             <span className="h5 mb-0 fw-bold">Grand Total:</span>
                             <span className="h4 mb-0 fw-bold text-primary">
-                                {loading ? "…" : `₹${(cartTotalFromDb + 50).toFixed(2)}`}
+                                {loading ? "…" : `₹${cartTotalFromDb.toFixed(2)}`}
                             </span>
                         </div>
                         <div className="d-grid gap-2">
