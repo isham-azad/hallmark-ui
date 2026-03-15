@@ -82,8 +82,8 @@ export default function CheckoutPage() {
             .finally(() => setPaymentMethodsLoading(false));
     }, []);
 
-    const shipping = cart.length > 0 ? 50.00 : 0;
-    const total = cartTotal + shipping;
+    const shipping = 0;
+    const total = cartTotal;
     const paymentMethodLabel = paymentMethods.find((pm) => pm.id === paymentMethod)?.name ?? paymentMethod;
 
     const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -536,10 +536,7 @@ export default function CheckoutPage() {
                                         <span>Subtotal:</span>
                                         <span className="fw-bold">₹{cartTotal}</span>
                                     </div>
-                                    <div className="summary-item d-flex justify-content-between mb-2">
-                                        <span>Shipping:</span>
-                                        <span className="text-muted">₹{shipping.toFixed(2)}</span>
-                                    </div>
+
                                     <hr />
                                     <div className="summary-total d-flex justify-content-between mb-4">
                                         <span className="h5 fw-bold">Total:</span>
