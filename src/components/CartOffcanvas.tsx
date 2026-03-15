@@ -69,7 +69,7 @@ export default function CartOffcanvas() {
                                 <div key={`${item.id}-${item.packSize}`} className="cart-item d-flex align-items-center py-3 border-bottom">
                                     <div className="item-img me-3" style={{ width: "70px", height: "70px", flexShrink: 0 }}>
                                         <img 
-                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
+                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
                                             alt={item.nameFromDb} 
                                             className="img-fluid rounded" 
                                             style={{ objectFit: "cover", width: "100%", height: "100%" }} 

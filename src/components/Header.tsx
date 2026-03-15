@@ -54,7 +54,7 @@ export default function Header() {
         <header id="header" className={headerClass}>
             <div className="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
                 <Link href="/" className="logo d-flex align-items-center me-auto me-lg-0">
-                    <img src="/assets/img/logo-white.png" alt="HallMark" className="img-fluid" style={{ width: "150px", height: "50px" }} />
+                    <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark" className="img-fluid" style={{ width: "150px", height: "50px" }} />
                 </Link>
 
                 {isShopFlow ? (

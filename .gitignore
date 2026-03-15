@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Static images — now hosted on Cloudinary
+/public/assets/img/
+/public/favicon.png

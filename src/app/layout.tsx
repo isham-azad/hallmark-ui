@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   title: "HallMark Enterprises",
   description: "A Wholesale Distributor & Food Processing Co.",
   icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566812/hallmark/favicon.png",
+    apple: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566812/hallmark/favicon.png",
   },
 };
 

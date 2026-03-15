@@ -264,7 +264,7 @@ export default function AdminLayoutClient({
       <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"} ${isMobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-header">
           <Link href="/admin" className="logo">
-            <img src="/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
+            <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
           </Link>
           <button className="toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             <i className={`bi ${isSidebarOpen ? "bi-chevron-left" : "bi-chevron-right"}`}></i>

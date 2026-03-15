@@ -68,7 +68,7 @@ export default function ProductDetailPage() {
     }
 
 
-    const images = product.image ? product.image.split(',').filter(Boolean) : ["/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
+    const images = product.image ? product.image.split(',').filter(Boolean) : ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
     const category = categories.find((c) => c.id === product.category);
     const brand = brands.find((b) => b.id === product.brand);
 

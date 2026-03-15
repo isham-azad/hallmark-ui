@@ -71,7 +71,7 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                         <p className="invoice-order-no">{order.orderNo}</p>
                     </div>
                     <div className="invoice-logo">
-                        <img src="/assets/img/logo-white.png" alt="Logo" className="invoice-logo-img" />
+                        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="Logo" className="invoice-logo-img" />
                     </div>
                 </header>
 

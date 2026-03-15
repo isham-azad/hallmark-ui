@@ -11,7 +11,7 @@ const relatedProducts = [
         category: "Home Care",
         price: 10,
         oldPrice: 15,
-        image: "/assets/img/masonry-portfolio/masonry-portfolio-2.jpg",
+        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566377/hallmark/assets/img/masonry-portfolio/masonry-portfolio-2.jpg",
     },
     {
         id: 2,
@@ -19,7 +19,7 @@ const relatedProducts = [
         category: "Cleaning Liquids",
         price: 89,
         oldPrice: 109,
-        image: "/assets/img/masonry-portfolio/masonry-portfolio-4.jpg",
+        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566380/hallmark/assets/img/masonry-portfolio/masonry-portfolio-4.jpg",
     },
     {
         id: 3,
@@ -27,7 +27,7 @@ const relatedProducts = [
         category: "Personal Care",
         price: 65,
         oldPrice: 79,
-        image: "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
+        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
     },
     {
         id: 4,
@@ -35,7 +35,7 @@ const relatedProducts = [
         category: "Fabric Care",
         price: 95,
         oldPrice: 115,
-        image: "/assets/img/masonry-portfolio/masonry-portfolio-9.jpg",
+        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566385/hallmark/assets/img/masonry-portfolio/masonry-portfolio-9.jpg",
     },
 ];
 
@@ -45,7 +45,7 @@ const mainProduct = {
     category: "Home Care",
     price: 85,
     oldPrice: 99,
-    image: "/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
+    image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
 };
 
 export default function ProductDetailsPage() {
@@ -121,13 +121,13 @@ export default function ProductDetailsPage() {
                             <div className="product-details-slider swiper init-swiper">
                                 <div className="swiper-wrapper align-items-center">
                                     <div className="swiper-slide">
-                                        <img src="/assets/img/masonry-portfolio/masonry-portfolio-1.jpg" alt="Soph Dishwash Liquid" className="img-fluid" />
+                                        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg" alt="Soph Dishwash Liquid" className="img-fluid" />
                                     </div>
                                     <div className="swiper-slide">
-                                        <img src="/assets/img/masonry-portfolio/masonry-portfolio-2.jpg" alt="Soph Dishwash Liquid – Variant" className="img-fluid" />
+                                        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566377/hallmark/assets/img/masonry-portfolio/masonry-portfolio-2.jpg" alt="Soph Dishwash Liquid – Variant" className="img-fluid" />
                                     </div>
                                     <div className="swiper-slide">
-                                        <img src="/assets/img/masonry-portfolio/masonry-portfolio-3.jpg" alt="Soph Dishwash Liquid – In Use" className="img-fluid" />
+                                        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566379/hallmark/assets/img/masonry-portfolio/masonry-portfolio-3.jpg" alt="Soph Dishwash Liquid – In Use" className="img-fluid" />
                                     </div>
                                 </div>
                                 <div className="swiper-pagination"></div>
