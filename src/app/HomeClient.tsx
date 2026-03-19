@@ -31,6 +31,11 @@ interface SiteTestimonial {
   rating: number;
 }
 
+interface NavCategory {
+  id: string;
+  name: string;
+}
+
 export default function HomeClient() {
   const { addToCart } = useCart();
   const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
@@ -80,6 +85,8 @@ export default function HomeClient() {
   const [brandsLoading, setBrandsLoading] = useState(true);
   const [testimonials, setTestimonials] = useState<SiteTestimonial[]>([]);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
+  const [categories, setCategories] = useState<NavCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
 
   useEffect(() => {
@@ -100,6 +107,12 @@ export default function HomeClient() {
       .then((data) => setTestimonials(data.testimonials ?? []))
       .catch(() => setTestimonials([]))
       .finally(() => setTestimonialsLoading(false));
+
+    fetch("/api/site/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data.categories ?? []))
+      .catch(() => setCategories([]))
+      .finally(() => setCategoriesLoading(false));
   }, []);
 
   useEffect(() => {
@@ -141,8 +154,6 @@ export default function HomeClient() {
     }
   };
 
-  console.log(brands)
-
   return (
     <>
       {/* Hero Section */}
@@ -156,48 +167,20 @@ export default function HomeClient() {
             </div>
           </div>
           <div className="row flex-wrap flex-lg-nowrap justify-content-center mt-5 gx-2 gy-3 hero-icon-grid" data-aos="fade-up" data-aos-delay="200">
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
-              <div className="icon-box">
-                <i className="bi bi-house-door-fill"></i>
-                <h3><a href="">Home Care</a></h3>
+            {categories.map((c) => (
+              <div key={c.id} className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
+                <div className="icon-box">
+                  {c.name === "Home Care" && <i className="bi bi-house-door-fill"></i>}
+                  {c.name === "Fabric Care" && <i className="fa fa-shirt"></i>}
+                  {c.name === "Cleaning Liquids" && <i className="bi bi-droplet-fill"></i>}
+                  {c.name === "Fancy Supplies" && <i className="bi bi-stars"></i>}
+                  {c.name === "Food & Beverages" && <i className="bi bi-cup-straw"></i>}
+                  {c.name === "Personal Care" && <i className="bi bi-person-hearts"></i>}
+                  {c.name === "Ritual Essentials" && <i className="bi bi-sun"></i>}
+                  <h3><a href={`/category/${c.id}`}>{c.name}</a></h3>
+                </div>
               </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="400">
-              <div className="icon-box">
-                <i className="fa fa-shirt"></i>
-                <h3><a href="">Fabric Care</a></h3>
-              </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="500">
-              <div className="icon-box">
-                <i className="bi bi-person-hearts"></i>
-                <h3><a href="">Personal Care</a></h3>
-              </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="600">
-              <div className="icon-box">
-                <i className="bi bi-droplet-fill"></i>
-                <h3><a href="">Cleaning Liquids</a></h3>
-              </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="700">
-              <div className="icon-box">
-                <i className="bi bi-stars"></i>
-                <h3><a href="">Fancy Supplies</a></h3>
-              </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="800">
-              <div className="icon-box">
-                <i className="bi bi-cup-straw"></i>
-                <h3><a href="">Food &amp; Beverages</a></h3>
-              </div>
-            </div>
-            <div className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="900">
-              <div className="icon-box">
-                <i className="bi bi-sun"></i>
-                <h3><a href="">Ritual Essentials</a></h3>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
