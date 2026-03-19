@@ -206,10 +206,10 @@ export function TableShimmer({ rows = 6, cols = 5 }: { rows?: number; cols?: num
                                                 <ShimmerBox style={{ width: 32, height: 32, borderRadius: ci === 0 ? '50%' : 8, flexShrink: 0 }} />
                                             )}
                                             {/* Pattern: Varied widths */}
-                                            <ShimmerBox style={{ 
-                                                height: 14, 
+                                            <ShimmerBox style={{
+                                                height: 14,
                                                 width: ci === 0 ? 40 : (ri % 3 === 0 ? '60%' : (ri % 3 === 1 ? '85%' : '40%')),
-                                                borderRadius: 4 
+                                                borderRadius: 4
                                             }} />
                                         </div>
                                     </td>
@@ -323,7 +323,7 @@ export function AdminGridShimmer({ type = 'brand' }: { type?: 'brand' | 'categor
                 </div>
                 <ShimmerBox style={{ height: 44, width: 180, borderRadius: 12 }} />
             </div>
-            
+
             <div className="mb-4">
                 <ShimmerBox style={{ height: 44, width: 400, borderRadius: 12 }} />
             </div>
@@ -390,7 +390,7 @@ export function OrderDetailShimmer() {
                         </div>
                     ))}
                 </div>
-                
+
                 <div className="mt-5 pt-4 border-top">
                     <ShimmerBox style={{ height: 16, width: 140, marginBottom: 20 }} />
                     <TableShimmer rows={3} cols={4} />
@@ -487,9 +487,9 @@ export function AdminPaymentMethodsShimmer() {
                             <div className="d-flex justify-content-between align-items-start mb-4">
                                 <ShimmerBox style={{ width: 60, height: 60, borderRadius: 12 }} />
                                 <div className="d-flex gap-1">
-                                    <ShimmerBox style={{ width:32, height: 32, borderRadius: 8 }} />
-                                    <ShimmerBox style={{ width:32, height: 32, borderRadius: 8 }} />
-                                    <ShimmerBox style={{ width:32, height: 32, borderRadius: 8 }} />
+                                    <ShimmerBox style={{ width: 32, height: 32, borderRadius: 8 }} />
+                                    <ShimmerBox style={{ width: 32, height: 32, borderRadius: 8 }} />
+                                    <ShimmerBox style={{ width: 32, height: 32, borderRadius: 8 }} />
                                 </div>
                             </div>
                             <ShimmerBox style={{ height: 24, width: '70%', marginBottom: 12 }} />
@@ -515,7 +515,7 @@ export function AdminTabbedTableShimmer() {
                 </div>
                 <ShimmerBox style={{ height: 36, width: 100, borderRadius: 10 }} />
             </div>
-            
+
             <div className="d-flex gap-2 mb-4">
                 {[1, 2, 3, 4].map(i => (
                     <ShimmerBox key={i} style={{ height: 40, width: 120, borderRadius: 10 }} />
@@ -537,7 +537,7 @@ export function AdminCustomersShimmer() {
                     <ShimmerBox style={{ height: 16, width: 300 }} />
                 </div>
             </div>
-            
+
             <div className="table-card border-light shadow-none">
                 <div className="p-4 border-bottom">
                     <ShimmerBox style={{ height: 44, width: 380, borderRadius: 12 }} />
@@ -826,6 +826,17 @@ export function AdminLogsShimmer() {
                         </div>
                     ))}
                 </div>
+            </div>
+        </div>
+    );
+}
+export function CategoryFilterShimmer() {
+    return (
+        <div className="filter-scroll-wrapper">
+            <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
+                {Array.from({ length: 9 }).map((_, i) => (
+                    <ShimmerBox key={i} style={{ height: 44, width: 140, borderRadius: 12, flexShrink: 0 }} />
+                ))}
             </div>
         </div>
     );

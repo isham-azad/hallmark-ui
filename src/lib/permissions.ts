@@ -18,6 +18,7 @@ export const PERMISSIONS = {
     MANAGE_ADMINS: "manage_admins",
     MANAGE_ROLES: "manage_roles",
     MANAGE_PAYMENTS: "manage_payments",
+    MANAGE_TESTIMONIALS: "manage_testimonials",
     VIEW_REPORTS: "view_reports",
     EXPORT_REPORTS: "export_reports",
     VIEW_OTP_VERIFICATIONS: "view_otp_verifications",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import ProductCard from "@/components/ProductCard";
-import { ProductCardShimmer } from "@/components/Shimmer";
+import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
 
 interface SiteProduct {
   id: string;
@@ -16,8 +16,25 @@ interface SiteProduct {
   price?: string;
 }
 
+interface SiteBrand {
+  id: string;
+  name: string;
+  image?: string;
+  summary?: string;
+}
+
+interface SiteTestimonial {
+  id: string;
+  name: string;
+  role: string;
+  quote: string;
+  rating: number;
+}
+
 export default function HomeClient() {
   const { addToCart } = useCart();
+  const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
+
   useEffect(() => {
     // Manually trigger Swiper initialization after component mounts
     // This ensures sliders work even if main.js ran before hydration
@@ -59,6 +76,10 @@ export default function HomeClient() {
   const [currentFeature, setCurrentFeature] = useState(0);
   const [products, setProducts] = useState<SiteProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [brands, setBrands] = useState<SiteBrand[]>([]);
+  const [brandsLoading, setBrandsLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState<SiteTestimonial[]>([]);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
   const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
 
   useEffect(() => {
@@ -67,6 +88,18 @@ export default function HomeClient() {
       .then((data) => setProducts(data.products ?? []))
       .catch(() => setProducts([]))
       .finally(() => setProductsLoading(false));
+
+    fetch("/api/site/brands")
+      .then((res) => res.json())
+      .then((data) => setBrands(data.brands ?? []))
+      .catch(() => setBrands([]))
+      .finally(() => setBrandsLoading(false));
+
+    fetch("/api/site/testimonials")
+      .then((res) => res.json())
+      .then((data) => setTestimonials(data.testimonials ?? []))
+      .catch(() => setTestimonials([]))
+      .finally(() => setTestimonialsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -75,6 +108,40 @@ export default function HomeClient() {
     }, 3000);
     return () => clearInterval(featureInterval);
   }, []);
+
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setContactState({ loading: true, success: false, error: "" });
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      message: formData.get("message") as string,
+    };
+
+    try {
+      const res = await fetch("/api/site/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setContactState({ loading: false, success: true, error: "" });
+        (e.target as HTMLFormElement).reset();
+
+        // Hide success message after 5 seconds
+        setTimeout(() => setContactState(prev => ({ ...prev, success: false })), 5000);
+      } else {
+        setContactState({ loading: false, success: false, error: result.error || "Failed to send message." });
+      }
+    } catch (err) {
+      setContactState({ loading: false, success: false, error: "Something went wrong. Please try again." });
+    }
+  };
+
+  console.log(brands)
 
   return (
     <>
@@ -174,15 +241,12 @@ export default function HomeClient() {
               {
                 "loop": true,
                 "speed": 600,
+                "observer": true,
+                "observeParents": true,
                 "autoplay": {
                   "delay": 5000
                 },
                 "slidesPerView": "auto",
-                "pagination": {
-                  "el": ".swiper-pagination",
-                  "type": "bullets",
-                  "clickable": true
-                },
                 "breakpoints": {
                   "320": {
                     "slidesPerView": 2,
@@ -205,18 +269,29 @@ export default function HomeClient() {
               `}
             </script>
             <div className="swiper-wrapper align-items-center">
-              {[
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566353/hallmark/assets/img/clients/client-1.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566354/hallmark/assets/img/clients/client-2.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566355/hallmark/assets/img/clients/client-3.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566356/hallmark/assets/img/clients/client-4.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566357/hallmark/assets/img/clients/client-5.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566358/hallmark/assets/img/clients/client-6.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566359/hallmark/assets/img/clients/client-7.png",
-                "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566360/hallmark/assets/img/clients/client-8.png",
-              ].map((src, i) => (
-                <div key={i} className="swiper-slide"><img src={src} className="img-fluid" alt="" /></div>
-              ))}
+              {brandsLoading ? (
+                <>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <div key={i} className="swiper-slide d-flex align-items-center justify-content-center">
+                      <ShimmerBox
+                        style={{
+                          width: "120px",
+                          height: "60px",
+                          borderRadius: "12px",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </>
+              ) : brands.length > 0 && (
+                brands.map((brand) => (
+                  <div key={brand.id} className="swiper-slide">
+                    {brand.image && (
+                      <img src={brand.image} className="img-fluid" alt={brand.name} />
+                    )}
+                  </div>
+                ))
+              )}
             </div>
             <div className="swiper-pagination"></div>
           </div>
@@ -281,27 +356,28 @@ export default function HomeClient() {
       </section>
 
       {/* Products Section */}
-      <section id="services" className="services section">
-        <div className="container section-title" data-aos="fade-up">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h2>Our Products</h2>
-              <p>Quality essentials for every home</p>
-            </div>
-            <div className="swiper-nav-buttons d-flex gap-2">
-              <div className="product-swiper-button-prev custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
-                <i className="bi bi-chevron-left" style={{ fontSize: '1.2rem' }}></i>
+      {products.length > 0 && (
+        <section id="services" className="services section">
+          <div className="container section-title" data-aos="fade-up">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h2>Our Products</h2>
+                <p>Quality essentials for every home</p>
               </div>
-              <div className="product-swiper-button-next custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
-                <i className="bi bi-chevron-right" style={{ fontSize: '1.2rem' }}></i>
+              <div className="swiper-nav-buttons d-flex gap-2">
+                <div className="product-swiper-button-prev custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
+                  <i className="bi bi-chevron-left" style={{ fontSize: '1.2rem' }}></i>
+                </div>
+                <div className="product-swiper-button-next custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
+                  <i className="bi bi-chevron-right" style={{ fontSize: '1.2rem' }}></i>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="container" data-aos="fade-up" data-aos-delay="100">
-          <div className="swiper init-swiper">
-            <script type="application/json" className="swiper-config">
-              {`
+          <div className="container" data-aos="fade-up" data-aos-delay="100">
+            <div className="swiper init-swiper">
+              <script type="application/json" className="swiper-config">
+                {`
               {
                 "loop": true,
                 "speed": 600,
@@ -334,31 +410,32 @@ export default function HomeClient() {
                 }
               }
               `}
-            </script>
-            <div className="swiper-wrapper">
-              {products.length === 0 && !productsLoading ? (
-                <div className="swiper-slide">
-                  <p className="text-center py-4 text-muted">No products at the moment.</p>
-                </div>
-              ) : products.length === 0 ? (
-                <>
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="swiper-slide h-auto p-2">
-                      <ProductCardShimmer />
-                    </div>
-                  ))}
-                </>
-              ) : (
-                products.map((product, i) => (
-                  <div key={product.id} className="swiper-slide h-auto p-2">
-                    <ProductCard product={product} index={i} />
+              </script>
+              <div className="swiper-wrapper">
+                {products.length === 0 && !productsLoading ? (
+                  <div className="swiper-slide">
+                    <p className="text-center py-4 text-muted">No products at the moment.</p>
                   </div>
-                ))
-              )}
+                ) : products.length === 0 ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="swiper-slide h-auto p-2">
+                        <ProductCardShimmer />
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  products.map((product, i) => (
+                    <div key={product.id} className="swiper-slide h-auto p-2">
+                      <ProductCard product={product} index={i} />
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Call To Action Section */}
       <section id="call-to-action" className="call-to-action section dark-background">
@@ -412,15 +489,18 @@ export default function HomeClient() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="testimonials section dark-background">
-        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566402/hallmark/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
-        <div className="container" data-aos="fade-up" data-aos-delay="100">
-          <div className="swiper init-swiper">
-            <script type="application/json" className="swiper-config">
-              {`
+      {testimonials.length > 0 && (
+        <section id="testimonials" className="testimonials section dark-background">
+          <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566402/hallmark/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
+          <div className="container" data-aos="fade-up" data-aos-delay="100">
+            <div className="swiper init-swiper">
+              <script type="application/json" className="swiper-config">
+                {`
               {
                 "loop": true,
                 "speed": 600,
+                "observer": true,
+                "observeParents": true,
                 "autoplay": {
                   "delay": 5000
                 },
@@ -432,67 +512,51 @@ export default function HomeClient() {
                 }
               }
               `}
-            </script>
-            <div className="swiper-wrapper">
-              {[
-                {
-                  img: 1,
-                  name: "Rajesh Kumar",
-                  role: "Retail Store Owner",
-                  quote: "Soph products have been a consistent bestseller in my store. Customers come back for them specifically—the quality and pricing are unbeatable."
-                },
-                {
-                  img: 2,
-                  name: "Priya Nair",
-                  role: "Homemaker",
-                  quote: "I use Soph Dishwash Liquid and Emitol Floor Cleaner every day. The fragrance is lovely and my kitchen and floors are spotless. Genuinely impressed."
-                },
-                {
-                  img: 3,
-                  name: "Suresh Menon",
-                  role: "Grocery Distributor",
-                  quote: "Hallmark's range is easy to move—customers ask for it by name. PDM Maharaja spices in particular have excellent freshness and packaging."
-                },
-                {
-                  img: 4,
-                  name: "Anitha Bose",
-                  role: "Homemaker",
-                  quote: "River Hill Tea is our family's everyday tea now. The flavour is rich and bold without being bitter. It's become a staple in our home."
-                },
-                {
-                  img: 5,
-                  name: "Mohammed Farooq",
-                  role: "Supermarket Manager",
-                  quote: "Vita Rich pulses are popular for their cleanliness and packaging. Customers appreciate that they are free from impurities. A very reliable brand."
-                }
-              ].map((t, i) => (
-                <div key={i} className="swiper-slide">
-                  <div className="testimonial-item">
-                    <img src={[
-                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566396/hallmark/assets/img/testimonials/testimonials-1.jpg",
-                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566397/hallmark/assets/img/testimonials/testimonials-2.jpg",
-                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566398/hallmark/assets/img/testimonials/testimonials-3.jpg",
-                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566399/hallmark/assets/img/testimonials/testimonials-4.jpg",
-                      "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566401/hallmark/assets/img/testimonials/testimonials-5.jpg",
-                    ][t.img - 1]} className="testimonial-img" alt="" />
-                    <h3>{t.name}</h3>
-                    <h4>{t.role}</h4>
-                    <div className="stars">
-                      <i className="bi bi-star-fill"></i><i className="bi bi-star-fill"></i><i className="bi bi-star-fill"></i><i className="bi bi-star-fill"></i><i className="bi bi-star-fill"></i>
+              </script>
+              <div className="swiper-wrapper">
+                {testimonialsLoading ? (
+                  <div className="swiper-slide text-center py-5">
+                    <div className="spinner-border text-light" role="status">
+                      <span className="visually-hidden">Loading...</span>
                     </div>
-                    <p>
-                      <i className="bi bi-quote quote-icon-left"></i>
-                      <span>{t.quote}</span>
-                      <i className="bi bi-quote quote-icon-right"></i>
-                    </p>
                   </div>
-                </div>
-              ))}
+                ) : testimonials.length > 0 ? (
+                  testimonials.map((t, i) => (
+                    <div key={t.id} className="swiper-slide">
+                      <div className="testimonial-item">
+                        <img src={[
+                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566396/hallmark/assets/img/testimonials/testimonials-1.jpg",
+                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566397/hallmark/assets/img/testimonials/testimonials-2.jpg",
+                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566398/hallmark/assets/img/testimonials/testimonials-3.jpg",
+                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566399/hallmark/assets/img/testimonials/testimonials-4.jpg",
+                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566401/hallmark/assets/img/testimonials/testimonials-5.jpg",
+                        ][i % 5]} className="testimonial-img" alt="" />
+                        <h3>{t.name}</h3>
+                        <h4>{t.role}</h4>
+                        <div className="stars">
+                          {[...Array(t.rating || 5)].map((_, j) => (
+                            <i key={j} className="bi bi-star-fill"></i>
+                          ))}
+                        </div>
+                        <p>
+                          <i className="bi bi-quote quote-icon-left"></i>
+                          <span>{t.quote}</span>
+                          <i className="bi bi-quote quote-icon-right"></i>
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="swiper-slide text-center py-5">
+                    <p className="text-light">No testimonials available at the moment.</p>
+                  </div>
+                )}
+              </div>
+              <div className="swiper-pagination"></div>
             </div>
-            <div className="swiper-pagination"></div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Contact Section */}
       <section id="contact" className="contact section">
@@ -526,12 +590,12 @@ export default function HomeClient() {
                 <i className="bi bi-envelope flex-shrink-0"></i>
                 <div>
                   <h3>Email Us</h3>
-                  <p>info@hallmarkenterprises.in</p>
+                  <p>care@hallmarkworld.com</p>
                 </div>
               </div>
             </div>
             <div className="col-lg-8">
-              <form action="#" method="post" className="php-email-form">
+              <form onSubmit={handleContactSubmit} className="php-email-form">
                 <div className="row gy-4">
                   <div className="col-md-6">
                     <input type="text" name="name" className="form-control" placeholder="Your Name" required />
@@ -540,13 +604,19 @@ export default function HomeClient() {
                     <input type="email" className="form-control" name="email" placeholder="Your Email" required />
                   </div>
                   <div className="col-md-12">
-                    <input type="text" className="form-control" name="subject" placeholder="Subject" required />
+                    <input type="text" className="form-control" name="phone" placeholder="Phone Number" required />
                   </div>
                   <div className="col-md-12">
                     <textarea className="form-control" name="message" rows={6} placeholder="Message" required></textarea>
                   </div>
+                  <div className="col-md-12">
+                    {contactState.error && <div className="alert alert-danger p-2 mb-3">{contactState.error}</div>}
+                    {contactState.success && <div className="alert alert-success p-2 mb-3">Your message has been sent. Thank you!</div>}
+                  </div>
                   <div className="col-md-12 text-center">
-                    <button type="submit" className="btn btn-primary">Send Message</button>
+                    <button type="submit" className="btn btn-primary" disabled={contactState.loading}>
+                      {contactState.loading ? "Sending..." : "Send Message"}
+                    </button>
                   </div>
                 </div>
               </form>

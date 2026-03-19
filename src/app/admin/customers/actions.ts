@@ -18,6 +18,7 @@ export interface Customer {
     shippingAddress?: string | null;
     createdAt?: string;
     updatedAt?: string;
+    subscribed?: boolean;
 }
 
 function toISO(val: any): string {
@@ -55,6 +56,7 @@ export async function getCustomers(): Promise<Customer[]> {
                 shippingAddress: data.shippingAddress || null,
                 createdAt: toISO(data.createdAt),
                 updatedAt: toISO(data.updatedAt),
+                subscribed: data.subscribed || false,
             };
         });
     } catch (error) {
