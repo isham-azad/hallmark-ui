@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { ProductCardShimmer } from "@/components/Shimmer";
+import { ProductCardShimmer, CategoryFilterShimmer } from "@/components/Shimmer";
 
 interface ShopProduct {
     id: string;
@@ -245,33 +245,37 @@ export default function ShopClient() {
                             </div>
                         </div>
 
-                        <div className="filter-scroll-wrapper">
-                            <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
-                                <span
-                                    role="button"
-                                    onClick={() => { setSelectedCategory("all"); setDisplayCount(8); }}
-                                    className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
-                                >
-                                    {selectedCategory === "all" && <i className="bi bi-check2 me-1"></i>}
-                                    All Products
-                                </span>
-                                {categories.map((c) => (
+                        {productsLoading ? (
+                            <CategoryFilterShimmer />
+                        ) : (
+                            <div className="filter-scroll-wrapper">
+                                <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
                                     <span
-                                        key={c.id}
                                         role="button"
-                                        onClick={() => { setSelectedCategory(c.id); setDisplayCount(8); }}
-                                        className={`filter-chip ${selectedCategory === c.id ? "active" : ""}`}
+                                        onClick={() => { setSelectedCategory("all"); setDisplayCount(8); }}
+                                        className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
                                     >
-                                        {selectedCategory === c.id && (
-                                            <span onClick={(e) => { e.stopPropagation(); setSelectedCategory("all"); }} className="me-2 text-muted">
-                                                <i className="bi bi-x-lg" style={{ fontSize: '0.7rem' }}></i>
-                                            </span>
-                                        )}
-                                        {c.name}
+                                        {selectedCategory === "all" && <i className="bi bi-check2 me-1"></i>}
+                                        All Products
                                     </span>
-                                ))}
+                                    {categories.map((c) => (
+                                        <span
+                                            key={c.id}
+                                            role="button"
+                                            onClick={() => { setSelectedCategory(c.id); setDisplayCount(8); }}
+                                            className={`filter-chip ${selectedCategory === c.id ? "active" : ""}`}
+                                        >
+                                            {selectedCategory === c.id && (
+                                                <span onClick={(e) => { e.stopPropagation(); setSelectedCategory("all"); }} className="me-2 text-muted">
+                                                    <i className="bi bi-x-lg" style={{ fontSize: '0.7rem', color: 'white' }}></i>
+                                                </span>
+                                            )}
+                                            {c.name}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="results-info mt-3">
                             <span className="text-muted small">{filteredProducts.length} Results for <strong>"{selectedCategory === 'all' ? 'All Products' : categories.find(c => c.id === selectedCategory)?.name}"</strong></span>
