@@ -59,7 +59,7 @@ export default function Footer() {
                     <div className="row gy-4">
                         <div className="col-lg-4 col-md-6 footer-about">
                             <a href="/" className="logo d-flex align-items-center">
-                                <span className="sitename">HallMark</span>
+                                <span className="sitename">Hallmark</span>
                             </a>
                             <div className="footer-contact pt-3">
                                 <p>Hallmark Enterprises</p>
@@ -80,7 +80,6 @@ export default function Footer() {
                             <ul>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#hero"> Home</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#about"> About Us</a></li>
-                                <li><i className="bi bi-chevron-right"></i> <a href="/#services"> Our Products</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#contact"> Contact Us</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/shop"> Shop Online</a></li>
                             </ul>
@@ -113,9 +112,9 @@ export default function Footer() {
                                     <input type="email" name="email" required placeholder="Your email address" />
                                     <input type="submit" value={subscribeState.loading ? "Subscribing..." : "Subscribe"} disabled={subscribeState.loading} />
                                 </div>
-                                {subscribeState.loading && <div className="loading" style={{display: 'block'}}>Loading...</div>}
-                                {subscribeState.error && <div className="error-message" style={{display: 'block'}}>{subscribeState.error}</div>}
-                                {subscribeState.success && <div className="sent-message" style={{display: 'block'}}>Your subscription request has been sent. Thank you!</div>}
+                                {subscribeState.loading && <div className="loading" style={{ display: 'block' }}>Loading...</div>}
+                                {subscribeState.error && <div className="error-message" style={{ display: 'block' }}>{subscribeState.error}</div>}
+                                {subscribeState.success && <div className="sent-message" style={{ display: 'block' }}>Your subscription request has been sent. Thank you!</div>}
                             </form>
                         </div>
                     </div>
@@ -124,10 +123,10 @@ export default function Footer() {
 
             <div className="copyright">
                 <div className="container text-center">
-                    <p>© <span>Copyright</span> <strong className="px-1 sitename">Hallmark Enterprises</strong> <span>All Rights Reserved</span></p>
-                    <div className="credits">
+                    <p>© <span>Copyright</span> {new Date().getFullYear()}<strong className="px-1 sitename">Hallmark Enterprises</strong><span>All Rights Reserved</span></p>
+                    {/* <div className="credits">
                         <em>"All because we understand you better"</em>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </footer>
