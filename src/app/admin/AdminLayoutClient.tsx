@@ -87,6 +87,7 @@ export default function AdminLayoutClient({
         { name: "Roles", href: "/admin/staff/roles", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "Permissions", href: "/admin/staff/permissions", permission: PERMISSIONS.MANAGE_ROLES },
         { name: "OTP Verifications", href: "/admin/otp-verifications", permission: PERMISSIONS.VIEW_OTP_VERIFICATIONS },
+        { name: "Testimonials", href: "/admin/staff/testimonials", permission: PERMISSIONS.MANAGE_TESTIMONIALS },
         { name: "Activity Logs", href: "/admin/staff/logs", permission: PERMISSIONS.VIEW_LOGS },
       ],
     },

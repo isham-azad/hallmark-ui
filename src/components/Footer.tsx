@@ -13,15 +13,41 @@ export default function Footer() {
     const pathname = usePathname();
     const [brands, setBrands] = useState<NavBrand[]>([]);
     const [brandsLoading, setBrandsLoading] = useState(true);
+    const [subscribeState, setSubscribeState] = useState({ loading: false, success: false, error: "" });
     const isAdmin = pathname?.startsWith("/admin");
 
     useEffect(() => {
         fetch("/api/site/brands")
             .then((r) => r.json())
             .then((res) => setBrands(res.brands ?? []))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setBrandsLoading(false));
     }, []);
+
+    const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setSubscribeState({ loading: true, success: false, error: "" });
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get("email") as string;
+
+        try {
+            const res = await fetch("/api/site/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                setSubscribeState({ loading: false, success: true, error: "" });
+                (e.target as HTMLFormElement).reset();
+                setTimeout(() => setSubscribeState(prev => ({ ...prev, success: false })), 5000);
+            } else {
+                setSubscribeState({ loading: false, success: false, error: result.error || "Failed to subscribe." });
+            }
+        } catch (err) {
+            setSubscribeState({ loading: false, success: false, error: "Something went wrong." });
+        }
+    };
 
     if (isAdmin) return null;
 
@@ -39,7 +65,7 @@ export default function Footer() {
                                 <p>Hallmark Enterprises</p>
                                 <p>Kerala, India</p>
                                 <p className="mt-3"><strong>Phone:</strong> <span>+91 00000 00000</span></p>
-                                <p><strong>Email:</strong> <span>info@hallmarkenterprises.in</span></p>
+                                <p><strong>Email:</strong> <span>care@hallmarkworld.com</span></p>
                             </div>
                             <div className="social-links d-flex mt-4">
                                 <a href=""><i className="bi bi-facebook"></i></a>
@@ -82,11 +108,14 @@ export default function Footer() {
                         <div className="col-lg-4 col-md-12 footer-newsletter">
                             <h4>Our Newsletter</h4>
                             <p>Subscribe to our newsletter and receive the latest news about our products and offers!</p>
-                            <form action="#" method="post" className="php-email-form">
-                                <div className="newsletter-form"><input type="email" name="email" /><input type="submit" value="Subscribe" /></div>
-                                <div className="loading">Loading</div>
-                                <div className="error-message"></div>
-                                <div className="sent-message">Your subscription request has been sent. Thank you!</div>
+                            <form onSubmit={handleSubscribe} className="php-email-form">
+                                <div className="newsletter-form">
+                                    <input type="email" name="email" required placeholder="Your email address" />
+                                    <input type="submit" value={subscribeState.loading ? "Subscribing..." : "Subscribe"} disabled={subscribeState.loading} />
+                                </div>
+                                {subscribeState.loading && <div className="loading" style={{display: 'block'}}>Loading...</div>}
+                                {subscribeState.error && <div className="error-message" style={{display: 'block'}}>{subscribeState.error}</div>}
+                                {subscribeState.success && <div className="sent-message" style={{display: 'block'}}>Your subscription request has been sent. Thank you!</div>}
                             </form>
                         </div>
                     </div>

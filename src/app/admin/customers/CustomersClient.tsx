@@ -60,17 +60,25 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                         <td>
                                             <div className="customer-name-cell">
                                                 <div className="avatar-small">
-                                                    {customer.firstName[0]}{customer.lastName[0]}
+                                                    {(customer.firstName?.[0] || customer.email?.[0] || "-").toUpperCase()}
+                                                    {customer.lastName?.[0]?.toUpperCase() || ""}
                                                 </div>
-                                                <span className="customer-name">
-                                                    {customer.firstName} {customer.lastName}
-                                                </span>
+                                                <div className="d-flex flex-column align-items-start gap-1">
+                                                    <span className="customer-name">
+                                                        {customer.firstName || customer.lastName ? `${customer.firstName} ${customer.lastName}`.trim() : "No Name Provided"}
+                                                    </span>
+                                                    {customer.subscribed && (
+                                                        <span className="badge bg-success" style={{ fontSize: '0.65rem' }}>Subscribed</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div className="contact-info">
-                                                <span className="email"><i className="bi bi-envelope"></i> {customer.email}</span>
-                                                <span className="phone"><i className="bi bi-telephone"></i> {customer.phone}</span>
+                                                <span className="email">
+                                                    <i className="bi bi-envelope"></i> {customer.email}
+                                                </span>
+                                                <span className="phone"><i className="bi bi-telephone"></i> {customer.phone || "—"}</span>
                                             </div>
                                         </td>
                                         <td>
@@ -100,10 +108,12 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                 <div className="customer-card" key={customer.id}>
                                     <div className="card-header">
                                         <div className="card-avatar">
-                                            {customer.firstName[0]}{customer.lastName[0]}
+                                            {(customer.firstName?.[0] || customer.email?.[0] || "-").toUpperCase()}
+                                            {customer.lastName?.[0]?.toUpperCase() || ""}
                                         </div>
                                         <div className="card-title-group">
-                                            <div className="card-name">{customer.firstName} {customer.lastName}</div>
+                                            <div className="card-name">{customer.firstName || customer.lastName ? `${customer.firstName} ${customer.lastName}`.trim() : "No Name Provided"}</div>
+                                            {customer.subscribed && <div className="mb-1"><span className="badge bg-success" style={{ fontSize: '0.65rem' }}>Subscribed</span></div>}
                                             <div className="card-update">Updated: {customer.updatedAt ? format(new Date(customer.updatedAt), "MMM dd, yyyy") : "—"}</div>
                                         </div>
                                     </div>
@@ -114,7 +124,7 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                         </div>
                                         <div className="card-info-item">
                                             <i className="bi bi-telephone"></i>
-                                            <span>{customer.phone}</span>
+                                            <span>{customer.phone || "—"}</span>
                                         </div>
                                         <div className="card-info-item location">
                                             <i className="bi bi-geo-alt"></i>
