@@ -58,24 +58,29 @@ export async function POST(request: NextRequest) {
 
         // Rate limiting: Prevent duplicate orders/SMS spam (60-second window)
         if (phone) {
-            const normalizedPhone = String(phone).trim();
-            const recentOrders = await db.collection("orders")
-                .where("phone", "==", normalizedPhone)
-                .orderBy("createdAt", "desc")
-                .limit(1)
-                .get();
+            try {
+                const normalizedPhone = String(phone).trim();
+                const recentOrders = await db.collection("orders")
+                    .where("phone", "==", normalizedPhone)
+                    .orderBy("createdAt", "desc")
+                    .limit(1)
+                    .get();
 
-            if (!recentOrders.empty) {
-                const lastOrder = recentOrders.docs[0].data();
-                const lastCreatedAt = lastOrder.createdAt?.toDate?.() || new Date(0);
-                const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
-                
-                if (secondsSinceLast < 60) {
-                    return NextResponse.json({ 
-                        success: false, 
-                        error: "Please wait a minute before placing another order." 
-                    }, { status: 429 });
+                if (!recentOrders.empty) {
+                    const lastOrder = recentOrders.docs[0].data();
+                    const lastCreatedAt = lastOrder.createdAt?.toDate?.() || new Date(0);
+                    const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
+
+                    if (secondsSinceLast < 60) {
+                        return NextResponse.json({
+                            success: false,
+                            error: "Please wait a minute before placing another order."
+                        }, { status: 429 });
+                    }
                 }
+            } catch (e) {
+                console.warn("Rate-limit check skipped (likely missing Firestore index):", e);
+                // Continue with order creation even if rate-limiting check fails
             }
         }
 
@@ -94,7 +99,7 @@ export async function POST(request: NextRequest) {
                 const data = productDoc.exists ? productDoc.data() : null;
                 const priceStr = data?.price as string | undefined;
                 priceNum = priceStr != null ? parseFloat(String(priceStr).replace(/[^0-9.]/g, "")) || 0 : 0;
-                
+
                 // Use the string price from the DB for display in admin
                 const displayPrice = priceStr || (item.price != null ? `₹${item.price}` : "₹0");
 
@@ -192,7 +197,15 @@ export async function POST(request: NextRequest) {
         // Send confirmation SMS to customer
         if (phone) {
             try {
-                const smsMessage = `Thank you for your order! Your order ${orderNo} of ${orderData.total} has been placed successfully. - HallMark`;
+                let smsMessage = `Thank you for your order! Your order ${orderNo} of ${orderData.total} has been placed successfully. - HallMark`;
+
+                if (paymentMethod === "UPI") {
+                    const origin = request.nextUrl.origin;
+                    const cleanNo = orderNo.replace(/^#/, "");
+                    const paymentUrl = `${origin}/p?n=${cleanNo}&a=${totalNum.toFixed(2)}`;
+                    smsMessage += `\n\nPay via: ${paymentUrl}`;
+                }
+
                 await sendSms(String(phone).trim(), smsMessage);
             } catch (smsError) {
                 console.warn("Failed to send order confirmation SMS:", smsError);
@@ -223,3 +236,37 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export async function GET(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const n = searchParams.get("n");
+
+        if (!n) {
+            return NextResponse.json({ success: false, error: "Missing order number" }, { status: 400 });
+        }
+
+        const queryValue = n.startsWith("#") ? n : `#${n}`;
+        const orderSnap = await db.collection("orders")
+            .where("orderNo", "==", queryValue)
+            .limit(1)
+            .get();
+
+
+        if (orderSnap.empty) {
+            return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+        }
+
+        const data = orderSnap.docs[0].data();
+        return NextResponse.json({
+            success: true,
+            status: data.status || "Pending",
+            paymentStatus: data.paymentStatus || "Pending",
+            total: data.total || "₹0.00",
+        });
+    } catch (error) {
+        console.error("Fetch order error:", error);
+        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
