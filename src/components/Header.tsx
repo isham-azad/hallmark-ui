@@ -21,6 +21,8 @@ export default function Header() {
     const [brands, setBrands] = useState<NavBrand[]>([]);
     const [categories, setCategories] = useState<NavCategory[]>([]);
     const { cartCount, toggleCart } = useCart();
+    const [b2bUser, setB2bUser] = useState<{ username: string; companyName: string } | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -38,7 +40,15 @@ export default function Header() {
         ]).then(([brandsRes, categoriesRes]) => {
             setBrands(brandsRes.brands ?? []);
             setCategories(categoriesRes.categories ?? []);
-        }).catch(() => {});
+        }).catch(() => { });
+    }, []);
+
+    useEffect(() => {
+        fetch("/api/b2b/me")
+            .then((r) => r.json())
+            .then((res) => { if (res.authenticated) setB2bUser(res.user); })
+            .catch(() => {})
+            .finally(() => setMounted(true));
     }, []);
 
     const isHomePage = pathname === "/";
@@ -48,11 +58,47 @@ export default function Header() {
     if (isAdmin) return null;
 
     // Combine scroll state with homepage logic for the background class
-    const headerClass = `header d-flex align-items-center fixed-top ${isScrolled || !isHomePage ? "scrolled" : ""}`;
+    const headerClass = `header d-flex flex-column fixed-top p-0 ${isScrolled || !isHomePage ? "scrolled" : ""}`;
 
     return (
-        <header id="header" className={headerClass}>
-            <div className="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+        <header id="header" className={headerClass} style={{ top: 0 }}>
+            <div style={{
+                maxHeight: isScrolled ? "0" : "60px",
+                overflow: "hidden",
+                transition: "max-height 0.3s ease",
+            }}>
+                <div className="top-strip w-100" style={{ backgroundColor: "#111", borderBottom: "1px solid rgba(255,255,255,0.1)", zIndex: 1002, position: "relative" }}>
+                    <div className="container-fluid container-xl d-flex justify-content-between align-items-center py-2">
+                        <div className="contact-info d-flex align-items-center text-light" style={{ fontSize: "0.8rem", opacity: 0.9, gap: "clamp(0.5rem, 3vw, 2rem)", flexWrap: "nowrap", minWidth: 0 }}>
+                            <span className="d-none d-md-flex align-items-center text-decoration-none" style={{ whiteSpace: "nowrap" }} suppressHydrationWarning>
+                                <i className="bi bi-envelope me-2" style={{ color: "#ffc451" }}></i>
+                                <span suppressHydrationWarning>care@hallmarkworld.com</span>
+                            </span>
+                            <span className="d-flex align-items-center text-decoration-none" style={{ whiteSpace: "nowrap" }} suppressHydrationWarning>
+                                <i className="bi bi-telephone text-success me-2"></i>
+                                <span suppressHydrationWarning>+91 894 3051 632</span>
+                            </span>
+                        </div>
+                        {mounted && (b2bUser ? (
+                            <Link href="/b2b/account" className="text-light text-decoration-none fw-bold d-flex align-items-center bg-dark rounded flex-shrink-0" style={{ fontSize: "0.80rem", letterSpacing: "0.5px", border: "1px solid rgba(255,196,81,0.3)", padding: "4px 10px", whiteSpace: "nowrap" }}>
+                                <i className="bi bi-person-circle me-1 me-md-2" style={{ color: "#ffc451" }}></i>
+                                <span className="d-none d-sm-inline">My Account</span>
+                                <span className="d-inline d-sm-none">Account</span>
+                            </Link>
+                        ) : (
+                            <Link href="/b2b/login" className="text-light text-decoration-none fw-bold d-flex align-items-center bg-dark rounded flex-shrink-0" style={{ fontSize: "0.80rem", letterSpacing: "0.5px", border: "1px solid rgba(255,196,81,0.3)", padding: "4px 10px", whiteSpace: "nowrap" }}>
+                                <i className="bi bi-person-badge me-1 me-md-2" style={{ color: "#ffc451" }}></i>
+                                <span className="d-none d-sm-inline">B2B Login</span>
+                                <span className="d-inline d-sm-none">B2B</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                <div style={{ height: "4px", background: "linear-gradient(90deg, #ffc451 0%, rgba(255,196,81,0.2) 50%, transparent 100%)", width: "100%" }}></div>
+            </div>
+
+            <div className="container-fluid container-xl position-relative d-flex align-items-center justify-content-between header-main-area flex-grow-1 w-100 py-3">
                 <Link href="/" className="logo d-flex align-items-center me-auto me-lg-0">
                     <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark" className="img-fluid" style={{ width: "150px", height: "50px" }} />
                 </Link>

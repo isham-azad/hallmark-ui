@@ -41,6 +41,7 @@ export async function GET() {
                     brandName: brandNames[data.brandId as string],
                     howToUse: (data.howToUse as string) ?? "",
                     sku: (data.sku as string) ?? "",
+                    b2bPricingTiers: data.b2bPricingTiers || [],
                 };
             })
             .filter(Boolean);

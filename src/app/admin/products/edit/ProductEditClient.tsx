@@ -23,6 +23,7 @@ interface Product {
     sku: string | null;
     stock: number;
     howToUse: string;
+    b2bPricingTiers?: { minQty: number; price: string }[];
 }
 
 interface ProductEditClientProps {
@@ -51,6 +52,7 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         brandId: product.brandId,
         categoryId: product.categoryId,
         howToUse: product.howToUse || "",
+        b2bPricingTiers: product.b2bPricingTiers || [{ minQty: 1, price: "" }],
     });
     const [existingImageUrls, setExistingImageUrls] = useState<string[]>(initialExisting);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -99,6 +101,7 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         form.set("wasPrice", formData.wasPrice);
         form.set("sku", formData.sku);
         form.set("stock", formData.stock);
+        form.set("b2bPricingTiers", JSON.stringify(formData.b2bPricingTiers));
         form.set("existingImages", existingImageUrls.join(","));
         imageFiles.forEach((file) => form.append("images", file));
 
@@ -229,6 +232,69 @@ export default function ProductEditClient({ product, brands, categories }: Produ
                     </div>
 
                     <div className="form-section">
+                        <div className="section-header-row">
+                            <h3>B2B Tiered Pricing</h3>
+                            <button 
+                                type="button" 
+                                className="add-tier-btn"
+                                onClick={() => setFormData({
+                                    ...formData,
+                                    b2bPricingTiers: [...formData.b2bPricingTiers, { minQty: 2, price: "" }]
+                                })}
+                            >
+                                <i className="bi bi-plus-circle"></i> Add Tier
+                            </button>
+                        </div>
+                        <p className="section-hint">Set different prices based on quantity. B2B clients will see these prices when logged in.</p>
+                        
+                        <div className="tiers-list">
+                            {formData.b2bPricingTiers.map((tier, index) => (
+                                <div key={index} className="tier-row">
+                                    <div className="input-group">
+                                        <label>Min Qty</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            placeholder="1"
+                                            value={tier.minQty}
+                                            onChange={(e) => {
+                                                const newTiers = [...formData.b2bPricingTiers];
+                                                newTiers[index].minQty = parseInt(e.target.value) || 1;
+                                                setFormData({ ...formData, b2bPricingTiers: newTiers });
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>B2B Price</label>
+                                        <input
+                                            type="text"
+                                            placeholder="₹0.00"
+                                            value={tier.price}
+                                            onChange={(e) => {
+                                                const newTiers = [...formData.b2bPricingTiers];
+                                                newTiers[index].price = e.target.value;
+                                                setFormData({ ...formData, b2bPricingTiers: newTiers });
+                                            }}
+                                        />
+                                    </div>
+                                    {index > 0 && (
+                                        <button 
+                                            type="button" 
+                                            className="remove-tier-btn"
+                                            onClick={() => {
+                                                const newTiers = formData.b2bPricingTiers.filter((_, i) => i !== index);
+                                                setFormData({ ...formData, b2bPricingTiers: newTiers });
+                                            }}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="form-section">
                         <h3>Media</h3>
                         <div className="input-group">
                             <label>Product Images (max {MAX_IMAGES})</label>
@@ -327,6 +393,18 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         input, textarea, select { padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9375rem; }
         input:focus, textarea:focus, select:focus { outline: none; border-color: #ffc451; box-shadow: 0 0 0 4px rgba(255,196,81,0.1); }
         
+        .section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .section-header-row h3 { margin-bottom: 0; }
+        .section-hint { font-size: 0.8125rem; color: #94a3b8; margin-bottom: 1.5rem; }
+        
+        .add-tier-btn { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: 0.2s; }
+        .add-tier-btn:hover { background: #dcfce7; }
+        
+        .tiers-list { display: flex; flex-direction: column; gap: 1rem; }
+        .tier-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.5rem; align-items: flex-end; padding: 1rem; background: #fafbfc; border-radius: 12px; border: 1px solid #f1f5f9; }
+        .remove-tier-btn { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; margin-bottom: 1rem; }
+        .remove-tier-btn:hover { background: #fee2e2; }
+
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         
         .media-hint { font-size: 0.8125rem; color: #94a3b8; margin: 0 0 0.5rem 0; }

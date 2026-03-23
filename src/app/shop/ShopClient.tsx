@@ -152,7 +152,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
         <>
             {/* Shop Banners Slider */}
             {shopBanners.length > 0 && (
-                <div className="container" style={{ marginTop: "100px", marginBottom: "20px" }} data-aos="fade-up">
+                <div className="container" style={{ marginTop: "160px", marginBottom: "20px" }} data-aos="fade-up">
                     <div className="shop-banner-slider" style={{
                         position: "relative",
                         height: "min(400px, 60vw)",

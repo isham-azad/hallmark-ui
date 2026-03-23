@@ -63,7 +63,7 @@ export default function BrandClient() {
     }
 
     return (
-        <div className="brand-page mt-5 pt-4">
+        <div className="brand-page mt-5 pt-5">
             <section id="brand-header" className="section light-background py-5">
                 <div className="container">
                     <div className="row align-items-center">

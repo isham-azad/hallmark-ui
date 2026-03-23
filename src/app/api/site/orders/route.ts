@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendSms } from "@/lib/sms";
+import { getB2BSession } from "@/lib/b2b-auth";
+
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +90,9 @@ export async function POST(request: NextRequest) {
         const orderItems: { id: string; name: string; sku: string | null; qty: number; price: string; image: string | null; createdAt: string }[] = [];
         const itemCreatedAt = new Date().toISOString();
         let subtotalNum = 0;
+        
+        const b2bSession = await getB2BSession();
+        const isB2B = !!b2bSession;
 
         for (const item of items) {
             const itemId = item?.id != null ? String(item.id) : "";
@@ -97,11 +102,20 @@ export async function POST(request: NextRequest) {
             try {
                 const productDoc = await db.collection("products").doc(itemId).get();
                 const data = productDoc.exists ? productDoc.data() : null;
-                const priceStr = data?.price as string | undefined;
+                let priceStr = data?.price as string | undefined;
+
+                if (isB2B && data?.b2bPricingTiers && Array.isArray(data.b2bPricingTiers) && data.b2bPricingTiers.length > 0) {
+                    const sortedTiers = [...data.b2bPricingTiers].sort((a, b) => b.minQty - a.minQty);
+                    const appliedTier = sortedTiers.find(t => qty >= t.minQty);
+                    if (appliedTier) {
+                        priceStr = String(appliedTier.price);
+                    }
+                }
+
                 priceNum = priceStr != null ? parseFloat(String(priceStr).replace(/[^0-9.]/g, "")) || 0 : 0;
 
                 // Use the string price from the DB for display in admin
-                const displayPrice = priceStr || (item.price != null ? `₹${item.price}` : "₹0");
+                const displayPrice = priceStr && priceNum > 0 ? `₹${priceNum.toFixed(2)}` : (item.price != null ? `₹${item.price}` : "₹0");
                 const sku = (data?.sku as string) || (item as any).sku || item.packSize || null;
 
                 if (priceNum <= 0 && item.price != null) {

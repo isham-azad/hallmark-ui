@@ -8,7 +8,7 @@ import { useCartWithProducts } from "@/hooks/useCartWithProducts";
 export default function CartOffcanvas() {
     const router = useRouter();
     const { cart, removeFromCart, updateQuantity, isCartOpen, setIsCartOpen } = useCart();
-    const { cartWithDetails, cartTotalFromDb, loading } = useCartWithProducts(cart);
+    const { cartWithDetails, cartTotalFromDb, totalSavings, loading } = useCartWithProducts(cart);
 
     const offcanvasRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +82,12 @@ export default function CartOffcanvas() {
                                             {item.categoryFromDb} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
                                         </p>
                                         <div className="d-flex justify-content-between align-items-center">
-                                            <div className="item-price fw-bold text-success">₹{item.priceFromDb}</div>
+                                            <div className="item-price fw-bold text-success d-flex flex-column">
+                                                {item.originalPriceFromDb > item.priceFromDb && (
+                                                    <del className="text-muted small" style={{fontSize: "0.75rem", lineHeight: 1}}>₹{item.originalPriceFromDb}</del>
+                                                )}
+                                                <span>₹{item.priceFromDb}</span>
+                                            </div>
                                             <div className="quantity-control d-flex align-items-center bg-light rounded-pill border">
                                                 <button
                                                     className="btn btn-sm px-2 py-0 border-0"
@@ -117,9 +122,16 @@ export default function CartOffcanvas() {
                     <div className="cart-footer mt-auto pt-4 border-top">
                         <div className="cart-total d-flex justify-content-between align-items-center mb-4">
                             <span className="h5 mb-0 fw-bold">Grand Total:</span>
-                            <span className="h4 mb-0 fw-bold text-primary">
-                                {loading ? "…" : `₹${cartTotalFromDb.toFixed(2)}`}
-                            </span>
+                            <div className="text-end">
+                                {totalSavings > 0 && (
+                                    <div className="text-success small fw-bold mb-1" style={{fontSize: "0.85rem"}}>
+                                        Savings: -₹{totalSavings.toFixed(2)}
+                                    </div>
+                                )}
+                                <span className="h4 mb-0 fw-bold text-primary">
+                                    {loading ? "…" : `₹${cartTotalFromDb.toFixed(2)}`}
+                                </span>
+                            </div>
                         </div>
                         <div className="d-grid gap-2">
                             <button onClick={() => navigateTo("/checkout")} className="btn btn-primary btn-lg">

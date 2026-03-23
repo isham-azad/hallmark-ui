@@ -7,7 +7,7 @@ import { ShimmerBox } from "@/components/Shimmer";
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity } = useCart();
-    const { cartWithDetails, cartTotalFromDb, loading } = useCartWithProducts(cart);
+    const { cartWithDetails, cartTotalFromDb, totalSavings, loading } = useCartWithProducts(cart);
 
     const shipping = 0;
     const subtotal = loading ? 0 : cartTotalFromDb;
@@ -15,7 +15,7 @@ export default function CartPage() {
 
     return (
         <>
-            <div className="page-title mt-5" data-aos="fade">
+            <div className="page-title" style={{ marginTop: "100px" }} data-aos="fade">
                 <div className="heading">
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
@@ -87,10 +87,10 @@ export default function CartPage() {
                                                 )}
                                                 <div className="row align-items-center">
                                                     <div className="col-3 col-md-2">
-                                                        <img 
-                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
-                                                            alt={item.nameFromDb} 
-                                                            className="img-fluid rounded border" 
+                                                        <img
+                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
+                                                            alt={item.nameFromDb}
+                                                            className="img-fluid rounded border"
                                                         />
                                                     </div>
                                                     <div className="col-9 col-md-4">
@@ -114,8 +114,11 @@ export default function CartPage() {
                                                             >+</button>
                                                         </div>
                                                     </div>
-                                                    <div className="col-4 col-md-2 text-md-center mt-3 mt-md-0 text-success fw-bold h5 mb-0">
-                                                        ₹{item.priceFromDb * item.quantity}
+                                                    <div className="col-4 col-md-2 text-md-center mt-3 mt-md-0 d-flex flex-column align-items-md-center">
+                                                        {item.originalPriceFromDb > item.priceFromDb && (
+                                                            <del className="text-muted small">₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</del>
+                                                        )}
+                                                        <span className="text-success fw-bold h5 mb-0">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
                                                     </div>
                                                     <div className="col-2 col-md-2 text-end mt-3 mt-md-0">
                                                         <button
@@ -139,8 +142,15 @@ export default function CartPage() {
                                 <h4 className="mb-4 fw-bold">Order Summary</h4>
                                 <div className="summary-item d-flex justify-content-between mb-2">
                                     <span>Subtotal:</span>
-                                    <span className="fw-bold">{loading ? "—" : `₹${subtotal.toFixed(2)}`}</span>
+                                    <span className="fw-bold">{loading ? "—" : `₹${Math.max(0, subtotal + totalSavings).toFixed(2)}`}</span>
                                 </div>
+
+                                {totalSavings > 0 && (
+                                    <div className="summary-item d-flex justify-content-between mb-2 text-success">
+                                        <span>B2B Volume Savings:</span>
+                                        <span className="fw-bold">-₹{totalSavings.toFixed(2)}</span>
+                                    </div>
+                                )}
 
                                 <hr />
                                 <div className="summary-total d-flex justify-content-between mb-4 mt-3">

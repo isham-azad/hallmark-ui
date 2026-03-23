@@ -40,7 +40,7 @@ export function ProductCardShimmer({ className = "" }: { className?: string }) {
 /** Two-column product detail skeleton (image left, content right) */
 export function ProductDetailShimmer() {
     return (
-        <div className="container py-5">
+        <div className="container py-5 mt-5">
             <div className="row mb-4">
                 <ShimmerBox style={{ height: 20, width: 280 }} />
             </div>
@@ -66,7 +66,7 @@ export function ProductDetailShimmer() {
 export function ShopProductDetailShimmer() {
     return (
         <>
-            <div className="page-title mt-5">
+            <div className="page-title" style={{ marginTop: "100px" }}>
                 <div className="heading">
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
@@ -138,7 +138,7 @@ export function PaymentMethodsShimmer() {
 export function BrandOrCategoryPageShimmer({ cardCount = 8 }: { cardCount?: number }) {
     return (
         <>
-            <section className="section light-background" style={{ padding: "60px 0" }}>
+            <section className="section light-background" style={{ padding: "80px 0" }}>
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-4 text-center mb-4 mb-lg-0">
