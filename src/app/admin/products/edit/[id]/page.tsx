@@ -27,6 +27,7 @@ export default async function EditProductPage(props: { params: Promise<{ id: str
         brandId: data.brandId as string,
         categoryId: data.categoryId as string,
         howToUse: (data.howToUse as string | undefined) ?? "",
+        b2bPricingTiers: data.b2bPricingTiers as { minQty: number; price: string }[] | undefined,
     };
 
     const [brandsSnap, categoriesSnap] = await Promise.all([

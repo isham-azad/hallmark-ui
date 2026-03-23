@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { PaymentMethodsShimmer } from "@/components/Shimmer";
+import { useCartWithProducts } from "@/hooks/useCartWithProducts";
+
 
 interface PaymentMethodOption {
     id: string;
@@ -42,7 +44,8 @@ function sortPaymentMethodsWithCodLast(list: PaymentMethodOption[]): PaymentMeth
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { cart, cartTotal, clearCart } = useCart();
+    const { cart, clearCart } = useCart();
+    const { cartWithDetails, cartTotalFromDb, totalSavings, loading: cartLoading } = useCartWithProducts(cart);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showShipping, setShowShipping] = useState(false);
@@ -83,7 +86,7 @@ export default function CheckoutPage() {
     }, []);
 
     const shipping = 0;
-    const total = cartTotal;
+    const total = cartTotalFromDb;
     const paymentMethodLabel = paymentMethods.find((pm) => pm.id === paymentMethod)?.name ?? paymentMethod;
 
     const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -127,7 +130,7 @@ export default function CheckoutPage() {
             // First check if delivery is available
             const pcRes = await fetch(`/api/site/check-pincode?pincode=${encodeURIComponent(zip)}`);
             const pcData = await pcRes.json();
-            
+
             if (!pcData.available) {
                 setSubmitError("Sorry, we currently do not deliver to this pincode. Please try a different location.");
                 setIsVerifyingMobile(false);
@@ -225,15 +228,15 @@ export default function CheckoutPage() {
                     shippingAddress: showShipping ? form.shippingAddress.trim() : undefined,
                     paymentMethodId: paymentMethod,
                     paymentMethodName: paymentMethodLabel,
-                    subtotal: cartTotal,
+                    subtotal: cartTotalFromDb,
                     shipping,
                     total,
-                    items: cart.map((item) => ({
+                    items: cartWithDetails.map((item) => ({
                         id: String(item.id),
-                        name: item.name,
+                        name: item.nameFromDb,
                         quantity: item.quantity,
                         packSize: item.packSize,
-                        price: item.price,
+                        price: item.priceFromDb,
                         sku: item.sku || null,
                     })),
                 }),
@@ -274,7 +277,7 @@ export default function CheckoutPage() {
 
     return (
         <>
-            <div className="page-title mt-5" data-aos="fade">
+            <div className="page-title" style={{ marginTop: "100px" }} data-aos="fade">
                 <div className="heading">
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
@@ -307,7 +310,7 @@ export default function CheckoutPage() {
                                         <div className="checkout-section py-4">
                                             <h3 className="mb-4 fw-bold border-bottom pb-2">Step 1: Pincode & Mobile Verification</h3>
                                             {submitError && <div className="alert alert-danger mb-4">{submitError}</div>}
-                                            
+
                                             <div className="mb-5">
                                                 <div className="pincode-check-card rounded-3 border p-4" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
                                                     <label className="form-label fw-semibold mb-2 d-flex align-items-center gap-2">
@@ -344,8 +347,8 @@ export default function CheckoutPage() {
                                                             </button>
                                                         )}
                                                         {pincodeStatus === "available" && (
-                                                            <button 
-                                                                type="button" 
+                                                            <button
+                                                                type="button"
                                                                 className="btn btn-outline-secondary btn-sm ms-2"
                                                                 onClick={() => { setPincodeStatus("none"); setForm(prev => ({ ...prev, zip: "" })); }}
                                                             >
@@ -586,35 +589,41 @@ export default function CheckoutPage() {
                                 <div className="order-summary p-4 border rounded shadow-sm bg-white sticky-lg-top" style={{ zIndex: 10 }}>
                                     <h4 className="mb-4 fw-bold">Order Summary</h4>
                                     <div className="order-items mb-3 overflow-auto" style={{ maxHeight: "300px" }}>
-                                        {cart.map((item) => (
+                                        {cartWithDetails.map((item) => (
                                             <div key={`${item.id}-${item.packSize}`} className="order-item d-flex align-items-center gap-3 mb-3 border-bottom pb-2">
                                                 <div className="flex-shrink-0 bg-light rounded" style={{ width: "50px", height: "50px", overflow: "hidden", border: "1px solid #f1f5f9" }}>
-                                                    <img 
-                                                        src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"} 
-                                                        alt={item.name} 
-                                                        className="img-fluid w-100 h-100" 
-                                                        style={{ objectFit: "cover" }} 
+                                                    <img
+                                                        src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
+                                                        alt={item.nameFromDb}
+                                                        className="img-fluid w-100 h-100"
+                                                        style={{ objectFit: "cover" }}
                                                     />
                                                 </div>
                                                 <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                                                    <div className="fw-bold small text-truncate" title={item.name}>{item.name}</div>
+                                                    <div className="fw-bold small text-truncate" title={item.nameFromDb}>{item.nameFromDb}</div>
                                                     <p className="small text-muted mb-0">
                                                         Qty: {item.quantity} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
                                                     </p>
                                                 </div>
-                                                <span className="fw-bold small flex-shrink-0 text-nowrap">₹{item.price * item.quantity}</span>
+                                                <span className="fw-bold small flex-shrink-0 text-nowrap">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="summary-item d-flex justify-content-between mb-2">
                                         <span>Subtotal:</span>
-                                        <span className="fw-bold">₹{cartTotal}</span>
+                                        <span className="fw-bold">{cartLoading ? "—" : `₹${Math.max(0, cartTotalFromDb + totalSavings).toFixed(2)}`}</span>
                                     </div>
+                                    {totalSavings > 0 && (
+                                        <div className="summary-item d-flex justify-content-between mb-2 text-success" style={{ fontSize: "0.9rem" }}>
+                                            <span>Volume Savings:</span>
+                                            <span className="fw-bold">-₹{totalSavings.toFixed(2)}</span>
+                                        </div>
+                                    )}
 
                                     <hr />
                                     <div className="summary-total d-flex justify-content-between mb-4">
                                         <span className="h5 fw-bold">Total:</span>
-                                        <strong className="text-primary h4 mb-0">₹{total.toFixed(2)}</strong>
+                                        <strong className="text-primary h4 mb-0">{cartLoading ? "—" : `₹${total.toFixed(2)}`}</strong>
                                     </div>
                                     <button
                                         type="submit"

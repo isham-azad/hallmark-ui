@@ -20,6 +20,10 @@ const UpdateProductSchema = z.object({
     sku: z.string().nullable(),
     stock: z.number().min(0),
     howToUse: z.string().optional(),
+    b2bPricingTiers: z.array(z.object({
+        minQty: z.number().min(1),
+        price: z.string()
+    })).optional(),
 });
 
 function slugifyFolder(name: string): string {
@@ -45,6 +49,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         sku: (formData.get("sku") as string)?.trim() || null,
         stock: parseInt((formData.get("stock") as string) || "0", 10) || 0,
         howToUse: (formData.get("howToUse") as string)?.trim() ?? "",
+        b2bPricingTiers: formData.get("b2bPricingTiers") ? JSON.parse(formData.get("b2bPricingTiers") as string) : [],
     };
 
     const validation = UpdateProductSchema.safeParse(rawData);
@@ -97,6 +102,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         brandId,
         categoryId,
         howToUse: howToUse ?? "",
+        b2bPricingTiers: validation.data.b2bPricingTiers || [],
         updatedAt: FieldValue.serverTimestamp(),
     });
 
