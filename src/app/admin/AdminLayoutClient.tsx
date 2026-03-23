@@ -37,6 +37,7 @@ export default function AdminLayoutClient({
   const [isAdminsOpen, setIsAdminsOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isWebsiteOpen, setIsWebsiteOpen] = useState(false);
+  const [isCustomersOpen, setIsCustomersOpen] = useState(false);
   const [headerTitle, setHeaderTitle] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: Role } | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
@@ -73,8 +74,11 @@ export default function AdminLayoutClient({
     {
       name: "Customers",
       icon: "bi bi-people-fill",
-      href: "/admin/customers",
-      permission: PERMISSIONS.MANAGE_CUSTOMERS,
+      href: "#",
+      subItems: [
+        { name: "All Customers", href: "/admin/customers", permission: PERMISSIONS.MANAGE_CUSTOMERS },
+        { name: "B2B Clients", href: "/admin/b2b-clients", permission: PERMISSIONS.MANAGE_CUSTOMERS },
+      ],
     },
     {
       name: "Admins",
@@ -303,7 +307,7 @@ export default function AdminLayoutClient({
               {item.subItems ? (
                 <>
                   <button
-                    className={`sb-link has-dropdown ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "active" : ""}`}
+                    className={`sb-link has-dropdown ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) ? "active" : ""}`}
                     onClick={() => {
                       if (item.name === "Products") setIsProductsOpen(!isProductsOpen);
                       if (item.name === "Catalog") setIsCatalogOpen(!isCatalogOpen);
@@ -311,13 +315,14 @@ export default function AdminLayoutClient({
                       if (item.name === "Admins") setIsAdminsOpen(!isAdminsOpen);
                       if (item.name === "Payment") setIsPaymentOpen(!isPaymentOpen);
                       if (item.name === "Website") setIsWebsiteOpen(!isWebsiteOpen);
+                      if (item.name === "Customers") setIsCustomersOpen(!isCustomersOpen);
                     }}
                   >
                     <div className="sb-icon"><i className={item.icon}></i></div>
                     <span className="sb-label">{item.name}</span>
-                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "rotate" : ""}`}></i>
+                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) ? "rotate" : ""}`}></i>
                   </button>
-                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "expanded" : ""}`}>
+                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) ? "expanded" : ""}`}>
                     {item.subItems.map((subItem) => (
                       <Link
                         key={subItem.name}

@@ -127,10 +127,10 @@ export default function ProductDetailClient() {
     const brand = brands.find((b) => b.id === product.brand);
     const categoryName = category?.name ?? product.categoryName ?? product.category;
     const brandName = brand?.name ?? product.brandName ?? product.brand;
-    
+
     const images = product.image ? product.image.split(',').filter(Boolean) : ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
     const imageUrl = images[activeImageIndex];
-    
+
     const nextImage = () => setActiveImageIndex((prev) => (prev + 1) % images.length);
     const prevImage = () => setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
     const priceNum = product.price ? parseFloat(product.price.replace(/[^0-9.]/g, "")) || 0 : 0;
@@ -152,7 +152,7 @@ export default function ProductDetailClient() {
 
     return (
         <>
-            <div className="page-title mt-5" data-aos="fade">
+            <div className="page-title" data-aos="fade" style={{ marginTop: "100px" }}>
                 <div className="heading">
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
@@ -183,26 +183,26 @@ export default function ProductDetailClient() {
                                     <div className="shop-slider-track" style={{ display: 'flex', transform: `translateX(-${activeImageIndex * 100}%)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)', width: '100%' }}>
                                         {images.map((img, idx) => (
                                             <div key={idx} style={{ flex: '0 0 100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                <img 
-                                                    src={img} 
-                                                    alt={`${product.title} - ${idx + 1}`} 
-                                                    className="img-fluid" 
-                                                    style={{ maxHeight: '500px', width: '100%', objectFit: 'contain' }} 
+                                                <img
+                                                    src={img}
+                                                    alt={`${product.title} - ${idx + 1}`}
+                                                    className="img-fluid"
+                                                    style={{ maxHeight: '500px', width: '100%', objectFit: 'contain' }}
                                                 />
                                             </div>
                                         ))}
                                     </div>
-                                    
+
                                     {images.length > 1 && (
                                         <>
-                                            <button 
+                                            <button
                                                 onClick={prevImage}
                                                 className="slider-nav-btn prev"
                                                 style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: '5', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
                                             >
                                                 <i className="bi bi-chevron-left"></i>
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={nextImage}
                                                 className="slider-nav-btn next"
                                                 style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: '5', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
@@ -216,17 +216,17 @@ export default function ProductDetailClient() {
                                 {images.length > 1 && (
                                     <div className="thumbnail-list d-flex gap-2 overflow-auto pb-2" style={{ scrollbarWidth: 'none' }}>
                                         {images.map((img, idx) => (
-                                            <div 
-                                                key={idx} 
+                                            <div
+                                                key={idx}
                                                 onClick={() => setActiveImageIndex(idx)}
                                                 className="shop-thumbnail-item"
-                                                style={{ 
-                                                    width: '70px', 
-                                                    height: '70px', 
-                                                    flexShrink: 0, 
-                                                    cursor: 'pointer', 
-                                                    borderRadius: '8px', 
-                                                    overflow: 'hidden', 
+                                                style={{
+                                                    width: '70px',
+                                                    height: '70px',
+                                                    flexShrink: 0,
+                                                    cursor: 'pointer',
+                                                    borderRadius: '8px',
+                                                    overflow: 'hidden',
                                                     border: activeImageIndex === idx ? '2px solid var(--accent-color)' : '1px solid #eee',
                                                     transition: 'all 0.2s'
                                                 }}
@@ -319,14 +319,14 @@ export default function ProductDetailClient() {
                                     </div>
                                 </div>
 
-                                 <div className="product-actions">
+                                <div className="product-actions">
                                     <button
                                         className="btn btn-primary btn-lg w-100 mb-2"
                                         onClick={() => addToCart(cartProduct, quantity, selectedPack)}
                                     >
                                         <i className="bi bi-cart-plus me-2"></i>Add to Cart
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={handleBuyNow}
                                         className="btn btn-outline-primary btn-lg w-100 mb-3 text-center d-block"
                                     >

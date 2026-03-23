@@ -79,7 +79,7 @@ export default function ProductDetailPage() {
     const prevImage = () => setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
     return (
-        <div className="product-detail-page mt-0 pt-5">
+        <div className="product-detail-page mt-5 pt-5">
             <div className="container py-5">
                 <nav aria-label="breadcrumb" className="mb-4">
                     <ol className="breadcrumb">
@@ -105,17 +105,17 @@ export default function ProductDetailPage() {
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 {images.length > 1 && (
                                     <>
-                                        <button 
+                                        <button
                                             onClick={prevImage}
                                             className="nav-btn prev"
                                             style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: '5', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
                                         >
                                             <i className="bi bi-chevron-left"></i>
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={nextImage}
                                             className="nav-btn next"
                                             style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: '5', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
@@ -125,21 +125,21 @@ export default function ProductDetailPage() {
                                     </>
                                 )}
                             </div>
-                            
+
                             {images.length > 1 && (
                                 <div className="thumbnails d-flex gap-2 overflow-auto pb-2" style={{ scrollbarWidth: 'none' }}>
                                     {images.map((img, idx) => (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             onClick={() => setActiveImageIndex(idx)}
                                             className="thumbnail-item"
-                                            style={{ 
-                                                width: '80px', 
-                                                height: '80px', 
-                                                flexShrink: 0, 
-                                                cursor: 'pointer', 
-                                                borderRadius: '10px', 
-                                                overflow: 'hidden', 
+                                            style={{
+                                                width: '80px',
+                                                height: '80px',
+                                                flexShrink: 0,
+                                                cursor: 'pointer',
+                                                borderRadius: '10px',
+                                                overflow: 'hidden',
                                                 border: activeImageIndex === idx ? '2px solid var(--accent-color)' : '2px solid transparent',
                                                 transition: 'all 0.2s'
                                             }}
@@ -181,7 +181,7 @@ export default function ProductDetailPage() {
                                     {product.desc}
                                 </p>
                             </div>
-                            
+
                             {product.howToUse && (
                                 <div className="product-how-to-use mb-5">
                                     <h5 className="fw-bold mb-3">How to Use</h5>

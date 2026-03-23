@@ -63,8 +63,8 @@ export default function CategoryClient() {
     }
 
     return (
-        <div className="category-page mt-5 pt-4">
-            <section id="category-header" className="section dark-background text-white p-0 overflow-hidden" style={{ minHeight: "300px", display: "flex", alignItems: "center", position: "relative" }}>
+        <div className="category-page mt-5 pt-1">
+            <section id="category-header" className="section dark-background text-white p-0 overflow-hidden'" style={{ minHeight: "300px", display: "flex", alignItems: "center", position: "relative" }}>
                 {category.image ? (
                     <img
                         src={category.image}
@@ -73,7 +73,7 @@ export default function CategoryClient() {
                         style={{ objectFit: "cover", opacity: 0.3, zIndex: 0 }}
                     />
                 ) : null}
-                <div className="container position-relative responsive-banner-container" style={{ zIndex: 1, padding: "80px 0" }}>
+                <div className="container position-relative responsive-banner-container mt-5" style={{ zIndex: 1, padding: "80px 0" }}>
                     <div className="row justify-content-center text-center">
                         <div className="col-lg-8">
                             <h1 className="display-4" style={{ fontWeight: 800 }}>{category.name}</h1>
