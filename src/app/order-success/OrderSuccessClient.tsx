@@ -69,12 +69,20 @@ export default function OrderSuccessClient() {
                                     </div>
                                 </div>
 
-                                {isUpi && amount > 0 && (
+                                {isUpi && (
                                     <div className="success-upi-box">
-                                        <p className="success-upi-title">Pay via UPI</p>
-                                        <p className="success-upi-hint">Scan the QR code with Google Pay, PhonePe, or any UPI app</p>
-                                        <div className="success-upi-qr">
-                                            <UPIQrCode amount={amount} orderNo={displayOrderNo} size={200} showHeading />
+                                        <div className="success-info-content">
+                                            <i className="bi bi-info-circle-fill me-2" />
+                                            <span>Please make payment to the delivery person upon delivery of the product using your UPI payment mode.</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {payment.toUpperCase().includes("COD") && (
+                                    <div className="success-upi-box cash-box">
+                                        <div className="success-info-content">
+                                            <i className="bi bi-info-circle-fill me-2" />
+                                            <span>Please make payment to the delivery person upon delivery of the product by Cash.</span>
                                         </div>
                                     </div>
                                 )}
@@ -165,29 +173,27 @@ export default function OrderSuccessClient() {
                 .success-order-id { font-family: ui-monospace, monospace; letter-spacing: 0.02em; }
                 .success-order-total { font-size: 1.25rem; color: var(--accent-color, #ffc451); }
                 .success-upi-box {
-                    margin: 2rem 2rem 0;
-                    padding: 1.75rem;
-                    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+                    margin: 1.5rem 2rem 0;
+                    padding: 1.25rem 1.75rem;
+                    background: #f0fdf4;
                     border: 1px solid #bbf7d0;
-                    border-radius: 16px;
-                }
-                .success-upi-title {
-                    font-size: 1rem;
-                    font-weight: 700;
-                    color: #166534;
-                    margin: 0 0 0.25rem;
-                }
-                .success-upi-hint {
-                    font-size: 0.8125rem;
-                    color: #15803d;
-                    margin: 0 0 1.25rem;
-                }
-                .success-upi-qr {
-                    display: inline-block;
-                    padding: 1.25rem;
-                    background: #fff;
                     border-radius: 12px;
-                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+                .success-upi-box.cash-box {
+                    background: #fffbeb;
+                    border-color: #fde68a;
+                }
+                .success-info-content {
+                    font-size: 0.9375rem;
+                    font-weight: 600;
+                    color: #166534;
+                    line-height: 1.5;
+                }
+                .cash-box .success-info-content {
+                    color: #92400e;
                 }
                 .success-actions {
                     display: flex;

@@ -40,6 +40,7 @@ export async function GET() {
                     categoryName: categoryNames[data.categoryId as string],
                     brandName: brandNames[data.brandId as string],
                     howToUse: (data.howToUse as string) ?? "",
+                    sku: (data.sku as string) ?? "",
                 };
             })
             .filter(Boolean);

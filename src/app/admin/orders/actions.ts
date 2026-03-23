@@ -320,3 +320,32 @@ export async function verifyOrderDeliveryOtp(orderId: string, otp: string) {
         return { success: false, error: "Failed to verify OTP." };
     }
 }
+
+export async function assignOrderStaff(orderId: string, staffId: string, staffName: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        if (!isSuperAdmin) {
+            return { success: false, error: "Access Denied. Only Super Admins can assign orders." };
+        }
+
+        await db.collection("orders").doc(orderId).update({
+            assignedTo: {
+                id: staffId,
+                name: staffName,
+                assignedAt: new Date()
+            }
+        });
+
+        await logAction(session.email, session.name, "ASSIGN_ORDER_STAFF", { orderId, staffId, staffName });
+
+        revalidatePath("/admin/orders");
+        revalidatePath(`/admin/orders/${orderId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to assign order:", error);
+        return { success: false, error: "Failed to assign order." };
+    }
+}

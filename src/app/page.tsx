@@ -1,5 +1,9 @@
 import { Metadata } from "next";
 import HomeClient from "./HomeClient";
+import { getSiteWebsiteContent, getSiteProducts, getSiteBrands, getSiteCategories, getSiteTestimonials } from "@/lib/site-actions";
+import { serializeData } from "@/lib/serialize";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "HallMark Enterprises | Wholesale Distributor & Food Processing Co.",
@@ -11,6 +15,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <HomeClient />;
+export default async function Page() {
+  const [websiteContent, products, brands, categories, testimonials] = await Promise.all([
+    getSiteWebsiteContent(),
+    getSiteProducts(),
+    getSiteBrands(),
+    getSiteCategories(),
+    getSiteTestimonials(),
+  ]);
+
+  return (
+    <HomeClient 
+      initialData={serializeData({
+        websiteContent,
+        products,
+        brands,
+        categories,
+        testimonials
+      })} 
+    />
+  );
 }

@@ -63,8 +63,8 @@ export default function Footer() {
                             </a>
                             <div className="footer-contact pt-3">
                                 <p>Hallmark Enterprises</p>
-                                <p>Kerala, India</p>
-                                <p className="mt-3"><strong>Phone:</strong> <span>+91 00000 00000</span></p>
+                                <p>Mannam Nagar, Pandalam<br />Pathanamthitta, Kerala - 689 501<br />India</p>
+                                <p className="mt-3"><strong>Phone:</strong> <span>+91 894 3051 632</span></p>
                                 <p><strong>Email:</strong> <span>care@hallmarkworld.com</span></p>
                             </div>
                             <div className="social-links d-flex mt-4">

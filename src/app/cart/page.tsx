@@ -44,7 +44,9 @@ export default function CartPage() {
                             <div className="cart-items-list">
                                 <div className="cart-header d-flex justify-content-between align-items-center mb-4">
                                     <h3>Items in your cart</h3>
-                                    <span className="cart-count badge bg-primary rounded-pill">{cart.length} items</span>
+                                    <span className="cart-count badge bg-primary rounded-pill">
+                                        {loading ? "…" : `${cart.reduce((sum, i) => sum + i.quantity, 0)} ${cart.reduce((sum, i) => sum + i.quantity, 0) === 1 ? 'item' : 'items'}`}
+                                    </span>
                                 </div>
 
                                 {cart.length === 0 ? (
@@ -94,7 +96,7 @@ export default function CartPage() {
                                                     <div className="col-9 col-md-4">
                                                         <h5 className="mb-1 fw-bold">{item.nameFromDb}</h5>
                                                         <p className="text-muted mb-0 small">
-                                                            {item.categoryFromDb} {item.packSize && ` | ${item.packSize}`}
+                                                            {item.categoryFromDb} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
                                                         </p>
                                                     </div>
                                                     <div className="col-6 col-md-2 mt-3 mt-md-0">

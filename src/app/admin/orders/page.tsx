@@ -1,10 +1,14 @@
 import db from "@/lib/firebase";
 import OrdersClient from "./OrdersClient";
+import { getStaff } from "../staff/actions";
 
 export const dynamic = 'force-dynamic';
 
 export default async function OrdersPage() {
-  const snapshot = await db.collection("orders").orderBy("createdAt", "desc").get();
+  const [snapshot, staff] = await Promise.all([
+    db.collection("orders").orderBy("createdAt", "desc").get(),
+    getStaff()
+  ]);
 
   const normalizePaymentMethod = (p: unknown): "COD" | "UPI" => {
     const s = String(p ?? "").toLowerCase();
@@ -27,11 +31,15 @@ export default async function OrdersPage() {
       customer: data.customer as string,
       email: data.email as string,
       phone: (data.phone as string) ?? null,
+      pincode: (data.zip as string) ?? "",
       total: data.total as string,
       status: data.status as string,
       payment: data.payment as string,
       paymentMethod: paymentMethod === "COD" || paymentMethod === "UPI" ? paymentMethod : normalizePaymentMethod(data.payment),
       paymentStatus: paymentStatus === "Paid" ? "Paid" : "Pending",
+      assignedTo: data.assignedTo 
+        ? { ...data.assignedTo, assignedAt: toISO(data.assignedTo.assignedAt) } 
+        : null,
       date: toISO(data.date),
       createdAt: toISO(data.createdAt),
       updatedAt: toISO(data.updatedAt),
@@ -46,5 +54,5 @@ export default async function OrdersPage() {
     };
   });
 
-  return <OrdersClient initialOrders={orders} />;
+  return <OrdersClient initialOrders={orders as any} availableStaff={staff} />;
 }

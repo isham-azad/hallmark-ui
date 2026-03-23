@@ -114,10 +114,27 @@ export default function CheckoutPage() {
             setSubmitError("Please enter your mobile number.");
             return;
         }
+        const zip = form.zip.trim().replace(/\D/g, "");
+        if (zip.length !== 6) {
+            setSubmitError("Please enter a valid 6-digit pincode to check delivery availability.");
+            return;
+        }
+
         setIsVerifyingMobile(true);
         setSubmitError(null);
         setMobileStatus(null);
         try {
+            // First check if delivery is available
+            const pcRes = await fetch(`/api/site/check-pincode?pincode=${encodeURIComponent(zip)}`);
+            const pcData = await pcRes.json();
+            
+            if (!pcData.available) {
+                setSubmitError("Sorry, we currently do not deliver to this pincode. Please try a different location.");
+                setIsVerifyingMobile(false);
+                return;
+            }
+
+            // If available, send OTP
             const res = await fetch("/api/site/otp/send-mobile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -127,6 +144,7 @@ export default function CheckoutPage() {
             if (res.ok && data.success) {
                 setCheckoutStep("otp");
                 setMobileStatus("OTP sent successfully! Please check your mobile phone.");
+                setPincodeStatus("available");
             } else {
                 setSubmitError(data.error || "Failed to send OTP. Please try again.");
             }
@@ -216,6 +234,7 @@ export default function CheckoutPage() {
                         quantity: item.quantity,
                         packSize: item.packSize,
                         price: item.price,
+                        sku: item.sku || null,
                     })),
                 }),
             });
@@ -286,32 +305,97 @@ export default function CheckoutPage() {
                                 <div className="checkout-form bg-white p-4 rounded shadow-sm border">
                                     {checkoutStep === "mobile" && (
                                         <div className="checkout-section py-4">
-                                            <h3 className="mb-4 fw-bold border-bottom pb-2">Verify with Mobile</h3>
+                                            <h3 className="mb-4 fw-bold border-bottom pb-2">Step 1: Pincode & Mobile Verification</h3>
                                             {submitError && <div className="alert alert-danger mb-4">{submitError}</div>}
-                                            <div className="mb-4">
-                                                <label className="form-label fw-semibold">Mobile Number <span className="text-danger">*</span></label>
-                                                <div className="input-group">
-                                                    <span className="input-group-text bg-light">+91</span>
-                                                    <input
-                                                        type="tel"
-                                                        className="form-control form-control-lg"
-                                                        placeholder="9876543210"
-                                                        value={form.phone}
-                                                        onChange={handleChange("phone")}
-                                                        required
-                                                    />
+                                            
+                                            <div className="mb-5">
+                                                <div className="pincode-check-card rounded-3 border p-4" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
+                                                    <label className="form-label fw-semibold mb-2 d-flex align-items-center gap-2">
+                                                        <i className="bi bi-geo-alt-fill text-primary" />
+                                                        Delivery Pincode <span className="text-danger">*</span>
+                                                    </label>
+                                                    <p className="small text-muted mb-3">Enter your 6-digit pincode to check delivery availability.</p>
+                                                    <div className="d-flex gap-2 align-items-center">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            className="form-control form-control-lg"
+                                                            required
+                                                            style={{ backgroundColor: "#fff", flex: "1", minWidth: "120px" }}
+                                                            value={form.zip}
+                                                            onChange={handleChange("zip")}
+                                                            placeholder="679577"
+                                                            maxLength={6}
+                                                            disabled={pincodeStatus === "available"}
+                                                        />
+                                                        {pincodeStatus !== "available" && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-primary px-4 text-nowrap flex-shrink-0"
+                                                                onClick={checkPincode}
+                                                                disabled={form.zip.length !== 6 || pincodeStatus === "checking"}
+                                                                style={{ height: "48px" }}
+                                                            >
+                                                                {pincodeStatus === "checking" ? (
+                                                                    <span className="spinner-border spinner-border-sm" role="status" />
+                                                                ) : (
+                                                                    <><i className="bi bi-truck me-1" />Check delivery</>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                        {pincodeStatus === "available" && (
+                                                            <button 
+                                                                type="button" 
+                                                                className="btn btn-outline-secondary btn-sm ms-2"
+                                                                onClick={() => { setPincodeStatus("none"); setForm(prev => ({ ...prev, zip: "" })); }}
+                                                            >
+                                                                Change
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {pincodeStatus === "available" && (
+                                                        <div className="alert alert-success py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2 rounded-2">
+                                                            <i className="bi bi-check-circle-fill" />
+                                                            <span>Delivery available! Now enter your mobile number.</span>
+                                                        </div>
+                                                    )}
+                                                    {pincodeStatus === "unavailable" && (
+                                                        <div className="alert alert-danger py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2 rounded-2">
+                                                            <i className="bi bi-x-circle-fill" />
+                                                            <span>Sorry, we don’t deliver to this area.</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <p className="small text-muted mt-2">We'll send an OTP to verify your number.</p>
                                             </div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-primary btn-lg w-100 fw-bold py-3"
-                                                onClick={sendMobileOtp}
-                                                disabled={isVerifyingMobile || !form.phone}
-                                            >
-                                                {isVerifyingMobile ? <span className="spinner-border spinner-border-sm me-2" /> : null}
-                                                Send OTP
-                                            </button>
+
+                                            {pincodeStatus === "available" && (
+                                                <div className="animate__animated animate__fadeIn">
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-semibold">Mobile Number <span className="text-danger">*</span></label>
+                                                        <div className="input-group">
+                                                            <span className="input-group-text bg-light">+91</span>
+                                                            <input
+                                                                type="tel"
+                                                                className="form-control form-control-lg"
+                                                                placeholder="9876543210"
+                                                                value={form.phone}
+                                                                onChange={handleChange("phone")}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <p className="small text-muted mt-2">We'll send an OTP to verify your number.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary btn-lg w-100 fw-bold py-3"
+                                                        onClick={sendMobileOtp}
+                                                        disabled={isVerifyingMobile || !form.phone}
+                                                    >
+                                                        {isVerifyingMobile ? <span className="spinner-border spinner-border-sm me-2" /> : null}
+                                                        Send OTP
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -403,45 +487,21 @@ export default function CheckoutPage() {
                                                             <i className="bi bi-geo-alt-fill text-primary" />
                                                             Pincode <span className="text-danger">*</span>
                                                         </label>
-                                                        <p className="small text-muted mb-3">Enter your 6-digit pincode to confirm we deliver to your area.</p>
                                                         <div className="d-flex gap-2 align-items-center">
                                                             <input
                                                                 type="text"
                                                                 inputMode="numeric"
                                                                 className="form-control"
                                                                 required
-                                                                style={{ backgroundColor: "#fff", flex: "1", minWidth: "80px" }}
+                                                                disabled
+                                                                style={{ backgroundColor: "#f1f5f9", flex: "1", minWidth: "80px" }}
                                                                 value={form.zip}
-                                                                onChange={handleChange("zip")}
                                                                 placeholder="679577"
-                                                                maxLength={6}
                                                             />
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-primary px-3 text-nowrap flex-shrink-0"
-                                                                onClick={checkPincode}
-                                                                disabled={zipDigits !== 6 || pincodeStatus === "checking"}
-                                                                style={{ height: "45px" }}
-                                                            >
-                                                                {pincodeStatus === "checking" ? (
-                                                                    <span className="spinner-border spinner-border-sm" role="status" />
-                                                                ) : (
-                                                                    <><i className="bi bi-truck me-1" />Check delivery</>
-                                                                )}
-                                                            </button>
+                                                            <div className="text-success small d-flex align-items-center gap-1">
+                                                                <i className="bi bi-patch-check-fill" /> Verified
+                                                            </div>
                                                         </div>
-                                                        {pincodeStatus === "available" && (
-                                                            <div className="alert alert-success py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2 rounded-2">
-                                                                <i className="bi bi-check-circle-fill" />
-                                                                <span>Delivery available at this pincode.</span>
-                                                            </div>
-                                                        )}
-                                                        {pincodeStatus === "unavailable" && (
-                                                            <div className="alert alert-danger py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2 rounded-2">
-                                                                <i className="bi bi-x-circle-fill" />
-                                                                <span>We don’t deliver to this pincode. Use a different address to continue.</span>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -538,7 +598,9 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <div className="flex-grow-1" style={{ minWidth: 0 }}>
                                                     <div className="fw-bold small text-truncate" title={item.name}>{item.name}</div>
-                                                    <p className="small text-muted mb-0">Qty: {item.quantity} {item.packSize && ` | ${item.packSize}`}</p>
+                                                    <p className="small text-muted mb-0">
+                                                        Qty: {item.quantity} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
+                                                    </p>
                                                 </div>
                                                 <span className="fw-bold small flex-shrink-0 text-nowrap">₹{item.price * item.quantity}</span>
                                             </div>
@@ -572,6 +634,15 @@ export default function CheckoutPage() {
                     </form>
                 </div>
             </section>
+            <style jsx>{`
+                .form-control::placeholder {
+                    color: #cbd5e1 !important;
+                    opacity: 1;
+                }
+                .letter-spacing-lg {
+                    letter-spacing: 0.5rem;
+                }
+            `}</style>
         </>
     );
 }

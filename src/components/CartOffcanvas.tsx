@@ -68,18 +68,18 @@ export default function CartOffcanvas() {
                             {cartWithDetails.map((item) => (
                                 <div key={`${item.id}-${item.packSize}`} className="cart-item d-flex align-items-center py-3 border-bottom">
                                     <div className="item-img me-3" style={{ width: "70px", height: "70px", flexShrink: 0 }}>
-                                        <img 
-                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")} 
-                                            alt={item.nameFromDb} 
-                                            className="img-fluid rounded" 
-                                            style={{ objectFit: "cover", width: "100%", height: "100%" }} 
+                                        <img
+                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
+                                            alt={item.nameFromDb}
+                                            className="img-fluid rounded"
+                                            style={{ objectFit: "cover", width: "100%", height: "100%" }}
                                         />
                                     </div>
                                     <div className="item-info flex-grow-1">
                                         {!item.available && <span className="badge bg-warning text-dark mb-1">Unavailable</span>}
                                         <h6 className="mb-0 fw-bold">{item.nameFromDb}</h6>
                                         <p className="mb-1 text-mutedSmall" style={{ fontSize: "0.8rem" }}>
-                                            {item.categoryFromDb} {item.packSize && ` | ${item.packSize}`}
+                                            {item.categoryFromDb} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
                                         </p>
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div className="item-price fw-bold text-success">₹{item.priceFromDb}</div>
