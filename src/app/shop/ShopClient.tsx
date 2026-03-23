@@ -13,6 +13,7 @@ interface ShopProduct {
     oldPrice: number;
     image: string;
     description: string;
+    sku?: string;
 }
 
 function mapApiProductToShop(p: {
@@ -35,35 +36,53 @@ function mapApiProductToShop(p: {
         oldPrice: oldPriceNum,
         image: p.image?.split(',')[0] || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
         description: p.desc || "",
+        sku: (p as any).sku || "",
     };
 }
 
-export default function ShopClient() {
+export default function ShopClient({ initialData }: { initialData?: any }) {
     const { addToCart } = useCart();
-    const [products, setProducts] = useState<ShopProduct[]>([]);
-    const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+    const [products, setProducts] = useState<ShopProduct[]>(
+        initialData?.products ? (initialData.products as any[]).map(mapApiProductToShop) : []
+    );
+    const [categories, setCategories] = useState<{ id: string; name: string }[]>(initialData?.categories ?? []);
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOrder, setSortOrder] = useState("default");
     const [displayCount, setDisplayCount] = useState(8);
-    const [productsLoading, setProductsLoading] = useState(true);
+    const [productsLoading, setProductsLoading] = useState(!initialData?.products);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
+    const [shopBanners, setShopBanners] = useState<{ id: string; image: string }[]>(initialData?.banners ?? []);
+    const [currentBanner, setCurrentBanner] = useState(0);
 
     useEffect(() => {
+        if (initialData) return;
         setProductsLoading(true);
         Promise.all([
             fetch("/api/site/products").then((r) => r.json()),
             fetch("/api/site/categories").then((r) => r.json()),
-        ]).then(([productsRes, categoriesRes]) => {
+            fetch("/api/site/shop-banners").then((r) => r.json()),
+        ]).then(([productsRes, categoriesRes, bannersRes]) => {
             const apiProducts = (productsRes.products ?? []) as Array<{ id: string; title: string; desc: string; image?: string; price?: string; wasPrice?: string; category: string; categoryName?: string }>;
             setProducts(apiProducts.map(mapApiProductToShop));
             setCategories(categoriesRes.categories ?? []);
+            setShopBanners(bannersRes.banners ?? []);
         }).catch(() => {
             setProducts([]);
             setCategories([]);
+            setShopBanners([]);
         }).finally(() => setProductsLoading(false));
-    }, []);
+    }, [initialData]);
+
+    // Auto-advance shop banners
+    useEffect(() => {
+        if (shopBanners.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentBanner((prev) => (prev + 1) % shopBanners.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [shopBanners.length]);
 
     const filteredProducts = products
         .filter((product) => {
@@ -131,16 +150,97 @@ export default function ShopClient() {
 
     return (
         <>
-            {/* Page Title */}
-            <div className="page-title mt-5" data-aos="fade">
-                <div className="heading">
+            {/* Shop Banners Slider */}
+            {shopBanners.length > 0 && (
+                <div className="container" style={{ marginTop: "100px", marginBottom: "20px" }} data-aos="fade-up">
+                    <div className="shop-banner-slider" style={{
+                        position: "relative",
+                        height: "min(400px, 60vw)",
+                        borderRadius: "24px",
+                        overflow: "hidden",
+                        // boxShadow: "0 20px 40px rgba(0,0,0,0.12)"
+                    }}>
+                        {shopBanners.map((banner, index) => (
+                            <div key={banner.id} style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                opacity: currentBanner === index ? 1 : 0,
+                                transform: currentBanner === index ? "scale(1)" : "scale(1.05)",
+                                transition: "opacity 1s ease-in-out, transform 1s ease-in-out",
+                                zIndex: currentBanner === index ? 1 : 0,
+                            }}>
+                                <img
+                                    src={banner.image}
+                                    alt={`Promo Banner ${index}`}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                                <div style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4))"
+                                }}></div>
+                            </div>
+                        ))}
+                        {shopBanners.length > 1 && (
+                            <div className="slider-dots" style={{
+                                position: "absolute",
+                                bottom: "20px",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                display: "flex",
+                                gap: "10px",
+                                zIndex: 10
+                            }}>
+                                {shopBanners.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentBanner(i)}
+                                        style={{
+                                            width: currentBanner === i ? "24px" : "10px",
+                                            height: "10px",
+                                            borderRadius: "5px",
+                                            border: "none",
+                                            background: currentBanner === i ? "#ffc451" : "rgba(255,255,255,0.6)",
+                                            cursor: "pointer",
+                                            padding: 0,
+                                            transition: "0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+                                        }}
+                                        aria-label={`Go to slide ${i + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Breadcrumbs (Refined) */}
+            <div className="page-title mt-2" data-aos="fade">
+                <nav className="breadcrumbs" style={{ background: "transparent", borderBottom: "none", padding: "15px 0" }}>
+                    <div className="container">
+                        <ol style={{ display: 'flex', listStyle: 'none', padding: 0, margin: 0, gap: '5px', fontSize: '14px', color: '#64748b' }}>
+                            <li><Link href="/" style={{ color: '#ffc451', textDecoration: 'none' }}>Home</Link></li>
+                            {/* <li style={{ color: '#94a3b8' }}>/</li> */}
+                            <li className="current" style={{ color: '#1e293b', fontWeight: '500' }}>Shop Online</li>
+                        </ol>
+                    </div>
+                </nav>
+
+                <div className="heading" style={{ paddingTop: '50px' }}>
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
-                            <div className="col-lg-8">
-                                <h1>Shop Online</h1>
-                                <p className="mb-4">Browse our full range of trusted Hallmark products—quality essentials for every home, delivered to your door.</p>
+                            <div className="col-lg-10">
+                                <h1 style={{ fontSize: "2.5rem", fontWeight: "800", color: "#221f51", marginBottom: "0.5rem" }}>Shop Online</h1>
+                                <p className="mb-4" style={{ fontSize: "clamp(0.9rem, 2vw, 1.05rem)", color: "#64748b" }}>Elevate your lifestyle with Hallmark Essentials.</p>
                                 <div className="row justify-content-center">
-                                    <div className="col-lg-7 col-md-9 col-11">
+                                    <div className="col-lg-10 col-md-11 col-12">
                                         <div style={{ position: "relative" }}>
                                             <i
                                                 className="bi bi-search"
@@ -150,14 +250,14 @@ export default function ShopClient() {
                                                     top: "50%",
                                                     transform: "translateY(-50%)",
                                                     fontSize: "1.1rem",
-                                                    color: "#aaa",
+                                                    color: "#ffc451",
                                                     zIndex: 2,
                                                     pointerEvents: "none"
                                                 }}
                                             ></i>
                                             <input
                                                 type="text"
-                                                placeholder="Search products… e.g. Soph, Emitol, River Hill Tea"
+                                                placeholder="Search products..."
                                                 value={searchQuery}
                                                 onChange={(e) => {
                                                     setSearchQuery(e.target.value);
@@ -166,35 +266,34 @@ export default function ShopClient() {
                                                 style={{
                                                     width: "100%",
                                                     padding: "16px 52px 16px 52px",
-                                                    fontSize: "1rem",
-                                                    border: "none",
+                                                    fontSize: "1.05rem",
+                                                    border: "1px solid #e2e8f0",
                                                     borderRadius: "50px",
-                                                    background: "rgba(255,255,255,0.97)",
-                                                    boxShadow: "0 4px 24px rgba(0,0,0,0.13)",
+                                                    background: "#fff",
+                                                    boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
                                                     outline: "none",
-                                                    color: "#333",
+                                                    color: "#334155",
+                                                    transition: "0.3s"
                                                 }}
                                             />
                                             {searchQuery && (
                                                 <button
                                                     onClick={() => { setSearchQuery(""); setDisplayCount(8); }}
-                                                    title="Clear"
                                                     style={{
                                                         position: "absolute",
-                                                        right: "16px",
+                                                        right: "12px",
                                                         top: "50%",
                                                         transform: "translateY(-50%)",
-                                                        background: "#eee",
+                                                        background: "#f1f5f9",
                                                         border: "none",
                                                         borderRadius: "50%",
-                                                        width: "30px",
-                                                        height: "30px",
+                                                        width: "32px",
+                                                        height: "32px",
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
                                                         cursor: "pointer",
-                                                        color: "#666",
-                                                        fontSize: "0.85rem",
+                                                        color: "#64748b",
                                                         zIndex: 2,
                                                     }}
                                                 >
@@ -208,14 +307,6 @@ export default function ShopClient() {
                         </div>
                     </div>
                 </div>
-                <nav className="breadcrumbs">
-                    <div className="container">
-                        <ol>
-                            <li><Link href="/">Home</Link></li>
-                            <li className="current">Shop Online</li>
-                        </ol>
-                    </div>
-                </nav>
             </div>
 
             {/* Shop Section */}
@@ -318,7 +409,7 @@ export default function ShopClient() {
                                             <div className="product-overlay">
                                                 <button
                                                     className="btn btn-sm btn-primary add-to-cart-btn"
-                                                    onClick={() => addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category }, 1)}
+                                                    onClick={() => addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, sku: product.sku }, 1, "Standard")}
                                                 >
                                                     Add to Cart
                                                 </button>

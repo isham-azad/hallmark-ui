@@ -1,5 +1,9 @@
 import { Metadata } from "next";
 import ShopClient from "./ShopClient";
+import { getSiteProducts, getSiteCategories, getSiteShopBanners } from "@/lib/site-actions";
+import { serializeData } from "@/lib/serialize";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop Online | HallMark Enterprises",
@@ -11,6 +15,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <ShopClient />;
+export default async function Page() {
+  const [products, categories, banners] = await Promise.all([
+    getSiteProducts(),
+    getSiteCategories(),
+    getSiteShopBanners(),
+  ]);
+
+  return (
+    <ShopClient 
+      initialData={serializeData({
+        products,
+        categories,
+        banners
+      })} 
+    />
+  );
 }

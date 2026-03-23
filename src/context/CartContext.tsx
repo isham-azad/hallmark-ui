@@ -10,6 +10,9 @@ export interface CartItem {
     category?: string;
     quantity: number;
     packSize?: string;
+    sku?: string;
+    brandName?: string;
+    howToUse?: string;
 }
 
 interface CartContextType {
@@ -49,27 +52,43 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, [cart]);
 
     const addToCart = (product: any, quantity: number, packSize?: string, openCart: boolean = true) => {
+        const normalizedPack = packSize || "Standard";
+        const qToAdd = Number(quantity) || 1;
+
         setCart((prevCart) => {
             const existingItemIndex = prevCart.findIndex(
-                (item) => item.id === product.id && item.packSize === packSize
+                (item: any) => item.id === product.id && (item.packSize || "Standard") === normalizedPack
             );
 
             if (existingItemIndex > -1) {
-                const newCart = [...prevCart];
-                newCart[existingItemIndex].quantity += quantity;
-                return newCart;
+                return prevCart.map((item, index) =>
+                    index === existingItemIndex
+                        ? { ...item, quantity: (Number(item.quantity) || 0) + qToAdd }
+                        : item
+                );
             }
+
+            // Assuming product object passed to addToCart has these properties
+            // If product.title, priceNum, imageUrl, categoryName are not directly available on 'product',
+            // they would need to be derived or passed in.
+            // For now, mapping them from the 'product' object as per the instruction's snippet.
+            const cartProduct = {
+                id: product.id,
+                name: product.title || product.name, // Use title if available, else name
+                price: product.price, // Assuming price is directly on product
+                image: product.image, // Assuming image is directly on product
+                category: product.category, // Assuming category is directly on product
+                sku: product.sku || "",
+                brandName: product.brandName,
+                howToUse: product.howToUse,
+            };
 
             return [
                 ...prevCart,
                 {
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image: product.image,
-                    category: product.category,
-                    quantity: quantity,
-                    packSize: packSize,
+                    ...cartProduct,
+                    quantity: qToAdd,
+                    packSize: normalizedPack,
                 },
             ];
         });
@@ -81,19 +100,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
 
     const removeFromCart = (id: number | string, packSize?: string) => {
+        const normalizedPack = packSize || "Standard";
         setCart((prevCart) =>
-            prevCart.filter((item) => !(item.id === id && item.packSize === packSize))
+            prevCart.filter((item) => !(item.id === id && (item.packSize || "Standard") === normalizedPack))
         );
     };
 
     const updateQuantity = (id: number | string, quantity: number, packSize?: string) => {
+        const normalizedPack = packSize || "Standard";
         if (quantity <= 0) {
-            removeFromCart(id, packSize);
+            removeFromCart(id, normalizedPack);
             return;
         }
         setCart((prevCart) =>
             prevCart.map((item) =>
-                item.id === id && item.packSize === packSize
+                item.id === id && (item.packSize || "Standard") === normalizedPack
                     ? { ...item, quantity }
                     : item
             )

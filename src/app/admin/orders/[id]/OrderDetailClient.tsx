@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { updateOrderStatus, updatePayment, sendOrderDeliveryOtp, verifyOrderDeliveryOtp } from "../actions";
+import { updateOrderStatus, updatePayment, sendOrderDeliveryOtp, verifyOrderDeliveryOtp, assignOrderStaff } from "../actions";
 import { useAdminToast } from "@/components/AdminToast";
 import UPIQrCode from "@/components/UPIQrCode";
 import { parseOrderTotal } from "@/lib/upi";
+import { AdminUser } from "../../staff/actions";
 
 interface OrderItemType {
     id: string;
@@ -36,13 +37,15 @@ interface OrderType {
     paymentMethod?: string;
     paymentStatus?: string;
     items: OrderItemType[];
+    assignedTo?: { id: string; name: string; assignedAt: any; } | null;
 }
 
 interface OrderDetailClientProps {
     order: OrderType;
+    availableStaff: AdminUser[];
 }
 
-export default function OrderDetailClient({ order }: OrderDetailClientProps) {
+export default function OrderDetailClient({ order, availableStaff }: OrderDetailClientProps) {
     const router = useRouter();
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const [newStatus, setNewStatus] = useState("");
@@ -53,7 +56,42 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
     const [loading, setLoading] = useState(false);
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(""));
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [selectedStaffId, setSelectedStaffId] = useState("");
     const { showToast, ToastComponent } = useAdminToast();
+
+    useEffect(() => {
+        const userStr = localStorage.getItem("admin_user");
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                const role = String(user.role || "").toLowerCase();
+                const isSA = role.includes("super") || role.includes("admin") || role === "1";
+                if (isSA) setIsSuperAdmin(true);
+            } catch (e) {}
+        }
+    }, []);
+
+    const handleAssignStaff = async () => {
+        if (!selectedStaffId) return;
+        setLoading(true);
+        try {
+            const staff = availableStaff.find(s => s.id === selectedStaffId);
+            const res = await assignOrderStaff(order.id, selectedStaffId, staff?.name || "Staff");
+            if (res.success) {
+                showToast("Order assigned successfully");
+                setAssignModalOpen(false);
+                router.refresh();
+            } else {
+                showToast(res.error || "Failed to assign order", "error");
+            }
+        } catch (err) {
+            showToast("Something went wrong", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -307,6 +345,40 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                 </div>
             )}
 
+            {assignModalOpen && (
+                <div className="modal-overlay">
+                    <div className="status-modal assign-modal">
+                        <h3>Assign Order to Staff</h3>
+                        <p className="text-muted small">Select a staff member to handle delivery for order <strong>{order.orderNo}</strong></p>
+
+                        <div className="input-group mt-3">
+                            <label>Staff Member</label>
+                            <select
+                                value={selectedStaffId}
+                                onChange={(e) => setSelectedStaffId(e.target.value)}
+                                className="staff-select"
+                            >
+                                <option value="">Select Staff</option>
+                                {availableStaff.map((staff) => (
+                                    <option key={staff.id} value={staff.id}>{staff.name} ({staff.email})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="modal-actions mt-4">
+                            <button className="cancel-btn" onClick={() => { setAssignModalOpen(false); setSelectedStaffId(""); }}>Cancel</button>
+                            <button
+                                className="save-btn"
+                                onClick={handleAssignStaff}
+                                disabled={loading || !selectedStaffId}
+                            >
+                                {loading ? "Assigning..." : "Assign Order"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="detail-header">
                 <Link href="/admin/orders" className="back-link">
                     <i className="bi bi-arrow-left"></i>
@@ -329,6 +401,20 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                         <button type="button" className="header-btn secondary" title="Update Order Status" onClick={handleOpenStatusModal} disabled={isOrderCompleted}>
                             <i className="bi bi-pencil-square"></i>
                         </button>
+                        {isSuperAdmin && (
+                            <button
+                                type="button"
+                                className="header-btn assign-btn"
+                                title={order.status === "Delivered" ? "Order Delivered - Cannot Reassign" : (order.assignedTo ? `Assigned to: ${order.assignedTo.name}` : "Assign to Staff")}
+                                onClick={() => {
+                                    setAssignModalOpen(true);
+                                    setSelectedStaffId(order.assignedTo?.id || "");
+                                }}
+                                disabled={order.status === "Delivered"}
+                            >
+                                <i className={`bi ${order.assignedTo ? 'bi-person-check-fill' : 'bi-person-plus'}`}></i>
+                            </button>
+                        )}
                         <button type="button" className="header-btn primary" title="Update Payment Status" onClick={handleOpenPaymentModal} disabled={isOrderCompleted}>
                             <i className="bi bi-credit-card"></i>
                         </button>
@@ -354,7 +440,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Order Date</span>
-                        <span className="detail-value">{format(orderDate, "MMM dd, yyyy – hh:mm a")}</span>
+                        <span className="detail-value">{format(new Date(order.date), "MMM dd, yyyy – hh:mm a")}</span>
                     </div>
                     <div className="detail-item">
                         <span className="detail-label">Order Status</span>
@@ -374,6 +460,18 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                             {order.paymentStatus ?? "Pending"}
                         </span>
                     </div>
+                    {order.assignedTo && (
+                        <div className="detail-item full-row assign-info-row">
+                            <span className="detail-label">Assigned Staff</span>
+                            <span className="detail-value assigned-staff-badge">
+                                <i className="bi bi-person-badge"></i>
+                                {order.assignedTo.name}
+                                <span className="assigned-time">
+                                    at {format(new Date(order.assignedTo.assignedAt), "MMM dd, yyyy – hh:mm a")}
+                                </span>
+                            </span>
+                        </div>
+                    )}
                     {(order.address || order.city || order.zip) && (
                         <div className="detail-item address-row">
                             <span className="detail-label">Billing Address</span>
@@ -400,14 +498,13 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                             <thead>
                                 <tr>
                                     <th className="th-product">Product</th>
-                                    <th className="th-sku">SKU</th>
                                     <th className="th-qty">Qty</th>
                                     <th className="th-price">Price</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {order.items.map((item) => (
-                                    <tr key={item.id}>
+                                {order.items.map((item, index) => (
+                                    <tr key={`${item.id}-${index}`}>
                                         <td className="item-name">
                                             <div className="product-info-cell">
                                                 <div className="product-thumb">
@@ -416,10 +513,14 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                                                         alt={item.name}
                                                     />
                                                 </div>
-                                                <span>{item.name}</span>
+                                                <div className="product-name-block">
+                                                    <span className="product-main-name">{item.name}</span>
+                                                    {(item.sku && item.sku !== "Standard") && (
+                                                        <span className="product-sku-sub">SKU: {item.sku}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="item-sku">{item.sku || "—"}</td>
                                         <td className="item-qty">{item.qty}</td>
                                         <td className="item-price">{item.price}</td>
                                     </tr>
@@ -427,7 +528,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                             </tbody>
                             <tfoot>
                                 <tr className="items-total-row">
-                                    <td colSpan={3} className="items-total-label">Order Total</td>
+                                    <td colSpan={2} className="items-total-label">Order Total</td>
                                     <td className="items-total-value">{order.total}</td>
                                 </tr>
                             </tfoot>
@@ -435,30 +536,43 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
 
                         {/* Card View (Mobile Only) */}
                         <div className="items-cards">
-                            {order.items.map((item) => (
-                                <div key={item.id} className="item-card">
-                                    <div className="item-card-header">
-                                        <div className="item-card-img">
-                                            <img
-                                                src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
-                                                alt={item.name}
-                                            />
+                            {order.items.map((item, index) => {
+                                const priceNum = parseFloat((item.price || "0").toString().replace(/[^0-9.]/g, ""));
+                                const subtotal = priceNum * item.qty;
+                                const currency = (item.price || "").toString().includes("₹") ? "₹" : "";
+                                
+                                return (
+                                    <div key={`${item.id}-${index}`} className="item-card">
+                                        <div className="item-card-header">
+                                            <div className="item-card-img">
+                                                <img
+                                                    src={item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
+                                                    alt={item.name}
+                                                />
+                                            </div>
+                                            <div className="item-info">
+                                                <div className="item-name-row">
+                                                    <span className="item-card-name">{item.name}</span>
+                                                    <span className="item-qty-badge">x{item.qty}</span>
+                                                </div>
+                                                {(item.sku && item.sku !== "Standard") && (
+                                                    <span className="item-card-sku">SKU: {item.sku}</span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="item-card-title-wrap">
-                                            <span className="item-card-name">{item.name}</span>
-                                            <span className="item-card-qty">x{item.qty}</span>
+                                        <div className="item-price-details">
+                                            <div className="price-row">
+                                                <span className="price-label">Price Each</span>
+                                                <span className="price-val">{item.price}</span>
+                                            </div>
+                                            <div className="price-row total-row">
+                                                <span className="price-label">Subtotal</span>
+                                                <span className="price-val subtotal-val">{currency}{subtotal}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="item-card-body">
-                                        <span className="item-card-sku">SKU: {item.sku || "—"}</span>
-                                        <span className="item-card-price">{item.price}</span>
-                                    </div>
-                                    <div className="item-card-footer">
-                                        <span className="item-card-subtotal-label">Subtotal</span>
-                                        <span className="item-card-subtotal-value">{item.price}</span>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             <div className="items-mobile-total">
                                 <span className="mobile-total-label">Order Total</span>
                                 <span className="mobile-total-value">{order.total}</span>
@@ -542,6 +656,8 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                 .header-btn.qr-btn:hover:not(:disabled) { background: #dbeafe; color: #1d4ed8; transform: translateY(-2px); }
                 .header-btn.invoice { background: #f5f3ff; border-color: #e9e5ff; color: #6d28d9; }
                 .header-btn.invoice:hover { background: #ede9fe; color: #5b21b6; transform: translateY(-2px); }
+                .header-btn.assign-btn { background: #fff7ed; border-color: #ffedd5; color: #c2410c; }
+                .header-btn.assign-btn:hover:not(:disabled) { background: #ffedd5; transform: translateY(-2px); }
 
                 .detail-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; padding: 2rem; }
                 .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
@@ -574,11 +690,41 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                 .items-total-value { color: #0f172a; font-size: 1.125rem; text-align: right; min-width: 6rem; }
                 .item-name { font-weight: 600; color: #0f172a; text-align: left; }
                 .product-info-cell { display: flex; align-items: center; gap: 1rem; }
-                .item-sku { color: #94a3b8; font-size: 0.8125rem; text-align: left; }
+                .product-name-block { display: flex; flex-direction: column; gap: 0.125rem; }
+                .product-main-name { font-weight: 600; color: #0f172a; }
+                .product-sku-sub { font-size: 0.75rem; color: #94a3b8; font-weight: 500; font-family: monospace; }
                 .item-qty { font-weight: 700; color: #0f172a; text-align: right; }
                 .item-price { font-weight: 600; color: #0f172a; text-align: right; }
                 .product-thumb { width: 44px; height: 44px; border-radius: 8px; overflow: hidden; border: 1px solid #f1f5f9; background: #f8fafc; flex-shrink: 0; }
                 .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+                /* 👥 Assignment Styles */
+                .assign-modal .staff-select { 
+                    width: 100%; 
+                    height: 48px; 
+                    border-radius: 12px; 
+                    border: 1px solid #e2e8f0; 
+                    padding: 0 1rem; 
+                    font-weight: 600; 
+                    color: #1e293b;
+                    appearance: auto;
+                    font-family: inherit;
+                }
+                .assign-info-row { margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dashed #f1f5f9; }
+                .assigned-staff-badge { 
+                    display: inline-flex; 
+                    align-items: center; 
+                    gap: 0.75rem; 
+                    background: #fff7ed; 
+                    color: #c2410c; 
+                    padding: 0.5rem 1rem; 
+                    border-radius: 999px; 
+                    font-weight: 700;
+                    border: 1px solid #ffedd5;
+                    width: fit-content;
+                }
+                .assigned-staff-badge i { font-size: 1.125rem; }
+                .assigned-time { font-size: 0.75rem; font-weight: 500; opacity: 0.7; margin-left: 0.25rem; }
 
                 /* Mobile Items View (Hidden on Desktop) */
                 .items-cards { display: none; flex-direction: column; gap: 1rem; }
@@ -608,7 +754,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                     .order-no { font-size: 0.875rem; color: #64748b; background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 999px; margin-top: 0.5rem; display: inline-block; }
 
                     /* Action Buttons Grid */
-                    .detail-header-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; order: 2; }
+                    .detail-header-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; order: 2; }
                     .header-btn { width: 100%; height: 50px; border-radius: 14px; font-size: 1.15rem; background: #fff; border: 1px solid #e2e8f0; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; }
                     .header-btn.primary { background: #ffc451; border: none; color: #fff; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.25); }
                     .header-btn:active { transform: scale(0.95); }
@@ -665,17 +811,26 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                     .items-cards { display: grid; grid-template-columns: 1fr; gap: 1rem; }
                     .item-card { 
                         background: #fff; 
-                        border-radius: 20px; 
+                        border-radius: 18px; 
                         padding: 1.25rem; 
                         border: 1px solid #f1f5f9; 
                         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
                     }
-                    .item-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #e2e8f0; }
-                    .item-card-name { font-size: 0.9375rem; font-weight: 700; color: #1e293b; }
-                    .item-card-qty { background: #fffbeb; color: #b45309; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem; }
-                    .item-card-body { margin-bottom: 0.75rem; border: none; padding: 0; display: flex; justify-content: space-between; align-items: center; }
-                    .item-card-price { font-size: 0.9375rem; font-weight: 700; color: #0f172a; }
-                    .item-card-footer { border-top: 1px solid #f8fafc; padding-top: 0.75rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+                    .item-card-header { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+                    .item-card-img { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; flex-shrink: 0; border: 1px solid #f1f5f9; }
+                    .item-card-img img { width: 100%; height: 100%; object-fit: cover; }
+                    .item-info { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+                    .item-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+                    .item-card-name { font-size: 0.9375rem; font-weight: 700; color: #1e293b; line-height: 1.3; }
+                    .item-qty-badge { background: #fffbeb; color: #b45309; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 800; font-size: 0.7rem; border: 1px solid #fef3c7; }
+                    .item-card-sku { color: #94a3b8; font-size: 0.7rem; font-weight: 500; }
+                    
+                    .item-price-details { display: flex; flex-direction: column; gap: 0.6rem; padding-top: 1rem; border-top: 1px dashed #f1f5f9; }
+                    .price-row { display: flex; justify-content: space-between; align-items: center; }
+                    .price-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                    .price-val { font-size: 0.9375rem; font-weight: 700; color: #475569; }
+                    .price-row.total-row { padding-top: 0.2rem; }
+                    .subtotal-val { color: #0f172a; font-size: 1.05rem; }
 
                     .items-mobile-total { 
                         background: #0f172a; 
@@ -692,7 +847,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
                 }
 
                 @media (max-width: 480px) {
-                    .detail-header-actions { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+                    .detail-header-actions { grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
                     .header-btn { height: 44px; font-size: 1.125rem; }
                 }
             `}</style>

@@ -18,6 +18,7 @@ interface SiteProduct {
     categoryName?: string;
     brandName?: string;
     howToUse?: string;
+    sku?: string;
 }
 
 interface Brand {
@@ -141,6 +142,7 @@ export default function ProductDetailClient() {
         price: priceNum,
         image: imageUrl,
         category: categoryName,
+        sku: product.sku || "",
     };
 
     const handleBuyNow = () => {
