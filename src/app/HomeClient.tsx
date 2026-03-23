@@ -36,13 +36,47 @@ interface NavCategory {
   name: string;
 }
 
-export default function HomeClient() {
+interface HeroBanner {
+  id: string;
+  image: string;
+  order: number;
+}
+
+interface AboutUsData {
+  title: string;
+  description1: string;
+  description2: string;
+  description3: string;
+  points: string[];
+  image: string;
+}
+
+interface StatItem {
+  icon: string;
+  value: string;
+  label: string;
+}
+
+interface StatsData {
+  title: string;
+  description: string;
+  image: string;
+  stats: StatItem[];
+}
+
+interface WebsiteContent {
+  heroBanners: HeroBanner[];
+  aboutUs: AboutUsData;
+  stats: StatsData;
+  counts?: { products: number; categories: number };
+}
+
+export default function HomeClient({ initialData }: { initialData?: any }) {
   const { addToCart } = useCart();
   const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
 
   useEffect(() => {
     // Manually trigger Swiper initialization after component mounts
-    // This ensures sliders work even if main.js ran before hydration
     const initSwiper = () => {
       if (typeof window !== "undefined" && (window as any).Swiper) {
         document.querySelectorAll(".init-swiper").forEach(function (swiperElement) {
@@ -51,9 +85,6 @@ export default function HomeClient() {
             if (configEl) {
               try {
                 let config = JSON.parse(configEl.innerHTML.trim());
-
-                // For navigation buttons outside the swiper container, 
-                // we ensure they are correctly linked if they exist
                 if (config.navigation) {
                   const section = swiperElement.closest('section');
                   if (section) {
@@ -61,7 +92,6 @@ export default function HomeClient() {
                     config.navigation.prevEl = section.querySelector(config.navigation.prevEl);
                   }
                 }
-
                 new (window as any).Swiper(swiperElement, config);
               } catch (e) {
                 console.error("Failed to parse swiper config", e);
@@ -71,25 +101,34 @@ export default function HomeClient() {
         });
       }
     };
-
-    // Try immediately and also after a short delay
     initSwiper();
     const timer = setTimeout(initSwiper, 500);
     return () => clearTimeout(timer);
   }, []);
 
   const [currentFeature, setCurrentFeature] = useState(0);
-  const [products, setProducts] = useState<SiteProduct[]>([]);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [brands, setBrands] = useState<SiteBrand[]>([]);
-  const [brandsLoading, setBrandsLoading] = useState(true);
-  const [testimonials, setTestimonials] = useState<SiteTestimonial[]>([]);
-  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
-  const [categories, setCategories] = useState<NavCategory[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [currentHero, setCurrentHero] = useState(0);
+
+  const [products, setProducts] = useState<SiteProduct[]>(initialData?.products ?? []);
+  const [productsLoading, setProductsLoading] = useState(!initialData?.products);
+
+  const [brands, setBrands] = useState<SiteBrand[]>(initialData?.brands ?? []);
+  const [brandsLoading, setBrandsLoading] = useState(!initialData?.brands);
+
+  const [testimonials, setTestimonials] = useState<SiteTestimonial[]>(initialData?.testimonials ?? []);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(!initialData?.testimonials);
+
+  const [categories, setCategories] = useState<NavCategory[]>(initialData?.categories ?? []);
+  const [categoriesLoading, setCategoriesLoading] = useState(!initialData?.categories);
+
+  const [websiteContent, setWebsiteContent] = useState<WebsiteContent | null>(initialData?.websiteContent ?? null);
+  const [websiteLoading, setWebsiteLoading] = useState(!initialData?.websiteContent);
+
   const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
 
   useEffect(() => {
+    if (initialData) return;
+
     fetch("/api/site/products")
       .then((res) => res.json())
       .then((data) => setProducts(data.products ?? []))
@@ -113,7 +152,13 @@ export default function HomeClient() {
       .then((data) => setCategories(data.categories ?? []))
       .catch(() => setCategories([]))
       .finally(() => setCategoriesLoading(false));
-  }, []);
+
+    fetch("/api/site/website-content")
+      .then((res) => res.json())
+      .then((data) => setWebsiteContent(data))
+      .catch(() => setWebsiteContent(null))
+      .finally(() => setWebsiteLoading(false));
+  }, [initialData]);
 
   useEffect(() => {
     const featureInterval = setInterval(() => {
@@ -121,6 +166,15 @@ export default function HomeClient() {
     }, 3000);
     return () => clearInterval(featureInterval);
   }, []);
+
+  useEffect(() => {
+    const banners = websiteContent?.heroBanners;
+    if (!banners || banners.length <= 1) return;
+    const heroInterval = setInterval(() => {
+      setCurrentHero((prev) => (prev + 1) % banners.length);
+    }, 3000);
+    return () => clearInterval(heroInterval);
+  }, [websiteContent?.heroBanners]);
 
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,8 +212,30 @@ export default function HomeClient() {
     <>
       {/* Hero Section */}
       <section id="hero" className="hero section dark-background">
-        <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566373/hallmark/assets/img/hero-bg-2.png" alt="" className="img-fluid" data-aos="fade-in" />
-        <div className="container">
+        {websiteContent?.heroBanners && websiteContent.heroBanners.length > 0 ? (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1, overflow: 'hidden' }}>
+            {websiteContent.heroBanners.map((banner, idx) => (
+              <img
+                key={banner.id}
+                src={banner.image}
+                alt=""
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transition: 'opacity 1.2s ease-in-out',
+                  opacity: currentHero === idx ? 1 : 0,
+                  zIndex: currentHero === idx ? 2 : 1,
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <></>
+        )}
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div className="row justify-content-center text-center" data-aos="fade-up" data-aos-delay="100">
             <div className="col-xl-6 col-lg-8">
               <h2 className="responsive-h2"><span>Hallmark</span> Enterprises</h2>
@@ -190,25 +266,35 @@ export default function HomeClient() {
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4">
             <div className="col-lg-6 order-1 order-lg-2">
-              <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg" className="img-fluid" alt="" />
+              <img src={websiteContent?.aboutUs?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg"} className="img-fluid" alt="" />
             </div>
             <div className="col-lg-6 order-2 order-lg-1 content">
-              <h3>Hallmark Enterprises</h3>
+              <h3>{websiteContent?.aboutUs?.title || "Hallmark Enterprises"}</h3>
               <p style={{ textAlign: "justify" }}>
-                Established in 2014, Hallmark Enterprises is a consumer-focused company committed to delivering high-quality, affordable essentials for everyday living. Founded by <b>Mr. Vinod Bhaskaran</b>, who brings over 25 years of experience in retail marketing and channel sales across India and the Gulf, Hallmark combines market expertise with a strong value-driven approach.
+                {websiteContent?.aboutUs?.description1 || "Established in 2014, Hallmark Enterprises is a consumer-focused company committed to delivering high-quality, affordable essentials for everyday living. Founded by Mr. Vinod Bhaskaran, who brings over 25 years of experience in retail marketing and channel sales across India and the Gulf, Hallmark combines market expertise with a strong value-driven approach."}
               </p>
               <p style={{ textAlign: "justify" }}>
-                Hallmark began with a trusted range of home care products including <b>Soph Detergent Liquid, Soph Dishwash Liquid, Soph Handwash, Soph Washing Powder, Emitol Floor Cleaner and Emitol Toilet Cleaner</b>, which quickly gained market acceptance for their quality and reliability.
+                {websiteContent?.aboutUs?.description2 || "Hallmark began with a trusted range of home care products including Soph Detergent Liquid, Soph Dishwash Liquid, Soph Handwash, Soph Washing Powder, Emitol Floor Cleaner and Emitol Toilet Cleaner, which quickly gained market acceptance for their quality and reliability."}
               </p>
+              {websiteContent?.aboutUs?.points && websiteContent.aboutUs.points.length > 0 ? (
+                <ul style={{ textAlign: "justify" }}>
+                  {websiteContent.aboutUs.points.map((p, i) => (
+                    <li key={i}><i className="bi bi-check2-all"></i> <span>{p}</span></li>
+                  ))}
+                </ul>
+              ) : (
+                <>
+                  <p style={{ textAlign: "justify" }}>
+                    Expanding beyond home care, Hallmark has entered the food and grocery segment with:
+                  </p>
+                  <ul style={{ textAlign: "justify" }}>
+                    <li><i className="bi bi-check2-all"></i> <span><b>PDM Maharaja</b> – spices and dry fruits</span></li>
+                    <li><i className="bi bi-check2-all"></i> <span><b>Vita Rich</b> – pulses, masala items, rice flakes, and daily staples</span></li>
+                  </ul>
+                </>
+              )}
               <p style={{ textAlign: "justify" }}>
-                Expanding beyond home care, Hallmark has entered the food and grocery segment with:
-              </p>
-              <ul style={{ textAlign: "justify" }}>
-                <li><i className="bi bi-check2-all"></i> <span><b>PDM Maharaja</b> – spices and dry fruits</span></li>
-                <li><i className="bi bi-check2-all"></i> <span><b>Vita Rich</b> – pulses, masala items, rice flakes, and daily staples</span></li>
-              </ul>
-              <p style={{ textAlign: "justify" }}>
-                With a strong focus on quality, affordability, and long-term partnerships, Hallmark continues to serve households and retailers with dependable products that meet every day needs.
+                {websiteContent?.aboutUs?.description3 || "With a strong focus on quality, affordability, and long-term partnerships, Hallmark continues to serve households and retailers with dependable products that meet every day needs."}
               </p>
             </div>
           </div>
@@ -245,7 +331,7 @@ export default function HomeClient() {
                   },
                   "992": {
                     "slidesPerView": 6,
-                    "spaceBetween": 120
+                    "spaceBetween": 80
                   }
                 }
               }
@@ -427,7 +513,7 @@ export default function HomeClient() {
           <div className="row justify-content-center" data-aos="zoom-in" data-aos-delay="100">
             <div className="col-xl-10">
               <div className="text-center">
-                <h3>All because we understand you better</h3>
+                <h3>"All because we understand you better"</h3>
                 <p>From home care to food and grocery essentials, Hallmark Enterprises delivers trusted quality and real value to homes across the region. Explore our full range of products and discover the Hallmark difference.</p>
                 <a className="cta-btn" href="/shop">Shop Online</a>
               </div>
@@ -441,30 +527,42 @@ export default function HomeClient() {
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4 align-items-center justify-content-between">
             <div className="col-lg-5">
-              <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566392/hallmark/assets/img/stats-img.jpg" alt="" className="img-fluid" />
+              <img src={websiteContent?.stats?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566392/hallmark/assets/img/stats-img.jpg"} alt="" className="img-fluid" />
             </div>
             <div className="col-lg-6">
-              <h3 className="fw-bold fs-2 mb-3">Trusted by homes across India &amp; the Gulf</h3>
+              <h3 className="fw-bold fs-2 mb-3">{websiteContent?.stats?.title || "Trusted by homes across India & the Gulf"}</h3>
               <p>
-                Since 2014, Hallmark Enterprises has been delivering high-quality, affordable essentials with a commitment to value, satisfaction, and happiness—every single day.
+                {websiteContent?.stats?.description || "Since 2014, Hallmark Enterprises has been delivering high-quality, affordable essentials with a commitment to value, satisfaction, and happiness—every single day."}
               </p>
               <div className="row gy-4">
-                {[
-                  { icon: "emoji-smile", val: "10", label: "Years of Excellence" },
-                  { icon: "box-seam", val: "26", label: "Products &amp; Growing" },
-                  { icon: "shop", val: "7", label: "Product Categories" },
-                  { icon: "people", val: "25", label: "Years of Industry Experience" }
-                ].map((stat, i) => (
-                  <div key={i} className="col-6 col-lg-6">
-                    <div className="stats-item d-flex">
-                      <i className={`bi bi-${stat.icon} flex-shrink-0`}></i>
-                      <div>
-                        <span data-purecounter-start="0" data-purecounter-end={stat.val} data-purecounter-duration="1" className="purecounter"></span>
-                        <p><strong dangerouslySetInnerHTML={{ __html: stat.label }} /></p>
+                {(websiteContent?.stats?.stats || [
+                  { icon: "emoji-smile", value: "10", label: "Years of Excellence" },
+                  { icon: "box-seam", value: "26", label: "Products & Growing" },
+                  { icon: "shop", value: "7", label: "Product Categories" },
+                  { icon: "people", value: "25", label: "Years of Industry Experience" }
+                ]).map((stat: any, i: number) => {
+                  // Dynamically replace product/category count values
+                  let displayValue = stat.value || stat.val;
+                  const lbl = stat.label?.toLowerCase() || "";
+                  if (websiteContent?.counts) {
+                    if (lbl.includes("product") && !lbl.includes("categor")) {
+                      displayValue = String(websiteContent.counts.products);
+                    } else if (lbl.includes("categor")) {
+                      displayValue = String(websiteContent.counts.categories);
+                    }
+                  }
+                  return (
+                    <div key={i} className="col-6 col-lg-6">
+                      <div className="stats-item d-flex">
+                        <i className={`bi bi-${stat.icon} flex-shrink-0`}></i>
+                        <div>
+                          <span style={{ color: 'var(--heading-color)', fontSize: '40px', display: 'block', fontWeight: 700, lineHeight: '40px' }}>{displayValue}</span>
+                          <p><strong dangerouslySetInnerHTML={{ __html: stat.label }} /></p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -550,7 +648,7 @@ export default function HomeClient() {
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="mb-4" data-aos="fade-up" data-aos-delay="200">
             <div className="ratio ratio-16x9">
-              <iframe style={{ border: 0 }} src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d48389.78314118045!2d-74.006138!3d40.710059!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a22a3bda30d%3A0xb89d1fe6bc499443!2sDowntown%20Conference%20Center!5e0!3m2!1sen!2sus!4v1676961268712!5m2!1sen!2sus" frameBorder="0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
+              <iframe style={{ border: 0 }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15752.970708309695!2d76.66946996843613!3d9.222578203546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b06172717978767%3A0x8f1885cdfa41a69!2sPandalam%2C%20Kerala%2C%20India!5e0!3m2!1sen!2sae!4v1774271652681!5m2!1sen!2sae" frameBorder="0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
             </div>
           </div>
           <div className="row gy-4">
@@ -559,14 +657,14 @@ export default function HomeClient() {
                 <i className="bi bi-geo-alt flex-shrink-0"></i>
                 <div>
                   <h3>Address</h3>
-                  <p>Hallmark Enterprises, Kerala, India</p>
+                  <p>Hallmark Enterprises<br />Mannam Nagar, Pandalam<br />Pathanamthitta, Kerala - 689 501<br />India</p>
                 </div>
               </div>
               <div className="info-item d-flex" data-aos="fade-up" data-aos-delay="400">
                 <i className="bi bi-telephone flex-shrink-0"></i>
                 <div>
                   <h3>Call Us</h3>
-                  <p>+91 00000 00000</p>
+                  <p>+91 894 3051 632</p>
                 </div>
               </div>
               <div className="info-item d-flex" data-aos="fade-up" data-aos-delay="500">

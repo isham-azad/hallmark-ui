@@ -36,6 +36,7 @@ export default function AdminLayoutClient({
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isAdminsOpen, setIsAdminsOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isWebsiteOpen, setIsWebsiteOpen] = useState(false);
   const [headerTitle, setHeaderTitle] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: Role } | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
@@ -91,6 +92,17 @@ export default function AdminLayoutClient({
         { name: "Activity Logs", href: "/admin/staff/logs", permission: PERMISSIONS.VIEW_LOGS },
       ],
     },
+    {
+      name: "Website",
+      icon: "bi bi-globe",
+      href: "#",
+      subItems: [
+        { name: "Hero Banners", href: "/admin/website/hero", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "About Us", href: "/admin/website/about", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "Stats Section", href: "/admin/website/stats", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "Shop Banners", href: "/admin/website/shop-banners", permission: PERMISSIONS.MANAGE_WEBSITE },
+      ],
+    },
   ];
 
   const getFilteredItemsForUser = (role: string, permissionsMap: Record<string, string[]>) => {
@@ -127,6 +139,8 @@ export default function AdminLayoutClient({
           const data = await res.json();
           setIsAuthenticated(true);
           setAdminUser(data.user);
+          // Sync with localStorage for permissions components
+          localStorage.setItem("admin_user", JSON.stringify(data.user));
 
           // Fetch dynamic permissions map
           const map = await getRolePermissionsMap();
@@ -186,6 +200,14 @@ export default function AdminLayoutClient({
       setHeaderTitle("Payment Methods");
     } else if (pathname === "/admin/staff/logs") {
       setHeaderTitle("Activity Logs");
+    } else if (pathname === "/admin/website/hero") {
+      setHeaderTitle("Hero Banners");
+    } else if (pathname === "/admin/website/about") {
+      setHeaderTitle("About Us");
+    } else if (pathname === "/admin/website/stats") {
+      setHeaderTitle("Stats Section");
+    } else if (pathname === "/admin/website/shop-banners") {
+      setHeaderTitle("Shop Banners");
     } else if (orderId) {
       setHeaderTitle(null);
       getOrderById(orderId).then((order) => {
@@ -281,20 +303,21 @@ export default function AdminLayoutClient({
               {item.subItems ? (
                 <>
                   <button
-                    className={`sb-link has-dropdown ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) ? "active" : ""}`}
+                    className={`sb-link has-dropdown ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "active" : ""}`}
                     onClick={() => {
                       if (item.name === "Products") setIsProductsOpen(!isProductsOpen);
                       if (item.name === "Catalog") setIsCatalogOpen(!isCatalogOpen);
                       if (item.name === "Orders") setIsOrdersOpen(!isOrdersOpen);
                       if (item.name === "Admins") setIsAdminsOpen(!isAdminsOpen);
                       if (item.name === "Payment") setIsPaymentOpen(!isPaymentOpen);
+                      if (item.name === "Website") setIsWebsiteOpen(!isWebsiteOpen);
                     }}
                   >
                     <div className="sb-icon"><i className={item.icon}></i></div>
                     <span className="sb-label">{item.name}</span>
-                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) ? "rotate" : ""}`}></i>
+                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "rotate" : ""}`}></i>
                   </button>
-                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) ? "expanded" : ""}`}>
+                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) ? "expanded" : ""}`}>
                     {item.subItems.map((subItem) => (
                       <Link
                         key={subItem.name}

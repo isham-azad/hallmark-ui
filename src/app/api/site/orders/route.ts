@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
 
                 // Use the string price from the DB for display in admin
                 const displayPrice = priceStr || (item.price != null ? `₹${item.price}` : "₹0");
+                const sku = (data?.sku as string) || (item as any).sku || item.packSize || null;
 
                 if (priceNum <= 0 && item.price != null) {
                     const fromItem = typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price);
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
                 orderItems.push({
                     id: itemId,
                     name,
-                    sku: item.packSize ?? null,
+                    sku,
                     qty,
                     price: displayPrice,
                     image,
@@ -124,11 +125,12 @@ export async function POST(request: NextRequest) {
                 const fromItem = item.price != null ? (typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price)) : 0;
                 priceNum = fromItem || 0;
                 const displayPrice = item.price != null ? `₹${item.price}` : "₹0";
+                const sku = (item as any).sku || item.packSize || null;
 
                 orderItems.push({
                     id: itemId,
                     name: item.name || "Product",
-                    sku: item.packSize ?? null,
+                    sku,
                     qty,
                     price: displayPrice,
                     image: item.image || null,

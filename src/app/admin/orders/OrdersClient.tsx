@@ -2,8 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { updateOrderStatus, updatePayment, sendOrderDeliveryOtp, verifyOrderDeliveryOtp } from "./actions";
+import {
+    format,
+    startOfMonth,
+    endOfMonth,
+    startOfWeek,
+    endOfWeek,
+    eachDayOfInterval,
+    isSameMonth,
+    isSameDay,
+    isAfter,
+    isBefore,
+    isWithinInterval,
+    addMonths,
+    subMonths
+} from "date-fns";
+import { updateOrderStatus, updatePayment, sendOrderDeliveryOtp, verifyOrderDeliveryOtp, assignOrderStaff } from "./actions";
+import { AdminUser } from "../staff/actions";
 import { useAdminToast } from "@/components/AdminToast";
 import UPIQrCode from "@/components/UPIQrCode";
 import { parseOrderTotal } from "@/lib/upi";
@@ -32,14 +47,21 @@ interface Order {
     payment: string;
     paymentMethod?: string;
     paymentStatus?: string;
+    pincode?: string;
+    assignedTo?: {
+        id: string;
+        name: string;
+        assignedAt: any;
+    } | null;
     items: OrderItem[];
 }
 
 interface OrdersClientProps {
     initialOrders: Order[];
+    availableStaff: AdminUser[];
 }
 
-export default function OrdersClient({ initialOrders }: OrdersClientProps) {
+export default function OrdersClient({ initialOrders, availableStaff }: OrdersClientProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -53,30 +75,116 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
     const [canExport, setCanExport] = useState(false);
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(""));
+    const [columnFilters, setColumnFilters] = useState({
+        orderNo: "",
+        customer: "",
+        startDate: "",
+        endDate: "",
+        total: "",
+        deliveryStatus: "All",
+        pincode: "",
+        paymentMethod: "All",
+        paymentStatus: "All",
+    });
+    const [assignModalOrder, setAssignModalOrder] = useState<Order | null>(null);
+    const [selectedStaffId, setSelectedStaffId] = useState("");
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+    const [viewDate, setViewDate] = useState(new Date());
+    const calendarRef = typeof window !== 'undefined' ? (null as any) : null; // we will use useEffect for external click
     const { showToast, ToastComponent } = useAdminToast();
 
-    const filteredOrders = initialOrders.filter(order =>
-        order.orderNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    useEffect(() => {
+        if (!dateDropdownOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('.calendar-wrapper')) {
+                setDateDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [dateDropdownOpen]);
+
+    const generateDays = () => {
+        const start = startOfMonth(viewDate);
+        const end = endOfMonth(viewDate);
+        const days = eachDayOfInterval({
+            start: startOfWeek(start),
+            end: endOfWeek(end),
+        });
+        return days;
+    };
+
+    const handleDateSelect = (date: Date) => {
+        const dateStr = format(date, "yyyy-MM-dd");
+        if (!columnFilters.startDate || (columnFilters.startDate && columnFilters.endDate)) {
+            setColumnFilters({ ...columnFilters, startDate: dateStr, endDate: "" });
+        } else {
+            if (isBefore(date, new Date(columnFilters.startDate))) {
+                setColumnFilters({ ...columnFilters, startDate: dateStr, endDate: "" });
+            } else {
+                setColumnFilters({ ...columnFilters, endDate: dateStr });
+                setDateDropdownOpen(false);
+            }
+        }
+    };
+
+    const nextMonth = () => setViewDate(prev => addMonths(prev, 1));
+    const prevMonth = () => setViewDate(prev => subMonths(prev, 1));
+
+    const filteredOrders = initialOrders.filter(order => {
+        const matchesOrderNo = order.orderNo.toLowerCase().includes(columnFilters.orderNo.toLowerCase());
+        const matchesCustomer = order.customer.toLowerCase().includes(columnFilters.customer.toLowerCase());
+
+        let matchesDate = true;
+        const oDate = new Date(order.date);
+        oDate.setHours(0, 0, 0, 0);
+
+        if (columnFilters.startDate) {
+            const sDate = new Date(columnFilters.startDate);
+            sDate.setHours(0, 0, 0, 0);
+            if (oDate < sDate) matchesDate = false;
+        }
+        if (columnFilters.endDate) {
+            const eDate = new Date(columnFilters.endDate);
+            eDate.setHours(0, 0, 0, 0);
+            if (oDate > eDate) matchesDate = false;
+        }
+
+        const matchesTotal = order.total.toLowerCase().includes(columnFilters.total.toLowerCase());
+        const matchesDeliveryStatus = columnFilters.deliveryStatus === "All" || order.status === columnFilters.deliveryStatus;
+        const matchesPincode = (order.pincode ?? "").toLowerCase().includes(columnFilters.pincode.toLowerCase());
+        const matchesPaymentMethod = columnFilters.paymentMethod === "All" || (order.paymentMethod ?? order.payment ?? "").includes(columnFilters.paymentMethod);
+        const matchesPaymentStatus = columnFilters.paymentStatus === "All" || (order.paymentStatus === columnFilters.paymentStatus);
+
+        return matchesOrderNo && matchesCustomer && matchesDate && matchesTotal && matchesDeliveryStatus && matchesPincode && matchesPaymentMethod && matchesPaymentStatus;
+    });
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     const paginatedOrders = filteredOrders.slice(startIndex, startIndex + PAGE_SIZE);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm]);
+    }, [searchTerm, columnFilters]);
 
     useEffect(() => {
         const userStr = localStorage.getItem("admin_user");
+        console.log(userStr);
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                if (user.role === "Super Admin" || user.role === "super_admin") {
+                const role = (user.role || user.roleId || "").toString().trim().toLowerCase();
+
+                // Aggressive check for Super Admin across all possible variants
+                const isSA = role.includes("super") || role.includes("admin") || role === "1";
+                if (isSA) {
                     setCanExport(true);
+                    setIsSuperAdmin(true);
                 } else {
                     getRolePermissionsMap().then(map => {
-                        const permissions = map[user.role] || [];
+                        const originalRole = user.role || "";
+                        const permissions = map[originalRole] || [];
                         setCanExport(permissions.includes(PERMISSIONS.EXPORT_REPORTS));
                     });
                 }
@@ -86,6 +194,29 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         }
     }, []);
 
+    const handleAssignStaff = async () => {
+        if (!assignModalOrder || !selectedStaffId) return;
+        const staff = availableStaff.find(s => s.id === selectedStaffId);
+        if (!staff) return;
+
+        setLoading(true);
+        try {
+            const res = await assignOrderStaff(assignModalOrder.id, staff.id, staff.name);
+            if (res.success) {
+                showToast("Order assigned successfully!", "success");
+                setAssignModalOrder(null);
+                setSelectedStaffId("");
+                router.refresh();
+            } else {
+                showToast(res.error || "Failed to assign order", "error");
+            }
+        } catch (err) {
+            showToast("Something went wrong", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const escapeCsv = (value: string | number): string => {
         const s = String(value);
         if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
@@ -93,16 +224,18 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
     };
 
     const handleExportReport = () => {
-        const headers = ["Order ID", "Customer", "Email", "Date", "Total", "Status", "Payment Method", "Payment Status"];
+        const headers = ["Order ID", "Customer", "Email", "Date", "Total", "Payment Method", "Payment Status", "Delivery Status", "Pincode", "Assigned Staff"];
         const rows = filteredOrders.map((order) => [
             order.orderNo,
             order.customer,
             order.email,
             format(new Date(order.date), "yyyy-MM-dd HH:mm"),
             order.total,
-            order.status,
             order.paymentMethod ?? order.payment ?? "—",
             order.paymentStatus ?? "Pending",
+            order.status,
+            order.pincode || "—",
+            order.assignedTo?.name || "—",
         ]);
         const csvContent = [
             headers.map(escapeCsv).join(","),
@@ -162,7 +295,7 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         if (newStatus === "Delivered") {
             setLoading(true);
             const contact = selectedOrder.phone || selectedOrder.email;
-            const res = await sendOrderDeliveryOtp(selectedOrder.id, contact); 
+            const res = await sendOrderDeliveryOtp(selectedOrder.id, contact);
             setLoading(false);
             if (res.success) {
                 setShowOtpModal(true);
@@ -195,7 +328,7 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
 
     const handleOtpChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return;
-        
+
         const newOtp = [...otpValues];
         newOtp[index] = value.substring(value.length - 1);
         setOtpValues(newOtp);
@@ -371,6 +504,42 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                 </div>
             )}
 
+            {assignModalOrder && isSuperAdmin && (
+                <div className="modal-overlay">
+                    <div className="status-modal assign-modal">
+                        <h3>Assign Order to Staff</h3>
+                        <p className="text-muted small">Select a staff member to handle delivery for order <strong>{assignModalOrder.orderNo}</strong></p>
+
+                        <div className="input-group mt-3">
+                            <label>Staff Member</label>
+                            <select
+                                value={selectedStaffId}
+                                onChange={(e) => setSelectedStaffId(e.target.value)}
+                                className="staff-select"
+                            >
+                                <option value="">Select Staff</option>
+                                {availableStaff.map(staff => (
+                                    <option key={staff.id} value={staff.id}>
+                                        {staff.name} ({staff.role})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="modal-actions mt-4">
+                            <button className="cancel-btn" onClick={() => { setAssignModalOrder(null); setSelectedStaffId(""); }}>Cancel</button>
+                            <button
+                                className="save-btn"
+                                onClick={handleAssignStaff}
+                                disabled={loading || !selectedStaffId}
+                            >
+                                {loading ? "Assigning..." : "Assign Order"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="orders-header">
                 <div className="header-info">
                     <h3>Orders List</h3>
@@ -387,14 +556,24 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
             </div>
 
             <div className="table-card">
-                <div className="table-actions">
-                    <div className="search-box">
+
+
+                <div className="mobile-search-filters mobile-only">
+                    <div className="mobile-search-box">
                         <i className="bi bi-search"></i>
                         <input
                             type="text"
-                            placeholder="Search by Order ID or Customer..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search Order ID or Customer..."
+                            value={columnFilters.orderNo || columnFilters.customer}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                // Simple logic: if numeric-ish, search ID, else Customer
+                                if (/^\d/.test(val)) {
+                                    setColumnFilters({ ...columnFilters, orderNo: val, customer: "" });
+                                } else {
+                                    setColumnFilters({ ...columnFilters, customer: val, orderNo: "" });
+                                }
+                            }}
                         />
                     </div>
                 </div>
@@ -403,14 +582,157 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                     <table className="orders-table">
                         <thead>
                             <tr>
-                                <th className="hide-mobile">Order ID</th>
-                                <th>Customer</th>
-                                <th className="hide-mobile">Date</th>
-                                <th className="hide-mobile">Total</th>
-                                <th className="hide-mobile">Status</th>
-                                <th className="hide-mobile">Payment Method</th>
-                                <th className="hide-mobile">Payment Status</th>
-                                <th>Actions</th>
+                                <th className="hide-mobile" style={{ width: '120px' }}>Order ID</th>
+                                <th style={{ width: '180px' }}>Customer</th>
+                                <th className="hide-mobile" style={{ width: '140px' }}>Date</th>
+                                <th className="hide-mobile" style={{ width: '110px' }}>Total</th>
+                                <th className="hide-mobile" style={{ width: '130px' }}>Payment Method</th>
+                                <th className="hide-mobile" style={{ width: '130px' }}>Payment Status</th>
+                                <th className="hide-mobile" style={{ width: '130px' }}>Delivery Status</th>
+                                <th className="hide-mobile" style={{ width: '100px' }}>Pincode</th>
+                                <th style={{ width: '140px' }}>Actions</th>
+                            </tr>
+                            <tr className="filter-row hide-mobile">
+                                <td className="hide-mobile">
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 ID"
+                                        value={columnFilters.orderNo}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, orderNo: e.target.value })}
+                                        className="col-filter-input"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 Customer"
+                                        value={columnFilters.customer}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, customer: e.target.value })}
+                                        className="col-filter-input"
+                                    />
+                                </td>
+                                <td className="hide-mobile calendar-wrapper" style={{ position: 'relative' }}>
+                                    <div
+                                        className="col-filter-input date-trigger"
+                                        onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
+                                    >
+                                        <i className="bi bi-calendar3"></i>
+                                        {columnFilters.startDate || columnFilters.endDate ? (
+                                            <>
+                                                {columnFilters.startDate && format(new Date(columnFilters.startDate), 'MMM dd')}
+                                                {columnFilters.endDate && ` - ${format(new Date(columnFilters.endDate), 'MMM dd')}`}
+                                            </>
+                                        ) : "Select Range"}
+                                        {(columnFilters.startDate || columnFilters.endDate) && (
+                                            <i
+                                                className="bi bi-x-circle-fill clear-date"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setColumnFilters({ ...columnFilters, startDate: "", endDate: "" });
+                                                }}
+                                            ></i>
+                                        )}
+                                    </div>
+
+                                    {dateDropdownOpen && (
+                                        <div className="calendar-dropdown">
+                                            <div className="calendar-header">
+                                                <button type="button" onClick={prevMonth}><i className="bi bi-chevron-left"></i></button>
+                                                <span>{format(viewDate, "MMMM yyyy")}</span>
+                                                <button type="button" onClick={nextMonth}><i className="bi bi-chevron-right"></i></button>
+                                            </div>
+                                            <div className="calendar-weekdays">
+                                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d}>{d}</div>)}
+                                            </div>
+                                            <div className="calendar-grid">
+                                                {generateDays().map((day, i) => (
+                                                    <button
+                                                        key={i}
+                                                        type="button"
+                                                        className={`calendar-day ${!isSameMonth(day, viewDate) ? 'other-month' : ''} ${columnFilters.startDate && isSameDay(day, new Date(columnFilters.startDate)) ? 'selected start' : ''} ${columnFilters.endDate && isSameDay(day, new Date(columnFilters.endDate)) ? 'selected end' : ''} ${columnFilters.startDate && columnFilters.endDate && isWithinInterval(day, { start: new Date(columnFilters.startDate), end: new Date(columnFilters.endDate) }) ? 'in-range' : ''} ${isSameDay(day, new Date()) ? 'today' : ''}`}
+                                                        onClick={() => handleDateSelect(day)}
+                                                    >
+                                                        {format(day, 'd')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="hide-mobile">
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 Amount"
+                                        value={columnFilters.total}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, total: e.target.value })}
+                                        className="col-filter-input"
+                                    />
+                                </td>
+                                <td className="hide-mobile">
+                                    <select
+                                        value={columnFilters.paymentMethod}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, paymentMethod: e.target.value })}
+                                        className="col-filter-select"
+                                    >
+                                        <option value="All">All Methods</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="COD">COD</option>
+                                    </select>
+                                </td>
+                                <td className="hide-mobile">
+                                    <select
+                                        value={columnFilters.paymentStatus}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, paymentStatus: e.target.value })}
+                                        className="col-filter-select"
+                                    >
+                                        <option value="All">All Status</option>
+                                        <option value="Paid">Paid</option>
+                                        <option value="Pending">Pending</option>
+                                    </select>
+                                </td>
+                                <td className="hide-mobile">
+                                    <select
+                                        value={columnFilters.deliveryStatus}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, deliveryStatus: e.target.value })}
+                                        className="col-filter-select"
+                                    >
+                                        <option value="All">All Status</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Shipped">Shipped</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </td>
+                                <td className="hide-mobile">
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 Pin"
+                                        value={columnFilters.pincode}
+                                        onChange={(e) => setColumnFilters({ ...columnFilters, pincode: e.target.value })}
+                                        className="col-filter-input"
+                                    />
+                                </td>
+                                <td>
+                                    <button
+                                        className="clear-filters-btn"
+                                        type="button"
+                                        title="Clear all column filters"
+                                        onClick={() => setColumnFilters({
+                                            orderNo: "",
+                                            customer: "",
+                                            startDate: "",
+                                            endDate: "",
+                                            total: "",
+                                            deliveryStatus: "All",
+                                            pincode: "",
+                                            paymentMethod: "All",
+                                            paymentStatus: "All",
+                                        })}
+                                    >
+                                        <i className="bi bi-x-circle"></i>
+                                    </button>
+                                </td>
                             </tr>
                         </thead>
                         <tbody>
@@ -453,6 +775,20 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                                                             <i className="bi bi-qr-code"></i>
                                                         </button>
                                                     )}
+                                                    {isSuperAdmin && (
+                                                        <button
+                                                            className="icon-btn assign"
+                                                            title={order.status === "Delivered" ? "Order Delivered - Cannot Reassign" : (order.assignedTo ? `Assigned to: ${order.assignedTo.name}` : "Assign to Staff")}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAssignModalOrder(order);
+                                                                setSelectedStaffId(order.assignedTo?.id || "");
+                                                            }}
+                                                            disabled={order.status === "Delivered"}
+                                                        >
+                                                            <i className={`bi ${order.assignedTo ? 'bi-person-check-fill' : 'bi-person-plus'}`}></i>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -463,11 +799,6 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                                     </td>
                                     <td className="hide-mobile">{format(new Date(order.date), 'MMM dd, yyyy')}</td>
                                     <td className="total-amount hide-mobile">{order.total}</td>
-                                    <td className="hide-mobile">
-                                        <span className={`status-badge ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
-                                    </td>
                                     <td className="hide-mobile">
                                         <div className="payment-method-cell">
                                             <span className="payment-method-badge">
@@ -492,6 +823,16 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                                         </span>
                                     </td>
                                     <td className="hide-mobile">
+                                        <span className={`status-badge ${getStatusColor(order.status)}`}>
+                                            {order.status}
+                                        </span>
+                                    </td>
+                                    <td className="hide-mobile">
+                                        <span className="pincode-badge">
+                                            {order.pincode || "—"}
+                                        </span>
+                                    </td>
+                                    <td className="hide-mobile">
                                         <div className="action-btns">
                                             <button className="icon-btn view" title="View Order" onClick={() => router.push(`/admin/orders/${order.id}`)}>
                                                 <i className="bi bi-eye"></i>
@@ -502,6 +843,19 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
                                             <button className="icon-btn payment" title="Update Payment Status" onClick={() => handleOpenPaymentModal(order)} disabled={isOrderCompleted(order)}>
                                                 <i className="bi bi-credit-card"></i>
                                             </button>
+                                            {isSuperAdmin && (
+                                                <button
+                                                    className="icon-btn assign"
+                                                    title={order.status === "Delivered" ? "Order Delivered - Cannot Reassign" : (order.assignedTo ? `Assigned to: ${order.assignedTo.name}` : "Assign to Staff")}
+                                                    onClick={() => {
+                                                        setAssignModalOrder(order);
+                                                        setSelectedStaffId(order.assignedTo?.id || "");
+                                                    }}
+                                                    disabled={order.status === "Delivered"}
+                                                >
+                                                    <i className={`bi ${order.assignedTo ? 'bi-person-check-fill' : 'bi-person-plus'}`}></i>
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -592,9 +946,39 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         .header-info h3 { font-size: 1.5rem; margin: 0; color: #0f172a; font-weight: 700; }
         .header-info p { color: #64748b; margin: 0; }
         .export-btn { display: flex; align-items: center; gap: 0.5rem; padding: 10px 20px; background: #fff; color: #0f172a; border-radius: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; }
-        .table-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; overflow: hidden; }
-        .table-actions { padding: 1.5rem; display: flex; gap: 1rem; border-bottom: 1px solid #f1f5f9; }
-        .search-box { position: relative; flex: 1; }
+        .table-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; position: relative; overflow: visible !important; }
+        .table-responsive { position: static; overflow: visible !important; min-height: 450px; }
+        .table-actions { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; border-bottom: 1px solid #f1f5f9; }
+        
+        .filter-tabs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; }
+        .filter-tab { 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            border: 1px solid #f1f5f9; 
+            background: #fff; 
+            font-size: 0.875rem; 
+            font-weight: 600; 
+            color: #64748b; 
+            cursor: pointer; 
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.2s;
+        }
+        .filter-tab:hover { background: #f8fafc; border-color: #e2e8f0; }
+        .filter-tab.active { background: #ffc451; color: #fff; border-color: #ffc451; box-shadow: 0 4px 12px rgba(255,196,81,0.2); }
+        .filter-tab .count { 
+            font-size: 0.7rem; 
+            background: #f1f5f9; 
+            color: #64748b; 
+            padding: 2px 6px; 
+            border-radius: 6px; 
+            transition: 0.2s;
+        }
+        .filter-tab.active .count { background: rgba(255,255,255,0.2); color: #fff; }
+
+        .search-box { position: relative; width: 100%; }
         .search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         .search-box input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; }
         .orders-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -609,6 +993,7 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         .status-info { background: #e0f2fe; color: #075985; }
         .status-pending { background: #f1f5f9; color: #475569; }
         .status-danger { background: #fee2e2; color: #991b1b; }
+        .pincode-badge { font-family: monospace; font-weight: 600; color: #64748b; background: #f8fafc; padding: 2px 6px; border-radius: 4px; border: 1px solid #f1f5f9; }
         .payment-method-cell { display: inline-flex; align-items: center; gap: 0.4rem; }
         .payment-method-badge { font-size: 0.8125rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: #f1f5f9; color: #475569; }
         .payment-status-badge { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; display: inline-block; min-width: 72px; text-align: center; }
@@ -621,13 +1006,120 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
         .icon-btn.edit { background: #f0f9ff; color: #0369a1; border-color: #f0f9ff; }
         .icon-btn.payment { background: #f0fdf4; color: #166534; border-color: #f0fdf4; }
         .icon-btn.qr-view { background: #eff6ff; color: #1d4ed8; border-color: #eff6ff; }
+        .icon-btn.assign { background: #f5f3ff; color: #7c3aed; border-color: #f5f3ff; }
         .icon-btn:hover:not(:disabled) { background: #ffc451; color: #fff; border-color: #ffc451; transform: translateY(-2px); }
         .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+        .icon-btn.assign i.bi-person-check-fill { color: #7c3aed; }
+        
+        .staff-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.2s;
+            margin-top: 8px;
+        }
+        .staff-select:focus { border-color: #ffc451; box-shadow: 0 0 0 4px rgba(255,196,81,0.1); }
         .upi-qr-modal { text-align: center; }
         .upi-qr-modal :global(.upi-qr-wrap) { justify-content: center; display: flex; flex-direction: column; align-items: center; margin: 0 auto; }
         .action-btns { display: flex; gap: 0.5rem; }
         .payment-save-btn { background: #16a34a !important; }
         .payment-save-btn:hover { background: #15803d !important; }
+
+        .filter-row td { background: #fafbfc !important; padding: 0.75rem 1rem !important; border-bottom: 2px solid #f1f5f9 !important; }
+        .col-filter-input { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8rem; background: #fff; height: 31px; outline: none; transition: 0.2s; }
+        .col-filter-input:focus { border-color: #ffc451; box-shadow: 0 0 0 3px rgba(255,196,81,0.1); }
+        .date-input { font-family: inherit; color: #64748b; }
+        .date-trigger { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.4rem; 
+            cursor: pointer; 
+            color: #64748b; 
+            position: relative;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.8rem;
+        }
+        .date-trigger:hover { background: #fff; border-color: #ffc451; }
+        .clear-date { 
+            position: absolute; 
+            right: 8px; 
+            color: #94a3b8; 
+            font-size: 0.8rem; 
+            transition: 0.2s;
+        }
+        .clear-date:hover { color: #ef4444; }
+
+        .calendar-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            border: 1px solid #f1f5f9;
+            width: 280px;
+            z-index: 1000;
+            padding: 0.75rem;
+        }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .calendar-header span { font-weight: 700; color: #0f172a; font-size: 0.8rem; }
+        .calendar-header button { 
+            background: #f8fafc; 
+            border: 1px solid #f1f5f9; 
+            border-radius: 6px; 
+            width: 24px; 
+            height: 24px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .calendar-header button i { font-size: 0.7rem; }
+        .calendar-header button:hover { background: #f1f5f9; color: #0f172a; }
+
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 2px; }
+        .calendar-weekdays div { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-align: center; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day { 
+            aspect-ratio: 1; 
+            border-radius: 6px; 
+            border: none; 
+            background: #fff; 
+            font-size: 0.75rem; 
+            font-weight: 500; 
+            color: #475569; 
+            cursor: pointer; 
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .calendar-day:hover { background: #f8fafc; color: #ffc451; }
+        .calendar-day.other-month { color: #cbd5e1; }
+        .calendar-day.selected { background: #ffc451; color: #fff; font-weight: 700; }
+        .calendar-day.selected.start { border-radius: 6px 0 0 6px; }
+        .calendar-day.selected.end { border-radius: 0 6px 6px 0; }
+        .calendar-day.in-range { background: rgba(255,196,81,0.1) !important; color: #ffc451; border-radius: 0; }
+        .calendar-day.in-range:hover { background: rgba(255,196,81,0.2) !important; }
+        .calendar-day.today { border: 1px solid #ffc451; color: #ffc451; }
+        .calendar-day.today.selected { border-color: transparent; }
+
+        .col-filter-select { width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8rem; background: #fff; height: 31px; outline: none; transition: 0.2s; }
+        .col-filter-select:focus { border-color: #ffc451; box-shadow: 0 0 0 3px rgba(255,196,81,0.1); }
+        .status-placeholder { text-align: center; color: #94a3b8; font-size: 0.8rem; height: 31px; }
+        .clear-filters-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; width: 100%; transition: 0.2s; }
+        .clear-filters-btn:hover { color: #ef4444; transform: scale(1.1); }
 
         .pagination {
           display: flex;
@@ -687,6 +1179,35 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
             .table-card { background: transparent; border: none; }
             .table-actions { padding: 0 0 1rem 0; background: transparent; border: none; }
             .search-box input { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+            .mobile-search-filters {
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+            .mobile-search-box {
+                position: relative;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 0 1rem;
+                height: 48px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            }
+            .mobile-search-box i { color: #94a3b8; font-size: 1rem; margin-right: 0.75rem; }
+            .mobile-search-box input {
+                flex: 1;
+                border: none;
+                outline: none;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #1e293b;
+                background: transparent;
+                padding: 0;
+            }
+            .mobile-search-box input::placeholder { color: #cbd5e1; font-weight: 500; }
 
             .orders-table, .orders-table tbody, .orders-table tr, .orders-table td { display: block; width: 100%; }
             .orders-table thead, .hide-mobile { display: none !important; }
@@ -789,13 +1310,10 @@ export default function OrdersClient({ initialOrders }: OrdersClientProps) {
             }
             .action-icons { display: flex; gap: 0.4rem; }
             .action-icons .icon-btn {
-                width: 32px;
-                height: 32px;
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                color: #64748b;
+                width: 34px;
+                height: 34px;
                 border-radius: 8px;
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
             
             .pagination {

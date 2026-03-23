@@ -841,3 +841,120 @@ export function CategoryFilterShimmer() {
         </div>
     );
 }
+/** Shimmer for Hero Banners or Shop Banners in admin */
+export function AdminWebsiteBannersShimmer() {
+    return (
+        <div className="admin-banners-shimmer">
+            <div className="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <ShimmerBox style={{ height: 32, width: 220, marginBottom: 8 }} />
+                    <ShimmerBox style={{ height: 16, width: 350 }} />
+                </div>
+                <ShimmerBox style={{ height: 48, width: 180, borderRadius: 12 }} />
+            </div>
+            <div className="row g-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="col-xl-4 col-md-6">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                            <ShimmerBox style={{ width: '100%', height: 180 }} />
+                            <div className="p-4">
+                                <ShimmerBox style={{ height: 16, width: 80, marginBottom: 20 }} />
+                                <div className="d-flex gap-2">
+                                    <ShimmerBox style={{ height: 38, flex: 1, borderRadius: 8 }} />
+                                    <ShimmerBox style={{ height: 38, flex: 1, borderRadius: 8 }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/** Shimmer for About Us admin page */
+export function AdminAboutUsShimmer() {
+    return (
+        <div className="admin-about-shimmer">
+            <div className="mb-5">
+                <ShimmerBox style={{ height: 32, width: 180, marginBottom: 8 }} />
+                <ShimmerBox style={{ height: 16, width: '40%' }} />
+            </div>
+            <div className="row g-4">
+                <div className="col-lg-8">
+                    <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+                        <ShimmerBox style={{ height: 24, width: 140, marginBottom: 30 }} />
+                        <div className="row g-4">
+                            <div className="col-12">
+                                <ShimmerBox style={{ height: 14, width: 120, marginBottom: 8 }} />
+                                <ShimmerBox style={{ height: 48, width: '100%', borderRadius: 12 }} />
+                            </div>
+                            <div className="col-12">
+                                <ShimmerBox style={{ height: 14, width: 120, marginBottom: 8 }} />
+                                <ShimmerBox style={{ height: 120, width: '100%', borderRadius: 12 }} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                        <ShimmerBox style={{ height: 24, width: 140, marginBottom: 30 }} />
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="mb-3 d-flex gap-2">
+                                <ShimmerBox style={{ height: 44, flex: 1, borderRadius: 10 }} />
+                                <ShimmerBox style={{ height: 44, width: 44, borderRadius: 10 }} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="col-lg-4">
+                    <div className="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style={{ top: 20 }}>
+                        <ShimmerBox style={{ height: 22, width: 150, marginBottom: 20 }} />
+                        <ShimmerBox style={{ width: '100%', height: 250, borderRadius: 16, marginBottom: 20 }} />
+                        <ShimmerBox style={{ height: 48, width: '100%', borderRadius: 12 }} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/** Shimmer for Stats Section admin page */
+export function AdminStatsSectionShimmer() {
+    return (
+        <div className="admin-stats-shimmer">
+            <div className="mb-5">
+                <ShimmerBox style={{ height: 32, width: 220, marginBottom: 8 }} />
+                <ShimmerBox style={{ height: 16, width: '30%' }} />
+            </div>
+            <div className="row g-4">
+                <div className="col-lg-8">
+                    <div className="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                        <div className="d-flex justify-content-between mb-4">
+                            <ShimmerBox style={{ height: 22, width: 180 }} />
+                            <ShimmerBox style={{ height: 38, width: 120, borderRadius: 10 }} />
+                        </div>
+                        <div className="row g-4">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="col-md-6">
+                                    <div className="p-3 rounded-4 border">
+                                        <ShimmerBox style={{ height: 18, width: 60, marginBottom: 16 }} />
+                                        <ShimmerBox style={{ height: 14, width: 100, marginBottom: 8 }} />
+                                        <ShimmerBox style={{ height: 44, width: '100%', borderRadius: 10, marginBottom: 16 }} />
+                                        <ShimmerBox style={{ height: 14, width: 80, marginBottom: 8 }} />
+                                        <ShimmerBox style={{ height: 44, width: '100%', borderRadius: 10 }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="col-lg-4">
+                    <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <ShimmerBox style={{ height: 22, width: 150, marginBottom: 20 }} />
+                        <ShimmerBox style={{ width: '100%', height: 250, borderRadius: 16, marginBottom: 20 }} />
+                        <ShimmerBox style={{ height: 48, width: '100%', borderRadius: 12 }} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
