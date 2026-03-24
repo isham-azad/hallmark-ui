@@ -30,8 +30,8 @@ export async function POST(request: Request) {
         const lastRequested = adminData.otpRequestedAt?.toDate?.() || new Date(0);
         const secondsSinceLast = (Date.now() - lastRequested.getTime()) / 1000;
         if (secondsSinceLast < 60) {
-            return NextResponse.json({ 
-                error: `Please wait ${Math.ceil(60 - secondsSinceLast)} seconds before requesting again.` 
+            return NextResponse.json({
+                error: `Please wait ${Math.ceil(60 - secondsSinceLast)} seconds before requesting again.`
             }, { status: 429 });
         }
 
@@ -53,7 +53,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Failed to send OTP SMS" }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, message: "OTP sent successfully" });
+        // Added OTP in the Response for Testing Purpose
+
+        return NextResponse.json({ success: true, message: "OTP sent successfully", otp });
     } catch (error) {
         console.error("Login Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
