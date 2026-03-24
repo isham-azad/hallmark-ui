@@ -34,8 +34,10 @@ export default function AdminLogin() {
         showToast("OTP sent successfully", "success");
       } else {
         // for testing purpose need to show the OTP in the OTP screen
+        setStep(2);
         setOtpTest(data.otp);
         setShowOtp(true);
+
         showToast(data.error || "Failed to send OTP", "error");
       }
     } catch (error) {
