@@ -5,141 +5,152 @@ import { useRouter } from "next/navigation";
 import { useAdminToast } from "@/components/AdminToast";
 
 export default function AdminLogin() {
-    const [email, setEmail] = useState("");
-    const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
-    const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const otp = digits.join("");
-    const [step, setStep] = useState(1); // 1: Email, 2: OTP
-    const router = useRouter();
-    const { showToast, ToastComponent } = useAdminToast();
+  const [email, setEmail] = useState("");
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const otp = digits.join("");
+  const [step, setStep] = useState(1); // 1: Email, 2: OTP
+  const router = useRouter();
+  const { showToast, ToastComponent } = useAdminToast();
 
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const handleSendOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const res = await fetch("/api/admin/login/send-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setStep(2);
-                showToast("OTP sent successfully", "success");
-            } else {
-                showToast(data.error || "Failed to send OTP", "error");
-            }
-        } catch (error) {
-            showToast("An error occurred. Please try again.", "error");
-        } finally {
-            setLoading(false);
+  // for testing purpose need to show the OTP in the OTP screen
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpTest, setOtpTest] = useState("");
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/login/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStep(2);
+        showToast("OTP sent successfully", "success");
+
+        // for testing purpose need to show the OTP in the OTP screen
+        setOtpTest(data.otp);
+        setShowOtp(true);
+      } else {
+        showToast(data.error || "Failed to send OTP", "error");
+      }
+    } catch (error) {
+      showToast("An error occurred. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Store user info for client-side permissions check
+        if (data.admin) {
+          localStorage.setItem("admin_user", JSON.stringify(data.admin));
         }
-    };
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const res = await fetch("/api/admin/login/verify-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                // Store user info for client-side permissions check
-                if (data.admin) {
-                    localStorage.setItem("admin_user", JSON.stringify(data.admin));
-                }
-                showToast("Login successful!", "success");
-                setTimeout(() => router.push("/admin"), 500);
-            } else {
-                showToast(data.error || "Invalid OTP", "error");
-            }
-        } catch (error) {
-            showToast("An error occurred. Please try again.", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
+        showToast("Login successful!", "success");
+        setTimeout(() => router.push("/admin"), 500);
+      } else {
+        showToast(data.error || "Invalid OTP", "error");
+      }
+    } catch (error) {
+      showToast("An error occurred. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
-    return (
-        <div className="admin-login-container">
-            {ToastComponent}
-            <div className="login-card">
-                <div className="login-header">
-                    <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
-                    <p>{step === 1 ? "Enter your email to receive OTP" : "Enter the 6-digit code sent to your email"}</p>
-                </div>
+  return (
+    <div className="admin-login-container">
+      {ToastComponent}
+      <div className="login-card">
+        <div className="login-header">
+          <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
+          <p>{step === 1 ? "Enter your email to receive OTP" : "Enter the 6-digit code sent to your email"}</p>
+        </div>
 
-                <form onSubmit={step === 1 ? handleSendOtp : handleLogin} className="login-form">
-                    {step === 1 ? (
-                        <div className="form-group">
-                            <label>Email Address</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@hallmark.com"
-                                required
-                            />
+        <form onSubmit={step === 1 ? handleSendOtp : handleLogin} className="login-form">
+          {step === 1 ? (
+            <div className="form-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@hallmark.com"
+                required
+              />
 
-                            <button type="submit" className="login-btn" disabled={loading}>
-                                {loading ? "Processing..." : "Send OTP"}
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="form-group">
-                            <label>OTP Code</label>
-                            <div className="otp-inputs">
-                                {digits.map((d, i) => (
-                                    <input
-                                        key={i}
-                                        ref={(el) => { digitRefs.current[i] = el; }}
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength={1}
-                                        value={d}
-                                        className="otp-box"
-                                        onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, "").slice(-1);
-                                            const next = [...digits];
-                                            next[i] = val;
-                                            setDigits(next);
-                                            if (val && i < 5) digitRefs.current[i + 1]?.focus();
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Backspace" && !digits[i] && i > 0) {
-                                                digitRefs.current[i - 1]?.focus();
-                                            }
-                                        }}
-                                        onPaste={(e) => {
-                                            e.preventDefault();
-                                            const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-                                            if (!pasted) return;
-                                            const next = ["", "", "", "", "", ""];
-                                            pasted.split("").forEach((ch, idx) => { next[idx] = ch; });
-                                            setDigits(next);
-                                            const focusIdx = Math.min(pasted.length, 5);
-                                            digitRefs.current[focusIdx]?.focus();
-                                        }}
-                                        onFocus={(e) => e.target.select()}
-                                    />
-                                ))}
-                            </div>
-                            <button type="submit" className="login-btn" disabled={loading || otp.length < 6}>
-                                {loading ? "Verifying..." : "Verify & Login"}
-                            </button>
-                            <button type="button" className="back-btn" onClick={() => { setStep(1); setDigits(["", "", "", "", "", ""]); }} disabled={loading}>Back to Email</button>
-                        </div>
-                    )}
-                </form>
+              <button type="submit" className="login-btn" disabled={loading}>
+                {loading ? "Processing..." : "Send OTP"}
+              </button>
             </div>
+          ) : (
+            <div className="form-group">
+              <label>OTP Code</label>
+              <div className="otp-inputs">
+                {digits.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => { digitRefs.current[i] = el; }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    className="otp-box"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(-1);
+                      const next = [...digits];
+                      next[i] = val;
+                      setDigits(next);
+                      if (val && i < 5) digitRefs.current[i + 1]?.focus();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !digits[i] && i > 0) {
+                        digitRefs.current[i - 1]?.focus();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                      if (!pasted) return;
+                      const next = ["", "", "", "", "", ""];
+                      pasted.split("").forEach((ch, idx) => { next[idx] = ch; });
+                      setDigits(next);
+                      const focusIdx = Math.min(pasted.length, 5);
+                      digitRefs.current[focusIdx]?.focus();
+                    }}
+                    onFocus={(e) => e.target.select()}
+                  />
+                ))}
+              </div>
+              {showOtp && (
+                <p style={{ color: "#fff", textAlign: "center", marginTop: "1rem" }}>OTP: {otpTest}</p>
+              )}
+              <button type="submit" className="login-btn" disabled={loading || otp.length < 6}>
+                {loading ? "Verifying..." : "Verify & Login"}
+              </button>
+              <button type="button" className="back-btn" onClick={() => { setStep(1); setDigits(["", "", "", "", "", ""]); }} disabled={loading}>Back to Email</button>
+            </div>
+          )}
+        </form>
+      </div>
 
-            <style jsx>{`
+      <style jsx>{`
         .admin-login-container {
           min-height: 100vh;
           display: flex;
@@ -276,6 +287,6 @@ export default function AdminLogin() {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
