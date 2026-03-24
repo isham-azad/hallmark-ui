@@ -50,12 +50,11 @@ export async function POST(request: Request) {
         const smsSent = await sendSmsOtp(phone, otp);
 
         if (!smsSent) {
-            return NextResponse.json({ error: "Failed to send OTP SMS" }, { status: 500 });
+            // for testing purpose need to show the OTP in the OTP screen
+            return NextResponse.json({ error: "Failed to send OTP SMS", otp }, { status: 500 });
         }
 
-        // Added OTP in the Response for Testing Purpose
-
-        return NextResponse.json({ success: true, message: "OTP sent successfully", otp });
+        return NextResponse.json({ success: true, message: "OTP sent successfully" });
     } catch (error) {
         console.error("Login Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
