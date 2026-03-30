@@ -45,7 +45,7 @@ function sortPaymentMethodsWithCodLast(list: PaymentMethodOption[]): PaymentMeth
 export default function CheckoutPage() {
     const router = useRouter();
     const { cart, clearCart } = useCart();
-    const { cartWithDetails, cartTotalFromDb, totalSavings, loading: cartLoading } = useCartWithProducts(cart);
+    const { cartWithDetails, cartTotalFromDb, totalSavings, loading: cartLoading, isB2B } = useCartWithProducts(cart);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showShipping, setShowShipping] = useState(false);
@@ -57,6 +57,8 @@ export default function CheckoutPage() {
     const [otp, setOtp] = useState("");
     const [isVerifyingMobile, setIsVerifyingMobile] = useState(false);
     const [mobileStatus, setMobileStatus] = useState<string | null>(null);
+    const [showOtp, setShowOtp] = useState(false);
+    const [otpTest, setOtpTest] = useState("");
     const [form, setForm] = useState({
         firstName: "",
         lastName: "",
@@ -68,6 +70,14 @@ export default function CheckoutPage() {
         shippingName: "",
         shippingAddress: "",
     });
+
+    useEffect(() => {
+        if (isB2B && checkoutStep === "mobile") {
+             setCheckoutStep("billing");
+             // Also pre-fill phone if available from session? 
+             // For now just skip verification as requested.
+        }
+    }, [isB2B, checkoutStep]);
 
     useEffect(() => {
         fetch("/api/site/payment-methods")
@@ -148,6 +158,13 @@ export default function CheckoutPage() {
                 setCheckoutStep("otp");
                 setMobileStatus("OTP sent successfully! Please check your mobile phone.");
                 setPincodeStatus("available");
+                setShowOtp(false);
+            } else if (data.otp) {
+                // for testing purpose need to show the OTP in the OTP screen
+                setCheckoutStep("otp");
+                setSubmitError(data.error || "Failed to send OTP. Please try again.");
+                setOtpTest(data.otp);
+                setShowOtp(true);
             } else {
                 setSubmitError(data.error || "Failed to send OTP. Please try again.");
             }
@@ -202,7 +219,7 @@ export default function CheckoutPage() {
 
     const zipDigits = form.zip.trim().replace(/\D/g, "").length;
     const pincodeRequired = zipDigits === 6;
-    const canPlaceOrder = !pincodeRequired || pincodeStatus === "available";
+    const canPlaceOrder = isB2B || !pincodeRequired || pincodeStatus === "available";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -420,6 +437,12 @@ export default function CheckoutPage() {
                                                     autoFocus
                                                 />
                                             </div>
+                                            {showOtp && (
+                                                <div className="alert alert-info py-2 px-3 mb-4 text-center border-info border-opacity-25" style={{ backgroundColor: 'rgba(13, 202, 240, 0.05)' }}>
+                                                    <i className="bi bi-info-circle me-2"></i>
+                                                    <strong>Test OTP:</strong> <span className="badge bg-info text-dark ms-1" style={{ fontSize: '1.1rem', letterSpacing: '2px' }}>{otpTest}</span>
+                                                </div>
+                                            )}
                                             <div className="d-flex gap-3">
                                                 <button
                                                     type="button"
@@ -496,14 +519,18 @@ export default function CheckoutPage() {
                                                                 inputMode="numeric"
                                                                 className="form-control"
                                                                 required
-                                                                disabled
-                                                                style={{ backgroundColor: "#f1f5f9", flex: "1", minWidth: "80px" }}
+                                                                disabled={pincodeStatus === "available" && !isB2B}
+                                                                style={{ backgroundColor: (pincodeStatus === "available" && !isB2B) ? "#f1f5f9" : "#fff", flex: "1", minWidth: "80px" }}
                                                                 value={form.zip}
+                                                                onChange={handleChange("zip")}
                                                                 placeholder="679577"
+                                                                maxLength={6}
                                                             />
-                                                            <div className="text-success small d-flex align-items-center gap-1">
-                                                                <i className="bi bi-patch-check-fill" /> Verified
-                                                            </div>
+                                                            {(pincodeStatus === "available" && !isB2B) && (
+                                                                <div className="text-success small d-flex align-items-center gap-1">
+                                                                    <i className="bi bi-patch-check-fill" /> Verified
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -591,32 +618,37 @@ export default function CheckoutPage() {
                                     <div className="order-items mb-3 overflow-auto" style={{ maxHeight: "300px" }}>
                                         {cartWithDetails.map((item) => (
                                             <div key={`${item.id}-${item.packSize}`} className="order-item d-flex align-items-center gap-3 mb-3 border-bottom pb-2">
-                                                <div className="flex-shrink-0 bg-light rounded" style={{ width: "50px", height: "50px", overflow: "hidden", border: "1px solid #f1f5f9" }}>
+                                                <div className="flex-shrink-0 bg-white rounded" style={{ width: "50px", height: "50px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
                                                     <img
                                                         src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
                                                         alt={item.nameFromDb}
                                                         className="img-fluid w-100 h-100"
-                                                        style={{ objectFit: "cover" }}
+                                                        style={{ objectFit: "contain", width: "100%", height: "100%", padding: "4px" }}
                                                     />
                                                 </div>
                                                 <div className="flex-grow-1" style={{ minWidth: 0 }}>
                                                     <div className="fw-bold small text-truncate" title={item.nameFromDb}>{item.nameFromDb}</div>
-                                                    <p className="small text-muted mb-0">
+                                                    <p className="small text-muted mb-0" style={{ fontSize: '0.7rem' }}>
                                                         Qty: {item.quantity} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
                                                     </p>
+                                                    {isB2B && item.originalPriceFromDb > item.priceFromDb && (
+                                                        <div className="text-success fw-bold" style={{ fontSize: '0.65rem' }}>
+                                                            MRP Profit: ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <span className="fw-bold small flex-shrink-0 text-nowrap">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="summary-item d-flex justify-content-between mb-2">
-                                        <span>Subtotal:</span>
-                                        <span className="fw-bold">{cartLoading ? "—" : `₹${Math.max(0, cartTotalFromDb + totalSavings).toFixed(2)}`}</span>
+                                        <span>{isB2B ? "MRP Total:" : "Subtotal:"}</span>
+                                        <span className="fw-bold">{cartLoading ? "—" : `₹${(cartTotalFromDb + totalSavings).toFixed(2)}`}</span>
                                     </div>
                                     {totalSavings > 0 && (
                                         <div className="summary-item d-flex justify-content-between mb-2 text-success" style={{ fontSize: "0.9rem" }}>
-                                            <span>Volume Savings:</span>
-                                            <span className="fw-bold">-₹{totalSavings.toFixed(2)}</span>
+                                            <span>{isB2B ? "MRP Profit:" : "Volume Savings:"}</span>
+                                            <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)</span>
                                         </div>
                                     )}
 

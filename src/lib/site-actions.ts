@@ -67,6 +67,7 @@ export async function getSiteProducts() {
                     categoryName: categoryNames[data.categoryId],
                     brandName: brandNames[data.brandId],
                     howToUse: data.howToUse || "",
+                    b2bPricingTiers: data.b2bPricingTiers || [],
                     updatedAt: data.updatedAt?.toMillis?.() || 0,
                 };
             })

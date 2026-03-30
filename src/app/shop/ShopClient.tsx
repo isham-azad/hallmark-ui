@@ -12,8 +12,10 @@ interface ShopProduct {
     price: number;
     oldPrice: number;
     image: string;
+    images: string[];
     description: string;
     sku?: string;
+    b2bPricingTiers?: { minQty: number; price: string }[];
 }
 
 function mapApiProductToShop(p: {
@@ -28,15 +30,20 @@ function mapApiProductToShop(p: {
 }): ShopProduct {
     const priceNum = p.price ? parseFloat(p.price.replace(/[^0-9.]/g, "")) || 0 : 0;
     const oldPriceNum = p.wasPrice ? parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) || 0 : priceNum;
+    const defaultImg = "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg";
+    const images = (p.image || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (images.length === 0) images.push(defaultImg);
     return {
         id: p.id,
         name: p.title,
         category: p.category,
         price: priceNum,
         oldPrice: oldPriceNum,
-        image: p.image?.split(',')[0] || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
+        image: images[0],
+        images,
         description: p.desc || "",
         sku: (p as any).sku || "",
+        b2bPricingTiers: (p as any).b2bPricingTiers || [],
     };
 }
 
@@ -55,9 +62,40 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
     const sentinelRef = useRef<HTMLDivElement>(null);
     const [shopBanners, setShopBanners] = useState<{ id: string; image: string }[]>(initialData?.banners ?? []);
     const [currentBanner, setCurrentBanner] = useState(0);
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [hoverImgIdx, setHoverImgIdx] = useState(0);
+    const hoverIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [isB2B, setIsB2B] = useState(false);
+
+    const handleProductMouseEnter = (product: ShopProduct) => {
+        setHoveredId(product.id);
+        setHoverImgIdx(0);
+        if (product.images.length > 1) {
+            if (hoverIntervalRef.current) clearInterval(hoverIntervalRef.current);
+            hoverIntervalRef.current = setInterval(() => {
+                setHoverImgIdx(prev => (prev + 1) % product.images.length);
+            }, 1200);
+        }
+    };
+
+    const handleProductMouseLeave = () => {
+        setHoveredId(null);
+        setHoverImgIdx(0);
+        if (hoverIntervalRef.current) {
+            clearInterval(hoverIntervalRef.current);
+            hoverIntervalRef.current = null;
+        }
+    };
 
     useEffect(() => {
+        // Always check B2B status
+        fetch("/api/b2b/me")
+            .then((r) => r.json())
+            .then((b2bRes) => setIsB2B(b2bRes.authenticated ?? false))
+            .catch(() => setIsB2B(false));
+
         if (initialData) return;
+
         setProductsLoading(true);
         Promise.all([
             fetch("/api/site/products").then((r) => r.json()),
@@ -91,7 +129,8 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
             const matchesSearch = !q ||
                 product.name.toLowerCase().includes(q) ||
                 product.description.toLowerCase().includes(q);
-            return matchesCategory && matchesSearch;
+            const matchesB2B = !isB2B || (product.b2bPricingTiers && product.b2bPricingTiers.some(t => t.price && t.price.trim() !== ""));
+            return matchesCategory && matchesSearch && matchesB2B;
         })
         .sort((a, b) => {
             if (sortOrder === "name-asc") return a.name.localeCompare(b.name);
@@ -385,7 +424,11 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                         <div className="row gy-4" id="productsContainer">
                             {displayedProducts.map((product) => (
                                 <div key={product.id} className="col-6 col-lg-3 col-md-4 col-sm-6 product-item-wrapper" data-aos="fade-up">
-                                    <div className="product-item">
+                                    <div
+                                        className="product-item"
+                                        onMouseEnter={() => handleProductMouseEnter(product)}
+                                        onMouseLeave={handleProductMouseLeave}
+                                    >
                                         <div className="product-img" style={{ position: "relative" }}>
                                             <span
                                                 className="badge bg-success"
@@ -405,11 +448,71 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                 {product.category === "food-beverages" ? "Food & Beverages" :
                                                     product.category.replace("-", " ")}
                                             </span>
-                                            <img src={product.image} alt={product.name} className="img-fluid" />
-                                            <div className="product-overlay">
+                                            <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        width: `${product.images.length * 100}%`,
+                                                        height: '100%',
+                                                        transform: `translateX(-${product.images.length > 1 ? (hoveredId === product.id ? (hoverImgIdx % product.images.length) * (100 / product.images.length) : 0) : 0}%)`,
+                                                        transition: 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)',
+                                                        willChange: 'transform'
+                                                    }}
+                                                >
+                                                    {product.images.map((img, idx) => (
+                                                        <div key={idx} style={{ width: `${100 / product.images.length}%`, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}>
+                                                            <img
+                                                                src={img}
+                                                                alt={`${product.name} - ${idx + 1}`}
+                                                                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {product.images.length > 1 && (
+                                                <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '4px', zIndex: 4 }}>
+                                                    {product.images.map((_, dotIdx) => (
+                                                        <span
+                                                            key={dotIdx}
+                                                            style={{
+                                                                width: hoveredId === product.id && (hoverImgIdx % product.images.length) === dotIdx ? '14px' : '5px',
+                                                                height: '5px',
+                                                                borderRadius: '3px',
+                                                                background: hoveredId === product.id && (hoverImgIdx % product.images.length) === dotIdx ? '#ffc451' : 'rgba(0,0,0,0.15)',
+                                                                transition: 'all 0.4s ease',
+                                                                display: 'inline-block',
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="product-overlay" style={{ background: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '30px' }}>
                                                 <button
-                                                    className="btn btn-sm btn-primary add-to-cart-btn"
-                                                    onClick={() => addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, sku: product.sku }, 1, "Standard")}
+                                                    className="add-to-cart-btn"
+                                                    style={{
+                                                        backgroundColor: '#ffffff',
+                                                        color: '#000000',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        padding: '10px 22px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '700',
+                                                        textTransform: 'uppercase',
+                                                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                                                        transition: 'all 0.3s ease',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={() => {
+                                                        let finalPrice = product.price;
+                                                        if (isB2B && product.b2bPricingTiers && product.b2bPricingTiers.length > 0) {
+                                                            const tier1 = product.b2bPricingTiers.find(t => Number(t.minQty) === 1);
+                                                            if (tier1) {
+                                                                finalPrice = parseFloat(tier1.price.replace(/[^0-9.]/g, "")) || finalPrice;
+                                                            }
+                                                        }
+                                                        addToCart({ id: product.id, name: product.name, price: finalPrice, image: product.image, category: product.category, sku: product.sku }, 1, "Standard");
+                                                    }}
                                                 >
                                                     Add to Cart
                                                 </button>
@@ -418,18 +521,50 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                         <div className="product-info">
                                             <h4><Link href={`/shop/product/${product.id}`}>{product.name}</Link></h4>
                                             <p className="product-description">{product.description}</p>
-                                            <p className="product-price">
-                                                {product.price > 0 ? (
-                                                    <>
-                                                        <span className="current-price">₹{product.price}</span>
-                                                        {product.oldPrice > product.price && (
-                                                            <span className="old-price ms-2">₹{product.oldPrice}</span>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <span className="current-price">Contact for Price</span>
-                                                )}
-                                            </p>
+                                            <div className="product-price-container" style={{ marginTop: '12px' }}>
+                                                {(() => {
+                                                    let displayPrice = product.price;
+                                                    let displayOldPrice = product.oldPrice;
+
+                                                    if (isB2B && product.b2bPricingTiers && product.b2bPricingTiers.length > 0) {
+                                                        const tier1 = product.b2bPricingTiers.find(t => Number(t.minQty) === 1);
+                                                        if (tier1) {
+                                                            displayPrice = parseFloat(tier1.price.replace(/[^0-9.]/g, "")) || displayPrice;
+                                                        }
+                                                    }
+
+                                                    if (displayPrice > 0) {
+                                                        return (
+                                                            <>
+                                                                <div className="d-flex align-items-end gap-2 flex-wrap" style={{ color: "#1e293b" }}>
+                                                                    <div className="d-flex" style={{ alignItems: 'flex-start' }}>
+                                                                        <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
+                                                                        <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
+                                                                            {displayPrice.toLocaleString('en-IN')}
+                                                                        </span>
+                                                                    </div>
+                                                                    {displayOldPrice > displayPrice && (
+                                                                        <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
+                                                                            <span style={{ fontWeight: "500" }}>M.R.P.:</span>
+                                                                            <span style={{ textDecoration: "line-through" }}>₹{displayOldPrice.toLocaleString('en-IN')}</span>
+                                                                            <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)}% off)</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="d-flex justify-content-between align-items-center">
+                                                                    <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
+                                                                        Inclusive of all taxes
+                                                                    </div>
+                                                                    {isB2B && product.b2bPricingTiers && product.b2bPricingTiers.some(t => Number(t.minQty) === 1 && t.price && t.price.trim() !== "") && (
+                                                                        <span className="badge bg-primary" style={{ fontSize: '0.6rem' }}>B2B Price</span>
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        );
+                                                    }
+                                                    return <span className="current-price" style={{ fontSize: "0.95rem", fontWeight: "600", color: "#64748b" }}>Contact for Price</span>;
+                                                })()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

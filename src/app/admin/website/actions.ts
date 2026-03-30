@@ -238,3 +238,40 @@ export async function deleteShopBanner(id: string) {
         return { success: false, error: error.message };
     }
 }
+
+// Investors Section
+export async function getInvestorsSection() {
+    try {
+        await verifyAuth(PERMISSIONS.MANAGE_WEBSITE);
+        const doc = await db.collection("website_settings").doc("investors").get();
+        return doc.exists ? doc.data() : null;
+    } catch (error: any) {
+        console.error("Failed to get investors section:", error);
+        return null;
+    }
+}
+
+export async function updateInvestorsSection(data: {
+    badgeText: string;
+    titleLight: string;
+    titleBold: string;
+    description: string;
+    cards: { icon: string; title: string; description: string }[];
+    bottomText: string;
+}) {
+    try {
+        const session = await verifyAuth(PERMISSIONS.MANAGE_WEBSITE);
+        await db.collection("website_settings").doc("investors").set({
+            ...data,
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        await logAction(session.email, session.name, "UPDATE_INVESTORS_SECTION", data);
+        revalidatePath("/");
+        revalidatePath("/admin/website/investors");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to update investors section:", error);
+        return { success: false, error: error.message };
+    }
+}

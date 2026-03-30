@@ -19,6 +19,9 @@ export default function BrandAddClient() {
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+    const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
+    const bannerInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -35,6 +38,21 @@ export default function BrandAddClient() {
         setImagePreviewUrl("");
     };
 
+    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !file.type.startsWith("image/")) return;
+        if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+        setBannerFile(file);
+        setBannerPreviewUrl(URL.createObjectURL(file));
+        if (bannerInputRef.current) bannerInputRef.current.value = "";
+    };
+
+    const removeBanner = () => {
+        if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+        setBannerFile(null);
+        setBannerPreviewUrl("");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -43,6 +61,7 @@ export default function BrandAddClient() {
             form.set("name", formData.name);
             form.set("summary", formData.summary);
             if (imageFile) form.set("image", imageFile);
+            if (bannerFile) form.set("banner", bannerFile);
 
             const res = await fetch("/api/admin/brands/create", { method: "POST", body: form });
             const result = await res.json();
@@ -134,6 +153,45 @@ export default function BrandAddClient() {
                                         onClick={removeImage}
                                     >
                                         Remove image
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="input-group">
+                                <label>Brand Banner (Header Background)</label>
+                                <div
+                                    className="upload-zone banner-zone"
+                                    onClick={() => bannerInputRef.current?.click()}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === "Enter" && bannerInputRef.current?.click()}
+                                >
+                                    <input
+                                        ref={bannerInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleBannerChange}
+                                        className="hidden-input"
+                                    />
+                                    {bannerPreviewUrl ? (
+                                        <>
+                                            <img src={bannerPreviewUrl} alt="Banner Preview" className="preview-img banner-preview" />
+                                            <span>Click to change banner</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-aspect-ratio"></i>
+                                            <span>Choose banner image</span>
+                                        </>
+                                    )}
+                                </div>
+                                {bannerFile && (
+                                    <button
+                                        type="button"
+                                        className="remove-image-btn"
+                                        onClick={removeBanner}
+                                    >
+                                        Remove banner
                                     </button>
                                 )}
                             </div>
@@ -288,6 +346,18 @@ export default function BrandAddClient() {
         .upload-zone i {
           font-size: 2rem;
           color: #ffc451;
+        }
+
+        .banner-zone {
+            grid-column: span 2;
+            min-height: 180px;
+        }
+
+        .banner-preview {
+            max-height: 160px !important;
+            width: 100%;
+            object-fit: cover !important;
+            border-radius: 8px;
         }
 
         .upload-zone span {

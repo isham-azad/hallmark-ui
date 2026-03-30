@@ -154,7 +154,9 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <span className="text-muted italic small">General Inquiry</span>
+                                                <span className="text-muted italic small">
+                                                    {e.type ? e.type.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : "General Inquiry"}
+                                                </span>
                                             )}
                                         </td>
                                         <td>
@@ -213,10 +215,15 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                             <i className="bi bi-telephone"></i>
                                             <span>{e.phone}</span>
                                         </div>
-                                        {e.product && (
+                                        {e.product ? (
                                             <div className="info-item">
                                                 <i className="bi bi-box"></i>
                                                 <span>{e.product.name}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="info-item">
+                                                <i className="bi bi-info-circle"></i>
+                                                <span>{e.type ? e.type.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : "General Inquiry"}</span>
                                             </div>
                                         )}
                                         <div className="info-item status-item">

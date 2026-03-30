@@ -31,6 +31,10 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
         categoryId: categories[0]?.id ?? "",
         howToUse: "",
         b2bPricingTiers: [{ minQty: 1, price: "" }],
+        isReturnable: true,
+        isDeliveredByHallmark: true,
+        isFreeDelivery: false,
+        isSecureTransaction: true,
     });
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -71,6 +75,10 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
         form.set("sku", formData.sku);
         form.set("stock", formData.stock);
         form.set("b2bPricingTiers", JSON.stringify(formData.b2bPricingTiers));
+        form.set("isReturnable", String(formData.isReturnable));
+        form.set("isDeliveredByHallmark", String(formData.isDeliveredByHallmark));
+        form.set("isFreeDelivery", String(formData.isFreeDelivery));
+        form.set("isSecureTransaction", String(formData.isSecureTransaction));
         imageFiles.forEach((file) => form.append("images", file));
 
         try {
@@ -256,6 +264,53 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
                     </div>
 
                     <div className="form-section">
+                        <h3>Trust Markers (Badges)</h3>
+                        <p className="section-hint">These toggles control the trust badges shown above the quantity selector on the product page.</p>
+                        <div className="grid-2">
+                            <div className="checkbox-group">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isReturnable}
+                                        onChange={(e) => setFormData({ ...formData, isReturnable: e.target.checked })}
+                                    />
+                                    <span>Is Returnable</span>
+                                </label>
+                            </div>
+                            <div className="checkbox-group">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isDeliveredByHallmark}
+                                        onChange={(e) => setFormData({ ...formData, isDeliveredByHallmark: e.target.checked })}
+                                    />
+                                    <span>Delivered by Hallmark</span>
+                                </label>
+                            </div>
+                            <div className="checkbox-group">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isFreeDelivery}
+                                        onChange={(e) => setFormData({ ...formData, isFreeDelivery: e.target.checked })}
+                                    />
+                                    <span>Free Delivery</span>
+                                </label>
+                            </div>
+                            <div className="checkbox-group">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isSecureTransaction}
+                                        onChange={(e) => setFormData({ ...formData, isSecureTransaction: e.target.checked })}
+                                    />
+                                    <span>Secure Transaction</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-section">
                         <h3>Media</h3>
                         <div className="input-group">
                             <label>Product Images (max {MAX_IMAGES})</label>
@@ -338,6 +393,9 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         
         .media-hint { font-size: 0.8125rem; color: #94a3b8; margin: 0 0 0.5rem 0; }
+        .checkbox-group { margin-bottom: 0.5rem; }
+        .checkbox-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; font-size: 0.9375rem; color: #0f172a; font-weight: 500; }
+        .checkbox-label input[type="checkbox"] { width: 1.25rem; height: 1.25rem; cursor: pointer; accent-color: #ffc451; }
         .file-input { position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1; }
         .upload-trigger { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 12px; color: #64748b; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
         .upload-trigger:hover:not(:disabled) { background: #f1f5f9; border-color: #ffc451; color: #ffc451; }
