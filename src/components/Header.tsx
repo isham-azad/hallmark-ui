@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useInvest } from "@/context/InvestContext";
 
 interface NavBrand {
     id: string;
@@ -21,6 +22,7 @@ export default function Header() {
     const [brands, setBrands] = useState<NavBrand[]>([]);
     const [categories, setCategories] = useState<NavCategory[]>([]);
     const { cartCount, toggleCart } = useCart();
+    const { setIsInvestOpen } = useInvest();
     const [b2bUser, setB2bUser] = useState<{ username: string; companyName: string } | null>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -140,6 +142,7 @@ export default function Header() {
                             </ul>
                         </li>
                         <li><Link href="/#contact">Contact Us</Link></li>
+                        <li><Link href="/#investors" className={pathname === "#investors" ? "active" : ""}>Investors</Link></li>
                     </ul>
                     <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>

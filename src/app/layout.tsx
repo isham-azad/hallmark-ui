@@ -40,7 +40,9 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "@/context/CartContext";
 import { EnquiryProvider } from "@/context/EnquiryContext";
+import { InvestProvider } from "@/context/InvestContext";
 import EnquiryOffcanvas from "@/components/EnquiryOffcanvas";
+import InvestOffcanvas from "@/components/InvestOffcanvas";
 
 export default function RootLayout({
   children,
@@ -61,18 +63,21 @@ export default function RootLayout({
       <body className={`${roboto.variable} ${poppins.variable} ${raleway.variable}`} suppressHydrationWarning>
         <CartProvider>
           <EnquiryProvider>
-            <Preloader />
-            <BodyClassManager />
-            <Header />
-            <main className="main">
-              {children}
-            </main>
-            <Footer />
-            <ScrollTop />
-            <CartOffcanvas />
-            <EnquiryOffcanvas />
-            <SpeedInsights />
-            <Analytics />
+            <InvestProvider>
+              <Preloader />
+              <BodyClassManager />
+              <Header />
+              <main className="main">
+                {children}
+              </main>
+              <Footer />
+              <ScrollTop />
+              <CartOffcanvas />
+              <EnquiryOffcanvas />
+              <InvestOffcanvas />
+              <SpeedInsights />
+              <Analytics />
+            </InvestProvider>
           </EnquiryProvider>
         </CartProvider>
 

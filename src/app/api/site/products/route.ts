@@ -42,6 +42,10 @@ export async function GET() {
                     howToUse: (data.howToUse as string) ?? "",
                     sku: (data.sku as string) ?? "",
                     b2bPricingTiers: data.b2bPricingTiers || [],
+                    isReturnable: data.isReturnable as boolean | undefined,
+                    isDeliveredByHallmark: data.isDeliveredByHallmark as boolean | undefined,
+                    isFreeDelivery: data.isFreeDelivery as boolean | undefined,
+                    isSecureTransaction: data.isSecureTransaction as boolean | undefined,
                 };
             })
             .filter(Boolean);

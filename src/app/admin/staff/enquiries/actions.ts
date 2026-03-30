@@ -13,6 +13,7 @@ export interface Enquiry {
     phone: string;
     message: string;
     status: string;
+    type?: string | null;
     createdAt: string;
     product?: {
         id: string;
@@ -52,6 +53,7 @@ export async function getEnquiries(): Promise<Enquiry[]> {
                 phone: data.phone,
                 message: data.message,
                 status: data.status || "New",
+                type: data.type ?? null,
                 createdAt: toISO(data.createdAt),
                 product: data.product ?? null,
             };

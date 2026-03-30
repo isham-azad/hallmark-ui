@@ -20,6 +20,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const name = (formData.get("name") as string)?.trim();
     const summary = (formData.get("summary") as string)?.trim() ?? "";
     const file = formData.get("image") as File | null;
+    const bannerFile = formData.get("banner") as File | null;
 
     const validation = BrandUpdateSchema.safeParse({ id, name, summary });
     if (!validation.success) {
@@ -41,6 +42,17 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
             "logo"
         );
         updateData.image = imageUrl;
+    }
+
+    if (bannerFile && bannerFile.size > 0 && bannerFile.type.startsWith("image/")) {
+        const buffer = Buffer.from(await bannerFile.arrayBuffer());
+        const bannerUrl = await uploadSingleImage(
+            buffer,
+            bannerFile.type,
+            `brands/${id}`,
+            "banner"
+        );
+        updateData.banner = bannerUrl;
     }
 
     await db.collection("brands").doc(id).update(updateData);

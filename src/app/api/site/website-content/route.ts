@@ -17,6 +17,9 @@ export async function GET() {
         const statsDoc = await db.collection("website_settings").doc("stats").get();
         const stats = statsDoc.exists ? statsDoc.data() : null;
 
+        const investorsDoc = await db.collection("website_settings").doc("investors").get();
+        const investors = investorsDoc.exists ? investorsDoc.data() : null;
+
         const [productsSnap, categoriesSnap] = await Promise.all([
             db.collection("products").count().get(),
             db.collection("categories").count().get(),
@@ -26,6 +29,7 @@ export async function GET() {
             heroBanners,
             aboutUs,
             stats,
+            investors,
             counts: {
                 products: productsSnap.data().count,
                 categories: categoriesSnap.data().count,
@@ -33,6 +37,6 @@ export async function GET() {
         });
     } catch (error) {
         console.error("Site website-content API error:", error);
-        return NextResponse.json({ heroBanners: [], aboutUs: null, stats: null }, { status: 500 });
+        return NextResponse.json({ heroBanners: [], aboutUs: null, stats: null, investors: null }, { status: 500 });
     }
 }

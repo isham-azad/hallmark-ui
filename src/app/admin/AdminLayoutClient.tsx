@@ -104,6 +104,7 @@ export default function AdminLayoutClient({
         { name: "Hero Banners", href: "/admin/website/hero", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "About Us", href: "/admin/website/about", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Stats Section", href: "/admin/website/stats", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "Investors Section", href: "/admin/website/investors", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Shop Banners", href: "/admin/website/shop-banners", permission: PERMISSIONS.MANAGE_WEBSITE },
       ],
     },
@@ -210,6 +211,8 @@ export default function AdminLayoutClient({
       setHeaderTitle("About Us");
     } else if (pathname === "/admin/website/stats") {
       setHeaderTitle("Stats Section");
+    } else if (pathname === "/admin/website/investors") {
+      setHeaderTitle("Investors Section");
     } else if (pathname === "/admin/website/shop-banners") {
       setHeaderTitle("Shop Banners");
     } else if (orderId) {
