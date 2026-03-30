@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
             email,
             phone,
             message,
-            product
+            product,
+            type
         } = body as {
             name: string;
             email?: string;
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest) {
                 name: string;
                 category?: string;
                 image?: string;
-            }
+            };
+            type?: string;
         };
 
         if (!name || !phone || !message) {
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
             phone: phone.trim(),
             message: message.trim(),
             product: product || null,
+            type: type || null,
             status: "New",
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),

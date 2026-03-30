@@ -11,6 +11,7 @@ interface Brand {
   name: string;
   summary: string;
   image: string | null;
+  banner: string | null;
 }
 
 interface BrandEditClientProps {
@@ -28,12 +29,17 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
     summary: brand.summary,
     website: "",
     status: "active",
-    image: brand.image || ""
+    image: brand.image || "",
+    banner: brand.banner || ""
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const displayImageUrl = imagePreviewUrl || formData.image;
+  const displayBannerUrl = bannerPreviewUrl || formData.banner;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,16 +57,34 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
     setFormData((prev) => ({ ...prev, image: "" }));
   };
 
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+    setBannerFile(file);
+    setBannerPreviewUrl(URL.createObjectURL(file));
+    if (bannerInputRef.current) bannerInputRef.current.value = "";
+  };
+
+  const removeBanner = () => {
+    if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
+    setBannerFile(null);
+    setBannerPreviewUrl("");
+    setFormData((prev) => ({ ...prev, banner: "" }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (imageFile) {
+      if (imageFile || bannerFile) {
         const form = new FormData();
         form.set("id", brand.id);
         form.set("name", formData.name);
         form.set("summary", formData.summary);
-        form.set("image", imageFile);
+        if (imageFile) form.set("image", imageFile);
+        if (bannerFile) form.set("banner", bannerFile);
+        
         const res = await fetch("/api/admin/brands/update", { method: "POST", body: form });
         const result = await res.json();
         if (result.success) {
@@ -73,7 +97,8 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
         const result = await updateBrand(brand.id, {
           name: formData.name,
           summary: formData.summary,
-          image: formData.image || undefined
+          image: formData.image || undefined,
+          banner: formData.banner || undefined
         });
         if (result.success) {
           showToast("Brand updated successfully!");
@@ -173,6 +198,53 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
                     onClick={removeImage}
                   >
                     Remove image
+                  </button>
+                )}
+              </div>
+
+              <div className="input-group">
+                <label>Brand Banner (Header Background)</label>
+                <div
+                  className="upload-zone banner-zone existing"
+                  onClick={() => bannerInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && bannerInputRef.current?.click()}
+                >
+                  <input
+                    ref={bannerInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerChange}
+                    className="hidden-input"
+                  />
+                  {displayBannerUrl ? (
+                    <>
+                      <img src={displayBannerUrl} alt="Current Banner" className="preview-img banner-preview" />
+                      <div className="upload-overlay">
+                        <i className="bi bi-aspect-ratio"></i>
+                        <span>Change Banner (uploaded on Save)</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="no-image-placeholder banner-placeholder">
+                        <i className="bi bi-image" style={{ fontSize: '2rem' }}></i>
+                      </div>
+                      <div className="upload-overlay">
+                        <i className="bi bi-aspect-ratio"></i>
+                        <span>Choose Banner (uploaded on Save)</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {displayBannerUrl && (
+                  <button
+                    type="button"
+                    className="remove-image-btn"
+                    onClick={removeBanner}
+                  >
+                    Remove banner
                   </button>
                 )}
               </div>
@@ -381,6 +453,26 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
 
         .upload-overlay i {
           font-size: 1.5rem;
+        }
+
+        .banner-zone {
+            width: 100% !important;
+            grid-column: span 2;
+            height: 180px !important;
+        }
+
+        .banner-preview {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            padding: 0 !important;
+        }
+
+        .banner-placeholder {
+            height: 100% !important;
+            font-size: 1.5rem !important;
+            background: #f1f5f9 !important;
+            color: #94a3b8 !important;
         }
 
         .upload-overlay span {

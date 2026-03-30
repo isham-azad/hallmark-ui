@@ -11,6 +11,7 @@ interface Brand {
     name: string;
     summary: string;
     image: string;
+    banner?: string;
 }
 
 interface SiteProduct {
@@ -37,8 +38,11 @@ export default function BrandClient() {
         ]).then(([brandsRes, productsRes]) => {
             const brandsList = brandsRes.brands ?? [];
             const productsList = (productsRes.products ?? []) as SiteProduct[];
-            setBrand(brandsList.find((b: Brand) => b.id === id) ?? null);
-            setProducts(productsList.filter((p) => p.brand === id));
+            const foundBrand = brandsList.find((b: Brand) => b.id === id) ?? null;
+            setBrand(foundBrand);
+            if (foundBrand) {
+                setProducts(productsList.filter((p) => p.brand === id));
+            }
         }).catch(() => {
             setBrand(null);
             setProducts([]);
@@ -63,8 +67,18 @@ export default function BrandClient() {
     }
 
     return (
-        <div className="brand-page mt-5 pt-5">
-            <section id="brand-header" className="section light-background py-5">
+        <div className="brand-page" style={{ marginTop: '132px' }}>
+            {brand.banner && (
+                <div className="collection-banner overflow-hidden" style={{ height: '400px' }}>
+                    <img
+                        src={brand.banner}
+                        alt={`${brand.name} banner`}
+                        className="w-100 h-100 object-fit-cover"
+                    />
+                </div>
+            )}
+
+            <section id="brand-header" className="section light-background pt-4 pb-5" data-aos="fade-up">
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-4 text-center mb-4 mb-lg-0">

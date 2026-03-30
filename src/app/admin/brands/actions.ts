@@ -24,7 +24,7 @@ async function verifyAuth(permission?: string) {
     return session;
 }
 
-export async function createBrand(formData: { id: string; name: string; summary: string; image?: string }) {
+export async function createBrand(formData: { id: string; name: string; summary: string; image?: string; banner?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         const docId = formData.id || formData.name.toLowerCase().replace(/\s+/g, "-");
@@ -33,6 +33,7 @@ export async function createBrand(formData: { id: string; name: string; summary:
             name: formData.name,
             summary: formData.summary,
             image: formData.image || null,
+            banner: formData.banner || null,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -47,13 +48,14 @@ export async function createBrand(formData: { id: string; name: string; summary:
     }
 }
 
-export async function updateBrand(id: string, formData: { name: string; summary: string; image?: string }) {
+export async function updateBrand(id: string, formData: { name: string; summary: string; image?: string; banner?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         await db.collection("brands").doc(id).update({
             name: formData.name,
             summary: formData.summary,
             image: formData.image || null,
+            banner: formData.banner || null,
             updatedAt: FieldValue.serverTimestamp(),
         });
 
@@ -99,11 +101,19 @@ export async function deleteBrand(id: string) {
         if (doc.exists) {
             const data = doc.data();
             const img = data?.image;
+            const banner = data?.banner;
             if (img && typeof img === "string" && img.includes("cloudinary")) {
                 try {
                     await deleteImageByUrl(img);
                 } catch (err) {
                     console.warn("Could not delete brand image from Cloudinary:", err);
+                }
+            }
+            if (banner && typeof banner === "string" && banner.includes("cloudinary")) {
+                try {
+                    await deleteImageByUrl(banner);
+                } catch (err) {
+                    console.warn("Could not delete brand banner from Cloudinary:", err);
                 }
             }
             try {

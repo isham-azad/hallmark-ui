@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useInvest } from "@/context/InvestContext";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
 
@@ -64,15 +65,26 @@ interface StatsData {
   stats: StatItem[];
 }
 
+interface InvestorsData {
+  badgeText: string;
+  titleLight: string;
+  titleBold: string;
+  description: string;
+  cards: { icon: string; title: string; description: string }[];
+  bottomText: string;
+}
+
 interface WebsiteContent {
   heroBanners: HeroBanner[];
   aboutUs: AboutUsData;
   stats: StatsData;
+  investors?: InvestorsData;
   counts?: { products: number; categories: number };
 }
 
 export default function HomeClient({ initialData }: { initialData?: any }) {
   const { addToCart } = useCart();
+  const { setIsInvestOpen } = useInvest();
   const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
 
   useEffect(() => {
@@ -166,6 +178,28 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
     }, 3000);
     return () => clearInterval(featureInterval);
   }, []);
+
+  // Refresh AOS after all data has loaded so sections below the brands
+  // carousel animate correctly (they were invisible because AOS calculated
+  // positions before async data shifted the page layout).
+  useEffect(() => {
+    if (productsLoading || brandsLoading || testimonialsLoading || categoriesLoading || websiteLoading) return;
+
+    const refreshAOS = () => {
+      if (typeof window !== "undefined" && (window as any).AOS) {
+        (window as any).AOS.refresh();
+        return true;
+      }
+      return false;
+    };
+
+    if (!refreshAOS()) {
+      const interval = setInterval(() => {
+        if (refreshAOS()) clearInterval(interval);
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [productsLoading, brandsLoading, testimonialsLoading, categoriesLoading, websiteLoading]);
 
   useEffect(() => {
     const banners = websiteContent?.heroBanners;
@@ -638,6 +672,61 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           </div>
         </section>
       )}
+
+      {/* Investors Section */}
+      <section id="investors" className="investors section position-relative" style={{ backgroundColor: '#111', color: '#fff', padding: '100px 0', borderTop: '4px solid #ffc451', overflow: 'hidden' }}>
+        {/* Background decorative elements */}
+        <div className="position-absolute top-0 end-0 opacity-25" style={{ width: '400px', height: '400px', background: 'radial-gradient(circle, #ffc451 0%, transparent 70%)', transform: 'translate(30%, -30%)' }}></div>
+        <div className="position-absolute bottom-0 start-0 opacity-25" style={{ width: '300px', height: '300px', background: 'radial-gradient(circle, #ffc451 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }}></div>
+        
+        <div className="container position-relative z-1" data-aos="fade-up">
+          <div className="row justify-content-center text-center mb-5">
+            <div className="col-lg-8">
+              <span className="badge rounded-pill px-4 py-2 mb-3" style={{ backgroundColor: 'rgba(255, 196, 81, 0.1)', color: '#ffc451', border: '1px solid rgba(255, 196, 81, 0.2)', fontSize: '0.9rem' }}>
+                <i className="bi bi-graph-up-arrow me-2"></i>{websiteContent?.investors?.badgeText || "Investment Opportunities"}
+              </span>
+              <h2 className="fw-bold mb-4 text-white" style={{ fontSize: '3rem' }}>{websiteContent?.investors?.titleLight || "Partner in Our"} <span style={{ color: '#ffc451' }}>{websiteContent?.investors?.titleBold || "Growth"}</span></h2>
+              <p className="lead mx-auto" style={{ maxWidth: '800px', fontSize: '1.2rem', color: '#e0e0e0' }}>
+                {websiteContent?.investors?.description || "Join Hallmark Enterprises as an investor and become part of a rapidly expanding FMCG market leader. We offer structured returns backed by real-world distribution and substantial market presence."}
+              </p>
+            </div>
+          </div>
+
+          <div className="row g-4 mb-5">
+            {/* Value Proposition Cards */}
+            {(websiteContent?.investors?.cards || [
+                { icon: "bi-bar-chart-fill", title: "Assured ROI", description: "Benefit from consistent, performance-linked returns driven by our high-turnover consumer goods portfolio." },
+                { icon: "bi-shield-check", title: "Transparent Operations", description: "We believe in complete transparency. Our robust business model and supply chain are open to rigorous assessment." },
+                { icon: "bi-globe-central-south-asia", title: "Scalable Expansion", description: "Capitalize on our aggressive expansion plans across India and the Gulf region, unlocking massive growth potential." }
+            ]).map((card, i) => (
+              <div key={i} className="col-md-4" data-aos="fade-up" data-aos-delay={100 + i * 100}>
+                <div className="p-4 h-100 rounded-4" style={{ backgroundColor: '#1a1a1a', border: '1px solid #333', transition: 'transform 0.3s ease, border-color 0.3s ease' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = '#ffc451'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = '#333'; }}>
+                  <div className="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ backgroundColor: 'rgba(255, 196, 81, 0.1)', width: '64px', height: '64px' }}>
+                    <i className={`bi ${card.icon} fs-3`} style={{ color: '#ffc451' }}></i>
+                  </div>
+                  <h4 className="fw-bold mb-3 text-white">{card.title}</h4>
+                  <p className="mb-0" style={{ color: '#ccc' }}>{card.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center" data-aos="zoom-in" data-aos-delay="400">
+             <div className="d-inline-block p-2 rounded-pill" style={{ backgroundColor: '#222', border: '1px solid #444' }}>
+               <button 
+                 onClick={() => setIsInvestOpen(true)}
+                 className="btn btn-lg px-5 py-3 rounded-pill fw-bold text-dark d-inline-flex align-items-center justify-content-center gap-2 m-0"
+                 style={{ backgroundColor: '#ffc451', border: 'none', transition: 'all 0.3s ease' }}
+                 onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255, 196, 81, 0.3)'; }}
+                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+               >
+                 Express Your Interest <i className="bi bi-arrow-right fs-5"></i>
+               </button>
+             </div>
+             <p className="mt-4 small" style={{ color: '#aaa' }}><i className="bi bi-shield-lock me-1"></i> {websiteContent?.investors?.bottomText || "Minimum investment commitments apply. Complete confidentiality maintained."}</p>
+          </div>
+        </div>
+      </section>
 
       {/* Contact Section */}
       <section id="contact" className="contact section">

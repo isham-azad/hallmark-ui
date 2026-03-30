@@ -9,6 +9,7 @@ interface SiteProduct {
     image?: string;
     price?: string;
     categoryName?: string;
+    wasPrice?: string;
     b2bPricingTiers?: { minQty: number; price: string }[];
 }
 
@@ -50,8 +51,10 @@ export function useCartWithProducts(cart: CartItem[]) {
     const cartWithDetails: CartItemWithDetails[] = cart.map((item) => {
         const product = products.find((p) => p.id === String(item.id));
         const available = !!product;
-        const originalPriceFromDb = product ? parsePrice(product.price) : item.price;
-        let finalPrice = originalPriceFromDb;
+        const currentPrice = product ? parsePrice(product.price) : item.price;
+        const wasPrice = product ? parsePrice(product.wasPrice) : 0;
+        const originalPriceFromDb = wasPrice > currentPrice ? wasPrice : currentPrice;
+        let finalPrice = currentPrice;
 
         if (isB2B && product && product.b2bPricingTiers && product.b2bPricingTiers.length > 0) {
             const sortedTiers = [...product.b2bPricingTiers].sort((a, b) => b.minQty - a.minQty);

@@ -23,6 +23,10 @@ const ProductSchema = z.object({
         minQty: z.number().min(1),
         price: z.string()
     })).optional(),
+    isReturnable: z.boolean().default(true),
+    isDeliveredByHallmark: z.boolean().default(true),
+    isFreeDelivery: z.boolean().default(false),
+    isSecureTransaction: z.boolean().default(true),
 });
 
 function slugifyFolder(name: string): string {
@@ -47,6 +51,10 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         stock: parseInt((formData.get("stock") as string) || "0", 10) || 0,
         howToUse: (formData.get("howToUse") as string)?.trim() ?? "",
         b2bPricingTiers: formData.get("b2bPricingTiers") ? JSON.parse(formData.get("b2bPricingTiers") as string) : [],
+        isReturnable: formData.get("isReturnable") === "true",
+        isDeliveredByHallmark: formData.get("isDeliveredByHallmark") === "true",
+        isFreeDelivery: formData.get("isFreeDelivery") === "true",
+        isSecureTransaction: formData.get("isSecureTransaction") === "true",
     };
 
     // Validate with Zod
@@ -104,6 +112,10 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         categoryId,
         howToUse: howToUse ?? "",
         b2bPricingTiers: validation.data.b2bPricingTiers || [],
+        isReturnable: validation.data.isReturnable,
+        isDeliveredByHallmark: validation.data.isDeliveredByHallmark,
+        isFreeDelivery: validation.data.isFreeDelivery,
+        isSecureTransaction: validation.data.isSecureTransaction,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });

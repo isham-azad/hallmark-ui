@@ -28,6 +28,10 @@ export default async function EditProductPage(props: { params: Promise<{ id: str
         categoryId: data.categoryId as string,
         howToUse: (data.howToUse as string | undefined) ?? "",
         b2bPricingTiers: data.b2bPricingTiers as { minQty: number; price: string }[] | undefined,
+        isReturnable: data.isReturnable as boolean | undefined,
+        isDeliveredByHallmark: data.isDeliveredByHallmark as boolean | undefined,
+        isFreeDelivery: data.isFreeDelivery as boolean | undefined,
+        isSecureTransaction: data.isSecureTransaction as boolean | undefined,
     };
 
     const [brandsSnap, categoriesSnap] = await Promise.all([

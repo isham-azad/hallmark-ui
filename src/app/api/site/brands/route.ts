@@ -15,6 +15,7 @@ export async function GET() {
                     name: data.name as string,
                     summary: (data.summary as string) ?? "",
                     image: (data.image as string) ?? "",
+                    banner: (data.banner as string) ?? "",
                 };
             })
             .filter(Boolean);

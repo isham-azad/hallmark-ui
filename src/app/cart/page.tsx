@@ -7,7 +7,7 @@ import { ShimmerBox } from "@/components/Shimmer";
 
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity } = useCart();
-    const { cartWithDetails, cartTotalFromDb, totalSavings, loading } = useCartWithProducts(cart);
+    const { cartWithDetails, cartTotalFromDb, totalSavings, loading, isB2B } = useCartWithProducts(cart);
 
     const shipping = 0;
     const subtotal = loading ? 0 : cartTotalFromDb;
@@ -81,55 +81,68 @@ export default function CartPage() {
                                 ) : (
                                     <div className="cart-items-container">
                                         {cartWithDetails.map((item) => (
-                                            <div key={`${item.id}-${item.packSize}`} className="cart-item-card mb-3 p-3 border rounded shadow-sm bg-white">
-                                                {!item.available && (
-                                                    <div className="badge bg-warning text-dark mb-2">No longer available</div>
-                                                )}
-                                                <div className="row align-items-center">
-                                                    <div className="col-3 col-md-2">
-                                                        <img
-                                                            src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
-                                                            alt={item.nameFromDb}
-                                                            className="img-fluid rounded border"
-                                                        />
-                                                    </div>
-                                                    <div className="col-9 col-md-4">
-                                                        <h5 className="mb-1 fw-bold">{item.nameFromDb}</h5>
-                                                        <p className="text-muted mb-0 small">
-                                                            {item.categoryFromDb} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
-                                                        </p>
-                                                    </div>
-                                                    <div className="col-6 col-md-2 mt-3 mt-md-0">
-                                                        <div className="quantity-selector d-flex align-items-center gap-2">
+                                            <div key={`${item.id}-${item.packSize}`} className="cart-item-card mb-3 p-0 border rounded shadow-sm bg-white overflow-hidden">
+                                                <div className="p-3">
+                                                    {!item.available && (
+                                                        <div className="badge bg-warning text-dark mb-2">No longer available</div>
+                                                    )}
+                                                    <div className="row align-items-center">
+                                                        <div className="col-3 col-md-2">
+                                                            <img
+                                                                src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
+                                                                alt={item.nameFromDb}
+                                                                className="img-fluid rounded border"
+                                                            />
+                                                        </div>
+                                                        <div className="col-9 col-md-4">
+                                                            <h5 className="mb-1 fw-bold">{item.nameFromDb}</h5>
+                                                            <p className="text-muted mb-0 small">
+                                                                {item.categoryFromDb} {item.packSize && item.packSize.toLowerCase() !== "standard" && ` | ${item.packSize}`}
+                                                            </p>
+                                                        </div>
+                                                        <div className="col-6 col-md-2 mt-3 mt-md-0">
+                                                            <div className="quantity-selector d-flex align-items-center gap-2">
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-secondary rounded-circle"
+                                                                    style={{ width: "28px", height: "28px", padding: 0 }}
+                                                                    onClick={() => updateQuantity(item.id, item.quantity - 1, item.packSize)}
+                                                                    disabled={item.quantity <= 1}
+                                                                >-</button>
+                                                                <span className="fw-bold px-1">{item.quantity}</span>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-secondary rounded-circle"
+                                                                    style={{ width: "28px", height: "28px", padding: 0 }}
+                                                                    onClick={() => updateQuantity(item.id, item.quantity + 1, item.packSize)}
+                                                                >+</button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-4 col-md-2 text-md-center mt-3 mt-md-0 d-flex flex-column align-items-md-center">
+                                                            {item.originalPriceFromDb > item.priceFromDb && (
+                                                                <del className="text-muted small">₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</del>
+                                                            )}
+                                                            <span className="text-success fw-bold h5 mb-0">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="col-2 col-md-2 text-end mt-3 mt-md-0">
                                                             <button
-                                                                className="btn btn-sm btn-outline-secondary rounded-circle"
-                                                                style={{ width: "28px", height: "28px", padding: 0 }}
-                                                                onClick={() => updateQuantity(item.id, item.quantity - 1, item.packSize)}
-                                                            >-</button>
-                                                            <span className="fw-bold px-1">{item.quantity}</span>
-                                                            <button
-                                                                className="btn btn-sm btn-outline-secondary rounded-circle"
-                                                                style={{ width: "28px", height: "28px", padding: 0 }}
-                                                                onClick={() => updateQuantity(item.id, item.quantity + 1, item.packSize)}
-                                                            >+</button>
+                                                                className="btn btn-sm btn-light text-danger border"
+                                                                onClick={() => removeFromCart(item.id, item.packSize)}
+                                                                title="Remove Item"
+                                                            >
+                                                                <i className="bi bi-trash"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                    <div className="col-4 col-md-2 text-md-center mt-3 mt-md-0 d-flex flex-column align-items-md-center">
-                                                        {item.originalPriceFromDb > item.priceFromDb && (
-                                                            <del className="text-muted small">₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</del>
-                                                        )}
-                                                        <span className="text-success fw-bold h5 mb-0">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
-                                                    </div>
-                                                    <div className="col-2 col-md-2 text-end mt-3 mt-md-0">
-                                                        <button
-                                                            className="btn btn-sm btn-light text-danger border"
-                                                            onClick={() => removeFromCart(item.id, item.packSize)}
-                                                            title="Remove Item"
-                                                        >
-                                                            <i className="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
                                                 </div>
+                                                {item.originalPriceFromDb > item.priceFromDb && (
+                                                    <div className="bg-light border-top p-2 px-3 d-flex justify-content-between align-items-center" style={{ background: 'linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%)' }}>
+                                                        <span className="text-muted" style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                            {isB2B ? "MRP Profit for these units" : "Savings for these units"}
+                                                        </span>
+                                                        <span className="text-success fw-bold" style={{ fontSize: '0.85rem' }}>
+                                                            ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / item.originalPriceFromDb) * 100)}% {isB2B ? "Profit" : "Off"})
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -142,13 +155,13 @@ export default function CartPage() {
                                 <h4 className="mb-4 fw-bold">Order Summary</h4>
                                 <div className="summary-item d-flex justify-content-between mb-2">
                                     <span>Subtotal:</span>
-                                    <span className="fw-bold">{loading ? "—" : `₹${Math.max(0, subtotal + totalSavings).toFixed(2)}`}</span>
+                                    <span className="fw-bold">{loading ? "—" : `₹${(cartTotalFromDb + totalSavings).toFixed(2)}`}</span>
                                 </div>
 
                                 {totalSavings > 0 && (
                                     <div className="summary-item d-flex justify-content-between mb-2 text-success">
-                                        <span>B2B Volume Savings:</span>
-                                        <span className="fw-bold">-₹{totalSavings.toFixed(2)}</span>
+                                        <span>{isB2B ? "MRP Profit:" : "Volume Savings:"}</span>
+                                        <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)</span>
                                     </div>
                                 )}
 
