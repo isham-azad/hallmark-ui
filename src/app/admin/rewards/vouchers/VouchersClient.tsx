@@ -205,8 +205,7 @@ export default function VouchersClient({ initialVouchers }: { initialVouchers: G
             <style jsx>{`
                 .rewards-container {
                     padding: 24px;
-                    max-width: 1200px;
-                    margin: 0 auto;
+                    width: 100%;
                 }
                 .rewards-header {
                     margin-bottom: 24px;
