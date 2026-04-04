@@ -38,6 +38,9 @@ interface OrderType {
     paymentStatus?: string;
     items: OrderItemType[];
     assignedTo?: { id: string; name: string; assignedAt: any; } | null;
+    rewardsUsed?: number;
+    rewardsEarned?: number;
+    voucherAmount?: number;
 }
 
 interface OrderDetailClientProps {
@@ -527,12 +530,38 @@ export default function OrderDetailClient({ order, availableStaff }: OrderDetail
                                 ))}
                             </tbody>
                             <tfoot>
+                                {order.rewardsUsed ? (
+                                    <tr className="items-total-row rewards-row">
+                                        <td colSpan={2} className="items-total-label text-danger">Rewards Applied</td>
+                                        <td className="items-total-value text-danger">-₹{order.rewardsUsed.toFixed(2)}</td>
+                                    </tr>
+                                ) : null}
+                                {order.voucherAmount ? (
+                                    <tr className="items-total-row rewards-row">
+                                        <td colSpan={2} className="items-total-label text-primary">Voucher Applied</td>
+                                        <td className="items-total-value text-primary">-₹{order.voucherAmount.toFixed(2)}</td>
+                                    </tr>
+                                ) : null}
                                 <tr className="items-total-row">
-                                    <td colSpan={2} className="items-total-label">Order Total</td>
+                                    <td colSpan={2} className="items-total-label">Final Order Total</td>
                                     <td className="items-total-value">{order.total}</td>
                                 </tr>
                             </tfoot>
                         </table>
+
+                        {(order.rewardsEarned || 0) > 0 && (
+                            <div className="rewards-earned-celebration">
+                                <div className="celebration-content">
+                                    <div className="celebration-icon">
+                                        <i className="bi bi-gift-fill"></i>
+                                    </div>
+                                    <div className="celebration-text">
+                                        <h4>Congratulations!</h4>
+                                        <p>You've earned <span>₹{(order.rewardsEarned || 0).toFixed(2)}</span> reward points on this order.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Card View (Mobile Only) */}
                         <div className="items-cards">
@@ -573,10 +602,32 @@ export default function OrderDetailClient({ order, availableStaff }: OrderDetail
                                     </div>
                                 );
                             })}
+                            {order.rewardsUsed ? (
+                                <div className="item-card rewards-card text-danger" style={{ borderStyle: 'dashed', borderColor: '#fee2e2', backgroundColor: '#fef2f2' }}>
+                                    <div className="price-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span className="price-label">Rewards Applied</span>
+                                        <span className="price-val fw-bold">-₹{order.rewardsUsed.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            ) : null}
+                            {order.voucherAmount ? (
+                                <div className="item-card rewards-card text-primary" style={{ borderStyle: 'dashed', borderColor: '#dbeafe', backgroundColor: '#eff6ff' }}>
+                                    <div className="price-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span className="price-label">Voucher Applied</span>
+                                        <span className="price-val fw-bold">-₹{order.voucherAmount.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            ) : null}
                             <div className="items-mobile-total">
-                                <span className="mobile-total-label">Order Total</span>
+                                <span className="mobile-total-label">Final order Total</span>
                                 <span className="mobile-total-value">{order.total}</span>
                             </div>
+                            {(order.rewardsEarned || 0) > 0 && (
+                                <div className="mobile-rewards-celebration">
+                                    <i className="bi bi-gift-fill me-2"></i>
+                                    <span>Reward Points Earned: <b>₹{(order.rewardsEarned || 0).toFixed(2)}</b></span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -688,6 +739,26 @@ export default function OrderDetailClient({ order, availableStaff }: OrderDetail
                 .items-total-row td { padding: 1rem 1rem; font-weight: 700; vertical-align: middle; }
                 .items-total-label { color: #64748b; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; }
                 .items-total-value { color: #0f172a; font-size: 1.125rem; text-align: right; min-width: 6rem; }
+                
+                .rewards-earned-celebration { 
+                    margin-top: 1.5rem; 
+                    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+                    border: 1px solid #bbf7d0; 
+                    border-radius: 16px; 
+                    padding: 1.25rem 1.5rem; 
+                    animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .celebration-content { display: flex; align-items: center; gap: 1.25rem; }
+                .celebration-icon { 
+                    width: 48px; height: 48px; background: #fff; color: #166534; 
+                    border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+                    font-size: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                }
+                .celebration-text h4 { font-size: 1.125rem; font-weight: 800; color: #166534; margin: 0 0 0.15rem; }
+                .celebration-text p { font-size: 0.9375rem; color: #14532d; font-weight: 500; margin: 0; opacity: 0.9; }
+                .celebration-text p span { font-weight: 800; color: #166534; }
+                @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
                 .item-name { font-weight: 600; color: #0f172a; text-align: left; }
                 .product-info-cell { display: flex; align-items: center; gap: 1rem; }
                 .product-name-block { display: flex; flex-direction: column; gap: 0.125rem; }
@@ -844,6 +915,21 @@ export default function OrderDetailClient({ order, availableStaff }: OrderDetail
                     }
                     .mobile-total-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; color: #fff; }
                     .mobile-total-value { font-size: 1.35rem; font-weight: 800; color: #ffc451; }
+
+                    .mobile-rewards-celebration {
+                        margin-top: 1rem;
+                        background: #f0fdf4;
+                        border: 1px dashed #22c55e;
+                        border-radius: 12px;
+                        padding: 0.875rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #166534;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                    }
+                    .mobile-rewards-celebration b { font-weight: 800; }
                 }
 
                 @media (max-width: 480px) {

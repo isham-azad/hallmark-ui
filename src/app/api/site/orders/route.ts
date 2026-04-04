@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
             paymentMethodName,
             shipping,
             items,
+            applyRewards,
+            appliedVoucherId,
         } = body as {
             firstName?: string;
             lastName?: string;
@@ -49,6 +51,8 @@ export async function POST(request: NextRequest) {
             paymentMethodName?: string;
             shipping?: number;
             items?: Array<{ id: string; name?: string; quantity: number; packSize?: string; price?: number; image?: string }>;
+            applyRewards?: boolean;
+            appliedVoucherId?: string;
         };
 
         if (!email || !items?.length) {
@@ -154,10 +158,53 @@ export async function POST(request: NextRequest) {
             subtotalNum += priceNum * qty;
         }
 
-        const totalNum = subtotalNum + shippingAmount;
+        let totalNum = subtotalNum + shippingAmount;
+        let rewardsUsed = 0;
+        let rewardBalance = 0;
+        let rewardPercentage = 2;
+
+        if (isB2B) {
+            const clientDoc = await db.collection("b2b_clients").doc(b2bSession.id).get();
+            const clientData = clientDoc.data();
+            rewardBalance = clientData?.rewardBalance || 0;
+            if (clientData?.rewardPercentage !== undefined) {
+                rewardPercentage = Number(clientData.rewardPercentage);
+            }
+            
+            if (applyRewards && rewardBalance > 0) {
+                rewardsUsed = Math.min(rewardBalance, totalNum);
+                totalNum -= rewardsUsed;
+            }
+        }
+
+        // --- NEW GIFT VOUCHER LOGIC ---
+        let voucherAmount = 0;
+        if (appliedVoucherId) {
+            const voucherRef = db.collection("gift_vouchers").doc(appliedVoucherId);
+            const voucherDoc = await voucherRef.get();
+            if (voucherDoc.exists) {
+                const voucherData = voucherDoc.data();
+                if (voucherData?.status === "Active" && (voucherData?.balance || 0) > 0) {
+                    voucherAmount = Math.min(voucherData.balance, totalNum);
+                    totalNum -= voucherAmount;
+                    
+                    // Deduct from voucher
+                    const newBalance = voucherData.balance - voucherAmount;
+                    await voucherRef.update({
+                        balance: newBalance,
+                        status: newBalance <= 0 ? "Exhausted" : "Active",
+                        updatedAt: FieldValue.serverTimestamp()
+                    });
+                }
+            }
+        }
+        // ------------------------------
+
         const customer = [firstName, lastName].filter(Boolean).join(" ") || "Guest";
         const orderNo = generateOrderNo();
         const paymentMethod = normalizePaymentMethod(paymentMethodId, paymentMethodName);
+
+        const earnedRewards = isB2B ? totalNum * (rewardPercentage / 100) : 0;
 
         const orderData: Record<string, unknown> = {
             orderNo,
@@ -172,6 +219,11 @@ export async function POST(request: NextRequest) {
             total: `₹${totalNum.toFixed(2)}`,
             subtotal: `₹${subtotalNum.toFixed(2)}`,
             shippingAmount,
+            rewardsUsed,
+            rewardsEarned: earnedRewards,
+            voucherId: appliedVoucherId || null,
+            voucherAmount,
+            b2bClientId: isB2B ? b2bSession.id : null,
             status: "Pending",
             paymentMethod,
             paymentStatus: "Pending",
@@ -183,6 +235,12 @@ export async function POST(request: NextRequest) {
         };
 
         const docRef = await db.collection("orders").add(orderData);
+
+        if (isB2B) {
+            await db.collection("b2b_clients").doc(b2bSession.id).update({
+                rewardBalance: FieldValue.increment(earnedRewards - rewardsUsed)
+            });
+        }
 
         // Update or create customer record with address details
         if (phone) {
@@ -235,6 +293,8 @@ export async function POST(request: NextRequest) {
             orderNo,
             total: totalNum.toFixed(2),
             payment: String(orderData.payment),
+            rewardsEarned: earnedRewards,
+            rewardsUsed,
         });
     } catch (error) {
         const err = error as Error & { code?: string };

@@ -95,12 +95,12 @@ export default function ProductDetailPage() {
                             <div className="main-image-container mb-3" style={{ position: 'relative', backgroundColor: "var(--surface-color)", borderRadius: "20px", border: "1px solid #eee", overflow: 'hidden' }}>
                                 <div className="slider-track" style={{ display: 'flex', transform: `translateX(-${activeImageIndex * 100}%)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)', width: '100%' }}>
                                     {images.map((img, idx) => (
-                                        <div key={idx} style={{ flex: '0 0 100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                        <div key={idx} style={{ flex: '0 0 100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
                                             <img
                                                 src={img}
                                                 alt={`${product.title} - ${idx + 1}`}
                                                 className="img-fluid"
-                                                style={{ borderRadius: "15px", maxHeight: "500px", width: '100%', objectFit: "cover" }}
+                                                style={{ borderRadius: "15px", maxHeight: "500px", width: '100%', objectFit: "contain" }}
                                             />
                                         </div>
                                     ))}
@@ -167,13 +167,13 @@ export default function ProductDetailPage() {
                                 </div>
                             )}
 
-                            <div className="product-price mb-4">
+                            {/* <div className="product-price mb-4">
                                 {product.price ? (
                                     <h3 className="fw-bold" style={{ color: "var(--accent-color)" }}>₹{product.price}</h3>
                                 ) : (
                                     <h3 className="fw-bold" style={{ color: "var(--accent-color)" }}>Contact for Price</h3>
                                 )}
-                            </div>
+                            </div> */}
 
                             <div className="product-description mb-5">
                                 <h5 className="fw-bold mb-3">Product Description</h5>

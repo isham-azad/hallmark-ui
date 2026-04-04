@@ -46,6 +46,12 @@ export default function CheckoutPage() {
     const router = useRouter();
     const { cart, clearCart } = useCart();
     const { cartWithDetails, cartTotalFromDb, totalSavings, loading: cartLoading, isB2B } = useCartWithProducts(cart);
+
+    useEffect(() => {
+        if (!cartLoading && !isB2B) {
+            router.push("/b2b/login");
+        }
+    }, [cartLoading, isB2B, router]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showShipping, setShowShipping] = useState(false);
@@ -70,6 +76,59 @@ export default function CheckoutPage() {
         shippingName: "",
         shippingAddress: "",
     });
+    const [rewardBalance, setRewardBalance] = useState(0);
+    const [applyRewards, setApplyRewards] = useState(false);
+    const [rewardAmount, setRewardAmount] = useState<string>("");
+    const [voucherCode, setVoucherCode] = useState("");
+    const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+    const [voucherLoading, setVoucherLoading] = useState(false);
+    const [voucherError, setVoucherError] = useState("");
+
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        setVoucherLoading(true);
+        setVoucherError("");
+        try {
+            const res = await fetch("/api/b2b/voucher", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: voucherCode.trim() })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAppliedVoucher(data.voucher);
+                setVoucherError("");
+            } else {
+                setVoucherError(data.error || "Invalid voucher code");
+            }
+        } catch (err) {
+            setVoucherError("Failed to validate voucher");
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+    useEffect(() => {
+        if (isB2B) {
+            fetch("/api/b2b/me").then(r => r.json()).then(res => {
+                if (res.user) {
+                    if (res.user.rewardBalance) {
+                        setRewardBalance(res.user.rewardBalance);
+                    }
+                    // Pre-fill form with B2B data
+                    setForm(prev => ({
+                        ...prev,
+                        firstName: res.user.firstName || res.user.companyName || prev.firstName,
+                        lastName: res.user.lastName || prev.lastName,
+                        email: res.user.email || prev.email,
+                        phone: res.user.phone || prev.phone,
+                        address: res.user.address || prev.address,
+                        city: res.user.city || prev.city,
+                        zip: res.user.zip || prev.zip,
+                    }));
+                }
+            }).catch(console.error);
+        }
+    }, [isB2B]);
 
     useEffect(() => {
         if (isB2B && checkoutStep === "mobile") {
@@ -96,7 +155,10 @@ export default function CheckoutPage() {
     }, []);
 
     const shipping = 0;
-    const total = cartTotalFromDb;
+    const rewardsDeducted = (isB2B && applyRewards) ? Math.min(rewardBalance, Number(rewardAmount) || 0, cartTotalFromDb + shipping) : 0;
+    const totalBeforeVoucher = cartTotalFromDb + shipping - rewardsDeducted;
+    const voucherDeducted = appliedVoucher ? Math.min(appliedVoucher.balance, totalBeforeVoucher) : 0;
+    const total = totalBeforeVoucher - voucherDeducted;
     const paymentMethodLabel = paymentMethods.find((pm) => pm.id === paymentMethod)?.name ?? paymentMethod;
 
     const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -248,6 +310,9 @@ export default function CheckoutPage() {
                     subtotal: cartTotalFromDb,
                     shipping,
                     total,
+                    applyRewards: isB2B && applyRewards,
+                    appliedVoucherId: appliedVoucher?.id || null,
+                    voucherAmount: voucherDeducted,
                     items: cartWithDetails.map((item) => ({
                         id: String(item.id),
                         name: item.nameFromDb,
@@ -269,6 +334,8 @@ export default function CheckoutPage() {
                 orderNo: data.orderNo || "",
                 total: String(data.total ?? total.toFixed(2)),
                 payment: data.payment || paymentMethodLabel,
+                rewardsEarned: String(data.rewardsEarned || 0),
+                rewardsUsed: String(data.rewardsUsed || 0),
             });
             router.push(`/order-success?${params.toString()}`);
         } catch {
@@ -290,6 +357,10 @@ export default function CheckoutPage() {
                 </Link>
             </div>
         );
+    }
+
+    if (!cartLoading && !isB2B) {
+        return null; // Don't flash checkout content while redirecting
     }
 
     return (
@@ -319,6 +390,14 @@ export default function CheckoutPage() {
 
             <section id="checkout" className="checkout section">
                 <div className="container" data-aos="fade-up" data-aos-delay="100">
+                    {cartLoading ? (
+                        <div className="text-center py-5">
+                            <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                            <p className="mt-3 text-muted">Preparing checkout...</p>
+                        </div>
+                    ) : (
                     <form onSubmit={handleSubmit}>
                         <div className="row">
                             <div className="col-lg-8">
@@ -651,11 +730,98 @@ export default function CheckoutPage() {
                                             <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)</span>
                                         </div>
                                     )}
+                                    {isB2B && rewardBalance > 0 && (
+                                        <div className="mb-3 p-3 bg-light rounded border border-warning" style={{ fontSize: "0.9rem" }}>
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <div className="fw-bold text-dark"><i className="bi bi-gift-fill text-warning me-2"></i>Reward Balance</div>
+                                                <div className="fw-bold text-success">₹{(rewardBalance).toFixed(2)}</div>
+                                            </div>
+                                            <div className="form-check form-switch mt-2">
+                                                <input className="form-check-input" type="checkbox" id="applyRewards" checked={applyRewards} onChange={(e) => {
+                                                    setApplyRewards(e.target.checked);
+                                                    if (e.target.checked) setRewardAmount(Math.min(rewardBalance, cartTotalFromDb + shipping).toFixed(2));
+                                                }} />
+                                                <label className="form-check-label text-muted small" htmlFor="applyRewards">Apply rewards to this order</label>
+                                            </div>
+
+                                            {applyRewards && (
+                                                <div className="reward-input-wrapper mt-3 animate__animated animate__fadeIn">
+                                                    <label className="small text-muted mb-1 d-block">Enter points to use (Max ₹{Math.min(rewardBalance, cartTotalFromDb + shipping).toFixed(2)})</label>
+                                                    <div className="input-group input-group-sm">
+                                                        <span className="input-group-text bg-white border-warning text-warning">₹</span>
+                                                        <input 
+                                                            type="number" 
+                                                            className="form-control border-warning shadow-none" 
+                                                            value={rewardAmount}
+                                                            onChange={(e) => {
+                                                                const val = Number(e.target.value);
+                                                                const max = Math.min(rewardBalance, cartTotalFromDb + shipping);
+                                                                if (val > max) {
+                                                                    setRewardAmount(max.toFixed(2));
+                                                                } else {
+                                                                    setRewardAmount(e.target.value);
+                                                                }
+                                                            }}
+                                                            max={Math.min(rewardBalance, cartTotalFromDb + shipping)}
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {applyRewards && rewardsDeducted > 0 && (
+                                                <div className="d-flex justify-content-between mt-2 pt-2 border-top border-warning text-success fw-bold">
+                                                    <span>Rewards Used:</span>
+                                                    <span>-₹{rewardsDeducted.toFixed(2)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {isB2B && (
+                                        <div className="mb-3 p-3 bg-white rounded border" style={{ borderColor: appliedVoucher ? '#22c55e' : (voucherError ? '#ef4444' : '#e2e8f0') }}>
+                                            <div className="fw-bold text-dark small mb-2">Have a Gift Voucher?</div>
+                                            <div className="input-group input-group-sm">
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control" 
+                                                    placeholder="Enter code (xxxx-xxxx-xxxx)" 
+                                                    value={voucherCode} 
+                                                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                    disabled={appliedVoucher || voucherLoading}
+                                                />
+                                                {!appliedVoucher ? (
+                                                    <button 
+                                                        className="btn btn-dark" 
+                                                        type="button" 
+                                                        onClick={handleApplyVoucher}
+                                                        disabled={!voucherCode || voucherLoading}
+                                                    >
+                                                        {voucherLoading ? <span className="spinner-border spinner-border-sm" /> : "Apply"}
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        className="btn btn-outline-danger" 
+                                                        type="button" 
+                                                        onClick={() => { setAppliedVoucher(null); setVoucherCode(""); }}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {voucherError && <div className="text-danger smaller mt-1" style={{ fontSize: '0.7rem' }}>{voucherError}</div>}
+                                            {appliedVoucher && (
+                                                <div className="d-flex justify-content-between mt-2 pt-2 border-top text-success fw-bold">
+                                                    <span>Voucher Benefit:</span>
+                                                    <span>-₹{Math.min(appliedVoucher.balance, totalBeforeVoucher).toFixed(2)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     <hr />
                                     <div className="summary-total d-flex justify-content-between mb-4">
                                         <span className="h5 fw-bold">Total:</span>
-                                        <strong className="text-primary h4 mb-0">{cartLoading ? "—" : `₹${total.toFixed(2)}`}</strong>
+                                        <strong className="text-primary h4 mb-0">{cartLoading ? "—" : `₹${Math.max(0, total).toFixed(2)}`}</strong>
                                     </div>
                                     <button
                                         type="submit"
@@ -673,15 +839,60 @@ export default function CheckoutPage() {
                             </div>
                         </div>
                     </form>
+                    )}
                 </div>
             </section>
+
+            {/* Sticky Mobile Action Bar */}
+            {checkoutStep === "billing" && !cartLoading && (
+                <div className="mobile-action-bar d-md-none border-top shadow-lg">
+                    <div className="container-fluid py-3 px-4">
+                        <div className="d-flex align-items-center justify-content-between gap-3">
+                            <div className="price-info">
+                                <div className="small text-white-50 lh-1">Total Amount</div>
+                                <div className="h5 fw-bold text-white mb-0">₹{total.toFixed(2)}</div>
+                            </div>
+                            <button
+                                type="button"
+                                className="btn btn-warning flex-grow-1 fw-bold py-2 shadow-sm rounded-pill"
+                                onClick={() => {
+                                    const formEl = document.querySelector('form');
+                                    if (formEl) formEl.requestSubmit();
+                                }}
+                                disabled={submitting || !canPlaceOrder}
+                                style={{ backgroundColor: '#ffc451', color: '#111', fontSize: '0.95rem' }}
+                            >
+                                {submitting ? "Processing..." : "Place Order"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style jsx>{`
+                .mobile-action-bar {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    z-index: 1050;
+                    background: #111;
+                    padding-bottom: env(safe-area-inset-bottom);
+                }
+                .mobile-action-bar .btn-warning:active {
+                    transform: scale(0.98);
+                }
                 .form-control::placeholder {
                     color: #cbd5e1 !important;
                     opacity: 1;
                 }
                 .letter-spacing-lg {
                     letter-spacing: 0.5rem;
+                }
+                @media (max-width: 767.98px) {
+                    section.checkout {
+                        padding-bottom: 100px !important;
+                    }
                 }
             `}</style>
         </>

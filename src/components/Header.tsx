@@ -49,7 +49,7 @@ export default function Header() {
         fetch("/api/b2b/me")
             .then((r) => r.json())
             .then((res) => { if (res.authenticated) setB2bUser(res.user); })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setMounted(true));
     }, []);
 
@@ -115,10 +115,12 @@ export default function Header() {
                         <i className="bi bi-cart3"></i>
                         <span className="cart-badge">{cartCount}</span>
                     </button>
-                ) : (
+                ) : mounted && b2bUser ? (
                     <Link className="btn-getstarted d-inline-flex position-relative ms-auto" href="/shop" style={{ zIndex: 1001 }}>
                         Shop Online
                     </Link>
+                ) : (
+                    <></>
                 )}
 
                 <nav id="navmenu" className="navmenu">

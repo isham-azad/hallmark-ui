@@ -15,6 +15,16 @@ export default function Footer() {
     const [brandsLoading, setBrandsLoading] = useState(true);
     const [subscribeState, setSubscribeState] = useState({ loading: false, success: false, error: "" });
     const isAdmin = pathname?.startsWith("/admin");
+    const [b2bUser, setB2bUser] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/b2b/me")
+            .then((r) => r.json())
+            .then((res) => { if (res.authenticated) setB2bUser(res.user); })
+            .catch(() => { })
+            .finally(() => setMounted(true));
+    }, []);
 
     useEffect(() => {
         fetch("/api/site/brands")
@@ -81,7 +91,7 @@ export default function Footer() {
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#hero"> Home</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#about"> About Us</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#contact"> Contact Us</a></li>
-                                <li><i className="bi bi-chevron-right"></i> <a href="/shop"> Shop Online</a></li>
+                                {mounted && b2bUser && <li><i className="bi bi-chevron-right"></i> <a href="/shop"> Shop Online</a></li>}
                             </ul>
                         </div>
 

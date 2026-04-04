@@ -86,6 +86,16 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   const { addToCart } = useCart();
   const { setIsInvestOpen } = useInvest();
   const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
+  const [b2bUser, setB2bUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/b2b/me")
+      .then((r) => r.json())
+      .then((res) => { if (res.authenticated) setB2bUser(res.user); })
+      .catch(() => { })
+      .finally(() => setMounted(true));
+  }, []);
 
   useEffect(() => {
     // Manually trigger Swiper initialization after component mounts
@@ -549,7 +559,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
               <div className="text-center">
                 <h3>"All because we understand you better"</h3>
                 <p>From home care to food and grocery essentials, Hallmark Enterprises delivers trusted quality and real value to homes across the region. Explore our full range of products and discover the Hallmark difference.</p>
-                <a className="cta-btn" href="/shop">Shop Online</a>
+                {mounted && b2bUser && <a className="cta-btn" href="/shop">Shop Online</a>}
               </div>
             </div>
           </div>

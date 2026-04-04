@@ -58,6 +58,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
             ...data.assignedTo,
             assignedAt: toISO(data.assignedTo.assignedAt)
         } : null,
+        rewardsUsed: (data.rewardsUsed as number) || 0,
+        rewardsEarned: (data.rewardsEarned as number) || 0,
+        voucherAmount: (data.voucherAmount as number) || 0,
         date: toISO(data.date),
         createdAt: toISO(data.createdAt),
         updatedAt: toISO(data.updatedAt),
