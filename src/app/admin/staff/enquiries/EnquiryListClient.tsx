@@ -12,6 +12,7 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [filterType, setFilterType] = useState("All");
     const { showToast, ToastComponent } = useAdminToast();
 
     const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
@@ -24,11 +25,16 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
     };
 
     // Filtering logic
-    const filteredEnquiries = enquiries.filter(e =>
-        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.phone.includes(searchTerm) ||
-        (e.product?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredEnquiries = enquiries.filter(e => {
+        const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.phone.includes(searchTerm) ||
+            (e.product?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (filterType === "Investor") return matchesSearch && e.type === "INVESTOR_INQUIRY";
+        if (filterType === "Product") return matchesSearch && !!e.product;
+        
+        return matchesSearch;
+    });
 
     // Pagination logic
     const totalPages = Math.max(1, Math.ceil(filteredEnquiries.length / PAGE_SIZE));
@@ -80,6 +86,22 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                    </div>
+                    <div className="filter-tabs">
+                        {["All", "Product", "Investor"].map(type => (
+                            <button 
+                                key={type}
+                                className={`filter-tab ${filterType === type ? 'active' : ''}`}
+                                onClick={() => setFilterType(type)}
+                            >
+                                {type}
+                                {type === 'Investor' && (
+                                    <span className="count-pill">
+                                        {enquiries.filter(e => e.type === 'INVESTOR_INQUIRY').length}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -153,10 +175,13 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                                         <small className="text-muted fs-xxs">{e.product.category}</small>
                                                     </div>
                                                 </div>
+                                            ) : e.type === "INVESTOR_INQUIRY" ? (
+                                                <div className="investor-badge">
+                                                    <i className="bi bi-graph-up-arrow me-1"></i>
+                                                    Investor Interest
+                                                </div>
                                             ) : (
-                                                <span className="text-muted italic small">
-                                                    {e.type ? e.type.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : "General Inquiry"}
-                                                </span>
+                                                <span className="text-muted italic small">General Inquiry</span>
                                             )}
                                         </td>
                                         <td>
@@ -220,10 +245,15 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                                 <i className="bi bi-box"></i>
                                                 <span>{e.product.name}</span>
                                             </div>
+                                        ) : e.type === "INVESTOR_INQUIRY" ? (
+                                            <div className="info-item">
+                                                <i className="bi bi-graph-up-arrow"></i>
+                                                <span className="investor-badge">Investor Interest</span>
+                                            </div>
                                         ) : (
                                             <div className="info-item">
                                                 <i className="bi bi-info-circle"></i>
-                                                <span>{e.type ? e.type.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()) : "General Inquiry"}</span>
+                                                <span>General Inquiry</span>
                                             </div>
                                         )}
                                         <div className="info-item status-item">
@@ -301,8 +331,16 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                 .header-info p { color: #64748b; margin: 0; margin-top: 0.25rem; }
 
                 .table-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; overflow: hidden; }
-                .table-actions-bar { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; background: #fff; }
-                .search-box { position: relative; max-width: 400px; }
+                .table-actions-bar { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+                
+                .filter-tabs { display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 12px; }
+                .filter-tab { padding: 8px 16px; border: none; background: transparent; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+                .filter-tab.active { background: #fff; color: #0f172a; shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                .count-pill { background: #ffc451; color: #000; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 800; min-width: 20px; text-align: center; }
+
+                .investor-badge { background: #fffbeb; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #fef3c7; display: inline-flex; align-items: center; }
+
+                .search-box { position: relative; width: 100%; max-width: 350px; }
                 .search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
                 .search-box input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; font-family: inherit; font-size: 0.9375rem; }
                 .search-box input:focus { outline: none; border-color: #ffc451; background: #fff; }

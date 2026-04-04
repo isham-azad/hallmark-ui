@@ -958,3 +958,135 @@ export function AdminStatsSectionShimmer() {
         </div>
     );
 }
+
+/** Shimmer for B2B My Account page - High Fidelity Match */
+export function B2BAccountShimmer() {
+    return (
+        <div className="b2b-account-shimmer">
+            {/* Hero Section */}
+            <div style={{ padding: '160px 0 60px', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', position: 'relative', marginBottom: 0, overflow: 'hidden' }}>
+                <div className="container">
+                    <div className="d-flex align-items-center gap-4">
+                        <ShimmerBox style={{ width: 80, height: 80, borderRadius: '50%', flexShrink: 0 }} />
+                        <div>
+                            <ShimmerBox style={{ height: 32, width: 250, marginBottom: 12 }} />
+                            <ShimmerBox style={{ height: 18, width: 180 }} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="container py-5" style={{ position: 'relative', zIndex: 10, paddingBottom: 100 }}>
+                <div className="row g-4 mb-4">
+                    {/* 1. Account Details */}
+                    <div className="col-lg-4">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                            <ShimmerBox style={{ height: 50, width: '100%', marginBottom: 20 }} />
+                            <div className="p-4 pt-0">
+                                {[1, 2, 3, 4, 5, 6].map(i => (
+                                    <div key={i} className="mb-3 d-flex justify-content-between align-items-center border-bottom pb-2">
+                                        <ShimmerBox style={{ height: 14, width: 80 }} />
+                                        <ShimmerBox style={{ height: 14, width: 100 }} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Quick Actions */}
+                    <div className="col-lg-4">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                            <ShimmerBox style={{ height: 50, width: '100%', marginBottom: 20 }} />
+                            <div className="p-4 pt-0 d-flex flex-column gap-3">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="p-3 rounded-4 bg-light border d-flex align-items-center gap-3">
+                                        <ShimmerBox style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0 }} />
+                                        <div className="flex-grow-1">
+                                            <ShimmerBox style={{ height: 14, width: 120, marginBottom: 6 }} />
+                                            <ShimmerBox style={{ height: 10, width: 100 }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. B2B Benefits */}
+                    <div className="col-lg-4">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                            <ShimmerBox style={{ height: 50, width: '100%', marginBottom: 20 }} />
+                            <div className="p-4 pt-0">
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <div key={i} className="mb-3 d-flex align-items-center gap-3">
+                                        <ShimmerBox style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0 }} />
+                                        <ShimmerBox style={{ height: 14, width: '80%' }} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Rewards Program - Full Width */}
+                <div className="row g-4">
+                    <div className="col-12">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                            <ShimmerBox style={{ height: 80, width: '100%', marginBottom: 24 }} />
+                            <div className="p-4 pt-0">
+                                <div className="row g-4">
+                                    <div className="col-md-5 border-end-md">
+                                        <ShimmerBox style={{ height: 20, width: 140, marginBottom: 16 }} />
+                                        <ShimmerBox style={{ height: 12, width: '100%', marginBottom: 12 }} />
+                                        <div className="mb-4 d-flex flex-column gap-3">
+                                            <ShimmerBox style={{ height: 44, width: '100%', borderRadius: 8 }} />
+                                            <ShimmerBox style={{ height: 44, width: '100%', borderRadius: 8 }} />
+                                            <ShimmerBox style={{ height: 80, width: '100%', borderRadius: 8 }} />
+                                            <ShimmerBox style={{ height: 44, width: '100%', borderRadius: 8 }} />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-7 ps-md-4">
+                                        <ShimmerBox style={{ height: 20, width: 140, marginBottom: 20 }} />
+                                        {[1, 2, 3, 4].map(i => (
+                                            <div key={i} className="mb-3 d-flex justify-content-between align-items-center border-bottom pb-2">
+                                                <div>
+                                                    <ShimmerBox style={{ height: 14, width: 160, marginBottom: 6 }} />
+                                                    <ShimmerBox style={{ height: 10, width: 80 }} />
+                                                </div>
+                                                <div className="text-end">
+                                                    <ShimmerBox style={{ height: 16, width: 110, marginBottom: 4 }} />
+                                                    <ShimmerBox style={{ height: 10, width: 60 }} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Gift Vouchers Section */}
+                <div className="mt-5 pt-4 border-top">
+                    <div className="d-flex align-items-center gap-2 mb-4">
+                        <ShimmerBox style={{ width: 24, height: 24, borderRadius: '50%' }} />
+                        <ShimmerBox style={{ height: 24, width: 200 }} />
+                    </div>
+                    <div className="row g-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="col-md-4">
+                                <div className="card p-4 border-0 shadow-sm rounded-4 text-center">
+                                    <ShimmerBox style={{ height: 12, width: 60, margin: '0 auto 12px' }} />
+                                    <ShimmerBox style={{ height: 26, width: 150, margin: '0 auto 20px', borderRadius: 8 }} />
+                                    <ShimmerBox style={{ height: 32, width: 100, margin: '0 auto 12px', borderRadius: 8 }} />
+                                    <ShimmerBox style={{ height: 12, width: 120, margin: '0 auto 24px' }} />
+                                    <ShimmerBox style={{ height: 40, width: '100%', borderRadius: 10 }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

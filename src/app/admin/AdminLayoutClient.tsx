@@ -38,6 +38,7 @@ export default function AdminLayoutClient({
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isWebsiteOpen, setIsWebsiteOpen] = useState(false);
   const [isCustomersOpen, setIsCustomersOpen] = useState(false);
+  const [isRewardsOpen, setIsRewardsOpen] = useState(false);
   const [headerTitle, setHeaderTitle] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<{ name: string; email: string; role: Role } | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
@@ -106,6 +107,16 @@ export default function AdminLayoutClient({
         { name: "Stats Section", href: "/admin/website/stats", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Investors Section", href: "/admin/website/investors", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Shop Banners", href: "/admin/website/shop-banners", permission: PERMISSIONS.MANAGE_WEBSITE },
+      ],
+    },
+    {
+      name: "Rewards",
+      icon: "bi bi-gift-fill",
+      href: "#",
+      subItems: [
+        { name: "Reward Points", href: "/admin/rewards", permission: PERMISSIONS.MANAGE_REWARDS },
+        { name: "Redemption Requests", href: "/admin/rewards/redemptions", permission: PERMISSIONS.MANAGE_REWARDS },
+        { name: "Gift Vouchers", href: "/admin/rewards/vouchers", permission: PERMISSIONS.MANAGE_REWARDS },
       ],
     },
   ];
@@ -215,6 +226,10 @@ export default function AdminLayoutClient({
       setHeaderTitle("Investors Section");
     } else if (pathname === "/admin/website/shop-banners") {
       setHeaderTitle("Shop Banners");
+    } else if (pathname === "/admin/rewards") {
+      setHeaderTitle("Reward Points History");
+    } else if (pathname === "/admin/rewards/redemptions") {
+      setHeaderTitle("Redemption Requests");
     } else if (orderId) {
       setHeaderTitle(null);
       getOrderById(orderId).then((order) => {
@@ -319,13 +334,14 @@ export default function AdminLayoutClient({
                       if (item.name === "Payment") setIsPaymentOpen(!isPaymentOpen);
                       if (item.name === "Website") setIsWebsiteOpen(!isWebsiteOpen);
                       if (item.name === "Customers") setIsCustomersOpen(!isCustomersOpen);
+                      if (item.name === "Rewards") setIsRewardsOpen(!isRewardsOpen);
                     }}
                   >
                     <div className="sb-icon"><i className={item.icon}></i></div>
                     <span className="sb-label">{item.name}</span>
-                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) ? "rotate" : ""}`}></i>
+                    <i className={`bi bi-chevron-down sb-arrow ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) || (item.name === "Rewards" && isRewardsOpen) ? "rotate" : ""}`}></i>
                   </button>
-                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) ? "expanded" : ""}`}>
+                  <div className={`sb-submenu ${(item.name === "Products" && isProductsOpen) || (item.name === "Catalog" && isCatalogOpen) || (item.name === "Orders" && isOrdersOpen) || (item.name === "Admins" && isAdminsOpen) || (item.name === "Payment" && isPaymentOpen) || (item.name === "Website" && isWebsiteOpen) || (item.name === "Customers" && isCustomersOpen) || (item.name === "Rewards" && isRewardsOpen) ? "expanded" : ""}`}>
                     {item.subItems.map((subItem) => (
                       <Link
                         key={subItem.name}

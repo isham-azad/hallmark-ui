@@ -12,8 +12,14 @@ export interface B2BClient {
     id: string;
     username: string;
     companyName: string;
+    firstName?: string;
+    lastName?: string;
     email?: string;
     phone?: string;
+    address?: string;
+    city?: string;
+    zip?: string;
+    rewardPercentage?: number;
     status: "active" | "disabled";
     createdAt?: string;
 }
@@ -51,8 +57,14 @@ export async function getB2BClients(): Promise<B2BClient[]> {
                 id: doc.id,
                 username: data.username || "",
                 companyName: data.companyName || "",
+                firstName: data.firstName || "",
+                lastName: data.lastName || "",
                 email: data.email || "",
                 phone: data.phone || "",
+                address: data.address || "",
+                city: data.city || "",
+                zip: data.zip || "",
+                rewardPercentage: data.rewardPercentage !== undefined ? Number(data.rewardPercentage) : 2,
                 status: data.status || "active",
                 createdAt: createdAtStr,
             };
@@ -76,7 +88,7 @@ export async function addB2BClient(data: any) {
             return { success: false, error: "Access Denied" };
         }
 
-        const { username, password, companyName, email, phone } = data;
+        const { username, password, companyName, firstName, lastName, email, phone, address, city, zip, rewardPercentage } = data;
         
         // Ensure username is unique
         const existing = await db.collection("b2b_clients").where("username", "==", username.trim()).get();
@@ -87,8 +99,15 @@ export async function addB2BClient(data: any) {
         const docRef = await db.collection("b2b_clients").add({
             username: username.trim(),
             companyName: companyName.trim(),
+            firstName: firstName?.trim() || "",
+            lastName: lastName?.trim() || "",
             email: email?.trim() || "",
             phone: phone?.trim() || "",
+            address: address?.trim() || "",
+            city: city?.trim() || "",
+            zip: zip?.trim() || "",
+            rewardPercentage: rewardPercentage !== undefined ? Number(rewardPercentage) : 2,
+            rewardBalance: 0,
             passwordHash: hashPassword(password),
             status: "active",
             createdAt: FieldValue.serverTimestamp(),
@@ -102,6 +121,51 @@ export async function addB2BClient(data: any) {
     } catch (e) {
         console.error("Add B2B client error:", e);
         return { success: false, error: "Failed to add B2B client" };
+    }
+}
+
+export async function editB2BClient(id: string, data: any) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_CUSTOMERS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
+        const { username, companyName, firstName, lastName, email, phone, address, city, zip, rewardPercentage } = data;
+        
+        // Ensure username is unique
+        const existing = await db.collection("b2b_clients").where("username", "==", username.trim()).get();
+        if (!existing.empty && existing.docs[0].id !== id) {
+            return { success: false, error: "Username is already taken by another client." };
+        }
+
+        await db.collection("b2b_clients").doc(id).update({
+            username: username.trim(),
+            companyName: companyName.trim(),
+            firstName: firstName?.trim() || "",
+            lastName: lastName?.trim() || "",
+            email: email?.trim() || "",
+            phone: phone?.trim() || "",
+            address: address?.trim() || "",
+            city: city?.trim() || "",
+            zip: zip?.trim() || "",
+            rewardPercentage: rewardPercentage !== undefined ? Number(rewardPercentage) : 2,
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        await logAction(session.email, session.name, "EDIT_B2B_CLIENT", { clientId: id, username });
+
+        revalidatePath("/admin/b2b-clients");
+        return { success: true };
+    } catch (e) {
+        console.error("Edit B2B client error:", e);
+        return { success: false, error: "Failed to edit B2B client" };
     }
 }
 

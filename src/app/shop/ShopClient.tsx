@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ProductCardShimmer, CategoryFilterShimmer } from "@/components/Shimmer";
 
@@ -66,6 +67,8 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
     const [hoverImgIdx, setHoverImgIdx] = useState(0);
     const hoverIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [isB2B, setIsB2B] = useState(false);
+    const [authChecking, setAuthChecking] = useState(true);
+    const router = useRouter();
 
     const handleProductMouseEnter = (product: ShopProduct) => {
         setHoveredId(product.id);
@@ -92,7 +95,8 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
         fetch("/api/b2b/me")
             .then((r) => r.json())
             .then((b2bRes) => setIsB2B(b2bRes.authenticated ?? false))
-            .catch(() => setIsB2B(false));
+            .catch(() => setIsB2B(false))
+            .finally(() => setAuthChecking(false));
 
         if (initialData) return;
 
@@ -186,6 +190,26 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
             return () => clearInterval(interval);
         }
     }, [displayCount]);
+
+    useEffect(() => {
+        if (!authChecking && !isB2B) {
+            router.push("/b2b/login");
+        }
+    }, [authChecking, isB2B, router]);
+
+    if (authChecking) {
+        return (
+            <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+                <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}>
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isB2B) {
+        return null; // Avoid flashing while redirecting
+    }
 
     return (
         <>
@@ -555,9 +579,9 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                                     <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
                                                                         Inclusive of all taxes
                                                                     </div>
-                                                                    {isB2B && product.b2bPricingTiers && product.b2bPricingTiers.some(t => Number(t.minQty) === 1 && t.price && t.price.trim() !== "") && (
+                                                                    {/* {isB2B && product.b2bPricingTiers && product.b2bPricingTiers.some(t => Number(t.minQty) === 1 && t.price && t.price.trim() !== "") && (
                                                                         <span className="badge bg-primary" style={{ fontSize: '0.6rem' }}>B2B Price</span>
-                                                                    )}
+                                                                    )} */}
                                                                 </div>
                                                             </>
                                                         );

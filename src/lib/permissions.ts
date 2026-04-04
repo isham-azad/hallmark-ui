@@ -25,6 +25,7 @@ export const PERMISSIONS = {
     MANAGE_ENQUIRIES: "manage_enquiries",
     VIEW_LOGS: "view_logs",
     MANAGE_WEBSITE: "manage_website",
+    MANAGE_REWARDS: "manage_rewards",
 } as const;
 
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {

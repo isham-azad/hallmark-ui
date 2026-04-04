@@ -34,6 +34,8 @@ interface Order {
     payment: string;
     paymentMethod?: string;
     paymentStatus?: string;
+    rewardsUsed?: number;
+    rewardsEarned?: number;
     createdAt: string;
     updatedAt: string;
     items: OrderItem[];
@@ -70,6 +72,8 @@ export async function getOrderById(id: string): Promise<Order | null> {
             payment: data.payment,
             paymentMethod: paymentMethod === "COD" || paymentMethod === "UPI" ? paymentMethod : norm(data.payment),
             paymentStatus: paymentStatus === "Paid" ? "Paid" : "Pending",
+            rewardsUsed: (data.rewardsUsed as number) || 0,
+            rewardsEarned: (data.rewardsEarned as number) || 0,
             date: toISO(data.date),
             createdAt: toISO(data.createdAt),
             updatedAt: toISO(data.updatedAt),
