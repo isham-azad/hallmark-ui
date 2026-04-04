@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UPIQrCode from "@/components/UPIQrCode";
 import { parseOrderTotal } from "@/lib/upi";
 
 export default function OrderSuccessClient() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [orderDate, setOrderDate] = useState("");
+    const [isB2B, setIsB2B] = useState<boolean | null>(null);
     const orderNo = searchParams.get("orderNo") || "—";
     const total = searchParams.get("total") || "—";
     const payment = searchParams.get("payment") || "—";
@@ -19,7 +21,22 @@ export default function OrderSuccessClient() {
     useEffect(() => {
         const now = new Date();
         setOrderDate(now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
+
+        fetch("/api/b2b/me")
+            .then((r) => r.json())
+            .then((b2bRes) => setIsB2B(b2bRes.authenticated ?? false))
+            .catch(() => setIsB2B(false));
     }, []);
+
+    useEffect(() => {
+        if (isB2B === false) {
+            router.push("/b2b/login");
+        }
+    }, [isB2B, router]);
+
+    if (isB2B === null || isB2B === false) {
+        return null;
+    }
 
     return (
         <>
@@ -67,6 +84,22 @@ export default function OrderSuccessClient() {
                                         </span>
                                         <span className="success-order-value">{payment}</span>
                                     </div>
+                                    {Number(searchParams.get("rewardsUsed") || 0) > 0 && (
+                                        <div className="success-order-row rewards-row used">
+                                            <span className="success-order-label text-danger">
+                                                <i className="bi bi-gift-fill text-danger" aria-hidden /> Rewards Applied
+                                            </span>
+                                            <span className="success-order-value text-danger">-₹{Number(searchParams.get("rewardsUsed")).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {Number(searchParams.get("rewardsEarned") || 0) > 0 && (
+                                        <div className="success-order-row rewards-row earned">
+                                            <span className="success-order-label text-success">
+                                                <i className="bi bi-star-fill text-success" aria-hidden /> Rewards Earned
+                                            </span>
+                                            <span className="success-order-value text-success">+₹{Number(searchParams.get("rewardsEarned")).toFixed(2)}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isUpi && (

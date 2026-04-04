@@ -88,6 +88,12 @@ export default function ProductDetailClient() {
         }).finally(() => setLoading(false));
     }, [id]);
 
+    useEffect(() => {
+        if (!loading && !isB2B) {
+            router.push("/b2b/login");
+        }
+    }, [loading, isB2B, router]);
+
     const checkPincode = async () => {
         const normalized = pincode.trim().replace(/\D/g, "");
         if (normalized.length !== 6) {
@@ -143,6 +149,10 @@ export default function ProductDetailClient() {
                 <ShopProductDetailShimmer />
             </>
         );
+    }
+
+    if (!isB2B) {
+        return null;
     }
 
     if (!product) {
@@ -331,7 +341,7 @@ export default function ProductDetailClient() {
                                             <tbody>
                                                 <tr><th style={{ width: "35%" }}>Brand</th><td><Link href={`/brand/${product.brand}`}>{brandName}</Link></td></tr>
                                                 <tr><th>Category</th><td><Link href={`/category/${product.category}`}>{categoryName}</Link></td></tr>
-                                                <tr><th>Manufactured by</th><td>Hallmark Enterprises</td></tr>
+                                                <tr><th>Sold by</th><td>Hallmark Enterprises</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -374,12 +384,12 @@ export default function ProductDetailClient() {
                                                     <del>₹{displayWasPrice.toLocaleString()}</del>
                                                 </div>
                                             )}
-                                            
+
                                             <div style={{ fontSize: "0.95rem", color: "#0F1111" }}>Inclusive of all taxes</div>
-                                            
-                                            {isB2B && (
+
+                                            {/* {isB2B && (
                                                 <div className="badge bg-primary mt-2">B2B Special Pricing Applied</div>
-                                            )}
+                                            )} */}
                                         </div>
                                     ) : (
                                         <span className="h4 text-primary fw-bold">Contact for Price</span>
@@ -419,9 +429,9 @@ export default function ProductDetailClient() {
                                                 {product.isReturnable === false ? 'Non-Returnable' : 'Returnable'}
                                             </span>
                                         </div>
-                                        <div className="trust-badge-item" style={{ 
-                                            flex: '1', 
-                                            display: (product.isDeliveredByHallmark ?? true) ? 'flex' : 'none' 
+                                        <div className="trust-badge-item" style={{
+                                            flex: '1',
+                                            display: (product.isDeliveredByHallmark ?? true) ? 'flex' : 'none'
                                         }}>
                                             <div className="badge-icon-wrapper mx-auto mb-2">
                                                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -436,7 +446,7 @@ export default function ProductDetailClient() {
                                                 Hallmark Delivered
                                             </span>
                                         </div>
-                                        <div className="trust-badge-item" style={{ 
+                                        <div className="trust-badge-item" style={{
                                             flex: '1',
                                             display: (product.isFreeDelivery ?? false) ? 'flex' : 'none'
                                         }}>
@@ -453,7 +463,7 @@ export default function ProductDetailClient() {
                                                 Free Delivery
                                             </span>
                                         </div>
-                                        <div className="trust-badge-item" style={{ 
+                                        <div className="trust-badge-item" style={{
                                             flex: '1',
                                             display: (product.isSecureTransaction ?? true) ? 'flex' : 'none'
                                         }}>
@@ -474,17 +484,17 @@ export default function ProductDetailClient() {
                                 <div className="product-options mb-4">
                                     <div className="mb-3">
                                         <label className="form-label fw-semibold">Quantity:</label>
-                                            <div className="quantity-selector d-flex align-items-center gap-2">
-                                                <button type="button" className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>-</button>
-                                                <input 
-                                                    type="number" 
-                                                    className="form-control text-center" 
-                                                    value={quantity} 
-                                                    readOnly
-                                                    style={{ width: "80px" }} 
-                                                />
-                                                <button type="button" className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.min(10, q + 1))}>+</button>
-                                            </div>
+                                        <div className="quantity-selector d-flex align-items-center gap-2">
+                                            <button type="button" className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>-</button>
+                                            <input
+                                                type="number"
+                                                className="form-control text-center"
+                                                value={quantity}
+                                                readOnly
+                                                style={{ width: "80px" }}
+                                            />
+                                            <button type="button" className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.min(10, q + 1))}>+</button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -557,9 +567,9 @@ export default function ProductDetailClient() {
                         <div className="row gy-4">
                             {relatedProducts.map((p) => {
                                 const pImages = p.image ? p.image.split(',').filter(Boolean) : ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
-                                
+
                                 let displayPrice = parsePrice(p.price);
-                                
+
                                 if (isB2B && p.b2bPricingTiers && p.b2bPricingTiers.length > 0) {
                                     const tier1 = p.b2bPricingTiers.find(t => Number(t.minQty) === 1);
                                     if (tier1) {
@@ -569,7 +579,7 @@ export default function ProductDetailClient() {
 
                                 return (
                                     <div key={p.id} className="col-6 col-lg-3 col-md-4 col-sm-6 product-item-wrapper" data-aos="fade-up">
-                                        <div 
+                                        <div
                                             className="product-item"
                                             onMouseEnter={() => handleRelatedMouseEnter(p.id, pImages.length)}
                                             onMouseLeave={handleRelatedMouseLeave}
@@ -639,35 +649,35 @@ export default function ProductDetailClient() {
                                             </div>
                                             <div className="product-info">
                                                 <h4><Link href={`/shop/product/${p.id}`}>{p.title}</Link></h4>
-                                                
+
                                                 <div className="product-price-container" style={{ marginTop: '12px' }}>
-                                                {p.price ? (
-                                                    <>
-                                                        <div className="d-flex align-items-end gap-2 flex-wrap" style={{ color: "#1e293b" }}>
-                                                            <div className="d-flex" style={{ alignItems: 'flex-start' }}>
-                                                                <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
-                                                                <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
-                                                                    {(parseFloat(p.price.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}
-                                                                </span>
-                                                            </div>
-                                                            {p.wasPrice && (
-                                                                <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
-                                                                    <span style={{ fontWeight: "500" }}>M.R.P.:</span>
-                                                                    <span style={{ textDecoration: "line-through" }}>₹{(parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}</span>
-                                                                    <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) - parseFloat(p.price.replace(/[^0-9.]/g, ""))) / parseFloat(p.wasPrice.replace(/[^0-9.]/g, ""))) * 100)}% off)</span>
+                                                    {p.price ? (
+                                                        <>
+                                                            <div className="d-flex align-items-end gap-2 flex-wrap" style={{ color: "#1e293b" }}>
+                                                                <div className="d-flex" style={{ alignItems: 'flex-start' }}>
+                                                                    <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
+                                                                    <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
+                                                                        {(parseFloat(p.price.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}
+                                                                    </span>
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                        <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
-                                                            Inclusive of all taxes
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <span className="current-price" style={{ fontSize: "0.95rem", fontWeight: "600", color: "#64748b" }}>Contact for Price</span>
-                                                )}
+                                                                {p.wasPrice && (
+                                                                    <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
+                                                                        <span style={{ fontWeight: "500" }}>M.R.P.:</span>
+                                                                        <span style={{ textDecoration: "line-through" }}>₹{(parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}</span>
+                                                                        <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) - parseFloat(p.price.replace(/[^0-9.]/g, ""))) / parseFloat(p.wasPrice.replace(/[^0-9.]/g, ""))) * 100)}% off)</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
+                                                                Inclusive of all taxes
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="current-price" style={{ fontSize: "0.95rem", fontWeight: "600", color: "#64748b" }}>Contact for Price</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
                                     </div>
                                 );
                             })}

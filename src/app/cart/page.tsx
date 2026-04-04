@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useCartWithProducts } from "@/hooks/useCartWithProducts";
 import { ShimmerBox } from "@/components/Shimmer";
@@ -8,6 +10,17 @@ import { ShimmerBox } from "@/components/Shimmer";
 export default function CartPage() {
     const { cart, removeFromCart, updateQuantity } = useCart();
     const { cartWithDetails, cartTotalFromDb, totalSavings, loading, isB2B } = useCartWithProducts(cart);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !isB2B) {
+            router.push("/b2b/login");
+        }
+    }, [loading, isB2B, router]);
+
+    if (!loading && !isB2B) {
+        return null;
+    }
 
     const shipping = 0;
     const subtotal = loading ? 0 : cartTotalFromDb;

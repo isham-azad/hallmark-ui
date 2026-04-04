@@ -33,6 +33,9 @@ interface OrderType {
     paymentMethod?: string;
     paymentStatus?: string;
     items: OrderItemType[];
+    rewardsUsed?: number;
+    rewardsEarned?: number;
+    voucherAmount?: number;
 }
 
 interface InvoiceViewProps {
@@ -159,10 +162,29 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                 </table>
 
                 <div className="invoice-summary">
+                    {order.rewardsUsed ? (
+                        <div className="invoice-summary-row rewards text-danger">
+                            <span className="summary-label">Rewards Applied</span>
+                            <span className="summary-value">-₹{order.rewardsUsed.toFixed(2)}</span>
+                        </div>
+                    ) : null}
+                    {order.voucherAmount ? (
+                        <div className="invoice-summary-row rewards text-primary">
+                            <span className="summary-label">Voucher Applied</span>
+                            <span className="summary-value">-₹{order.voucherAmount.toFixed(2)}</span>
+                        </div>
+                    ) : null}
                     <div className="invoice-summary-row total">
-                        <span className="summary-label">Total Amount</span>
+                        <span className="summary-label">Final Order Amount</span>
                         <span className="summary-value">{order.total}</span>
                     </div>
+
+                    {(order.rewardsEarned || 0) > 0 && (
+                        <div className="invoice-reward-alert">
+                            <i className="bi bi-gift-fill"></i>
+                            <span>You have earned <b>₹{(order.rewardsEarned || 0).toFixed(2)}</b> reward points on this order!</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="invoice-footer">
@@ -222,6 +244,30 @@ export default function InvoiceView({ order }: InvoiceViewProps) {
                 .invoice-summary-row.total { padding-top: 1rem; border-top: 1px dashed #e2e8f0; margin-top: 0.5rem; }
                 .summary-label { font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
                 .summary-value { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
+
+                .invoice-reward-alert {
+                    margin-top: 1.5rem;
+                    background: #f0fdf4;
+                    border: 1.5px solid #bbf7d0;
+                    border-radius: 12px;
+                    padding: 1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    color: #166534;
+                    font-size: 0.9375rem;
+                    font-weight: 600;
+                    animation: pulse-soft 2s infinite;
+                }
+                .invoice-reward-alert i { font-size: 1.25rem; }
+                .invoice-reward-alert b { font-weight: 800; }
+
+                @keyframes pulse-soft {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.01); }
+                    100% { transform: scale(1); }
+                }
 
                 .invoice-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #f1f5f9; text-align: center; }
                 .thank-you { font-size: 0.9375rem; color: #64748b; font-weight: 500; font-style: italic; }
