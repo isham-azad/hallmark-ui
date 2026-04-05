@@ -17,6 +17,15 @@ interface SiteProduct {
     categoryName?: string;
     brandName?: string;
     howToUse?: string;
+    itemWeight?: string;
+    itemDimensions?: string;
+    scent?: string;
+    skinType?: string;
+    itemPackageQuantity?: string;
+    productBenefits?: string;
+    specialFeature?: string;
+    itemForm?: string;
+    numberOfItems?: string;
 }
 
 interface Brand {
@@ -182,6 +191,67 @@ export default function ProductDetailPage() {
                                 </p>
                             </div>
 
+                            <div className="product-specifications mb-5">
+                                <h5 className="fw-bold mb-4" style={{ fontSize: "1.1rem", borderLeft: "4px solid var(--accent-color)", paddingLeft: "15px" }}>Product Specifications</h5>
+                                <div className="specs-grid">
+                                    {product.itemWeight && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Item Weight</span>
+                                            <span className="spec-value">{product.itemWeight}</span>
+                                        </div>
+                                    )}
+                                    {product.itemDimensions && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Item Dimensions</span>
+                                            <span className="spec-value">{product.itemDimensions}</span>
+                                        </div>
+                                    )}
+                                    {product.scent && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Scent</span>
+                                            <span className="spec-value">{product.scent}</span>
+                                        </div>
+                                    )}
+                                    {product.skinType && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Skin Type</span>
+                                            <span className="spec-value">{product.skinType}</span>
+                                        </div>
+                                    )}
+                                    {product.itemPackageQuantity && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Package Qty</span>
+                                            <span className="spec-value">{product.itemPackageQuantity}</span>
+                                        </div>
+                                    )}
+                                    {product.productBenefits && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Product Benefits</span>
+                                            <span className="spec-value">{product.productBenefits}</span>
+                                        </div>
+                                    )}
+                                    {product.specialFeature && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Special Feature</span>
+                                            <span className="spec-value">{product.specialFeature}</span>
+                                        </div>
+                                    )}
+                                    {product.itemForm && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Item Form</span>
+                                            <span className="spec-value">{product.itemForm}</span>
+                                        </div>
+                                    )}
+                                    {product.numberOfItems && (
+                                        <div className="spec-item">
+                                            <span className="spec-label">Number of Items</span>
+                                            <span className="spec-value">{product.numberOfItems}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+
                             {product.howToUse && (
                                 <div className="product-how-to-use mb-5">
                                     <h5 className="fw-bold mb-3">How to Use</h5>
@@ -243,6 +313,32 @@ export default function ProductDetailPage() {
                 }
                 .btn-enquiry:active {
                     transform: translateY(0);
+                }
+                .specs-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 20px;
+                    background: #f8fafc;
+                    padding: 25px;
+                    border-radius: 15px;
+                    border: 1px solid #e2e8f0;
+                }
+                .spec-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .spec-label {
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #64748b;
+                    font-weight: 600;
+                }
+                .spec-value {
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: #1e293b;
                 }
             `}</style>
         </div>

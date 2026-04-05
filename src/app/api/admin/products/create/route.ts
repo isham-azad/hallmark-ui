@@ -27,6 +27,15 @@ const ProductSchema = z.object({
     isDeliveredByHallmark: z.boolean().default(true),
     isFreeDelivery: z.boolean().default(false),
     isSecureTransaction: z.boolean().default(true),
+    itemWeight: z.string().optional(),
+    itemDimensions: z.string().optional(),
+    scent: z.string().optional(),
+    skinType: z.string().optional(),
+    itemPackageQuantity: z.string().optional(),
+    productBenefits: z.string().optional(),
+    specialFeature: z.string().optional(),
+    itemForm: z.string().optional(),
+    numberOfItems: z.string().optional(),
 });
 
 function slugifyFolder(name: string): string {
@@ -55,6 +64,15 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         isDeliveredByHallmark: formData.get("isDeliveredByHallmark") === "true",
         isFreeDelivery: formData.get("isFreeDelivery") === "true",
         isSecureTransaction: formData.get("isSecureTransaction") === "true",
+        itemWeight: (formData.get("itemWeight") as string)?.trim() ?? "",
+        itemDimensions: (formData.get("itemDimensions") as string)?.trim() ?? "",
+        scent: (formData.get("scent") as string)?.trim() ?? "",
+        skinType: (formData.get("skinType") as string)?.trim() ?? "",
+        itemPackageQuantity: (formData.get("itemPackageQuantity") as string)?.trim() ?? "",
+        productBenefits: (formData.get("productBenefits") as string)?.trim() ?? "",
+        specialFeature: (formData.get("specialFeature") as string)?.trim() ?? "",
+        itemForm: (formData.get("itemForm") as string)?.trim() ?? "",
+        numberOfItems: (formData.get("numberOfItems") as string)?.trim() ?? "",
     };
 
     // Validate with Zod
@@ -116,6 +134,15 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         isDeliveredByHallmark: validation.data.isDeliveredByHallmark,
         isFreeDelivery: validation.data.isFreeDelivery,
         isSecureTransaction: validation.data.isSecureTransaction,
+        itemWeight: validation.data.itemWeight ?? "",
+        itemDimensions: validation.data.itemDimensions ?? "",
+        scent: validation.data.scent ?? "",
+        skinType: validation.data.skinType ?? "",
+        itemPackageQuantity: validation.data.itemPackageQuantity ?? "",
+        productBenefits: validation.data.productBenefits ?? "",
+        specialFeature: validation.data.specialFeature ?? "",
+        itemForm: validation.data.itemForm ?? "",
+        numberOfItems: validation.data.numberOfItems ?? "",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });

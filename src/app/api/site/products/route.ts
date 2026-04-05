@@ -46,6 +46,15 @@ export async function GET() {
                     isDeliveredByHallmark: data.isDeliveredByHallmark as boolean | undefined,
                     isFreeDelivery: data.isFreeDelivery as boolean | undefined,
                     isSecureTransaction: data.isSecureTransaction as boolean | undefined,
+                    itemWeight: data.itemWeight as string | undefined,
+                    itemDimensions: data.itemDimensions as string | undefined,
+                    scent: data.scent as string | undefined,
+                    skinType: data.skinType as string | undefined,
+                    itemPackageQuantity: data.itemPackageQuantity as string | undefined,
+                    productBenefits: data.productBenefits as string | undefined,
+                    specialFeature: data.specialFeature as string | undefined,
+                    itemForm: data.itemForm as string | undefined,
+                    numberOfItems: data.numberOfItems as string | undefined,
                 };
             })
             .filter(Boolean);
