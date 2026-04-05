@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Product } from "@/data/products";
 
 interface ProductCardProps {
@@ -7,14 +8,17 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, index }: ProductCardProps) {
+    const imageUrl = product.image ? product.image.split(',').filter(Boolean)[0] : "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg";
+    
     return (
         <div className="product-card service-item position-relative d-flex flex-column h-100" style={{ padding: '0', overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--default-color), transparent 90%)', borderRadius: '15px', transition: 'all 0.4s ease', backgroundColor: 'var(--surface-color)', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
             <Link href={`/product/${product.id}`} className="product-card-img" style={{ overflow: 'hidden', position: 'relative', display: 'block', height: '220px', backgroundColor: '#ffffff' }}>
-                <img
-                    src={product.image ? product.image.split(',').filter(Boolean)[0] : "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"}
+                <Image
+                    src={imageUrl}
                     alt={product.title}
-                    className="img-fluid"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '12px', transition: 'transform 0.6s ease' }}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    style={{ objectFit: 'contain', padding: '12px', transition: 'transform 0.6s ease' }}
                 />
                 <div className="category-badge" style={{ position: 'absolute', top: '15px', left: '15px', backgroundColor: '#198754', padding: '5px 12px', borderRadius: '30px', fontSize: '0.65rem', fontWeight: '700', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: '2' }}>
                     {product.category.replace("-", " ")}

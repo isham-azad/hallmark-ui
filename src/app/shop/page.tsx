@@ -3,7 +3,7 @@ import ShopClient from "./ShopClient";
 import { getSiteProducts, getSiteCategories, getSiteShopBanners } from "@/lib/site-actions";
 import { serializeData } from "@/lib/serialize";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Cache for 1 hour
 
 export const metadata: Metadata = {
   title: "Shop Online | HallMark Enterprises",

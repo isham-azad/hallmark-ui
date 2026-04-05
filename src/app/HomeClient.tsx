@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useInvest } from "@/context/InvestContext";
+import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
 
@@ -193,15 +194,22 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   // carousel animate correctly (they were invisible because AOS calculated
   // positions before async data shifted the page layout).
   useEffect(() => {
-    if (productsLoading || brandsLoading || testimonialsLoading || categoriesLoading || websiteLoading) return;
-
     const refreshAOS = () => {
-      if (typeof window !== "undefined" && (window as any).AOS) {
-        (window as any).AOS.refresh();
+      const aos = (window as any).AOS;
+      if (typeof window !== "undefined" && aos) {
+        aos.init({
+          duration: 600,
+          easing: 'ease-in-out',
+          once: true,
+          mirror: false
+        });
+        aos.refresh();
         return true;
       }
       return false;
     };
+
+    if (productsLoading || brandsLoading || testimonialsLoading || categoriesLoading || websiteLoading) return;
 
     if (!refreshAOS()) {
       const interval = setInterval(() => {
@@ -259,21 +267,26 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
         {websiteContent?.heroBanners && websiteContent.heroBanners.length > 0 ? (
           <div style={{ position: 'absolute', inset: 0, zIndex: 1, overflow: 'hidden' }}>
             {websiteContent.heroBanners.map((banner, idx) => (
-              <img
+              <div
                 key={banner.id}
-                src={banner.image}
-                alt=""
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
                   transition: 'opacity 1.2s ease-in-out',
                   opacity: currentHero === idx ? 1 : 0,
                   zIndex: currentHero === idx ? 2 : 1,
                 }}
-              />
+              >
+                <Image
+                  src={banner.image}
+                  alt={`Banner ${idx + 1}`}
+                  fill
+                  priority={idx === 0}
+                  style={{ objectFit: 'cover' }}
+                  sizes="100vw"
+                  quality={85}
+                />
+              </div>
             ))}
           </div>
         ) : (
@@ -309,8 +322,14 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       <section id="about" className="about section">
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4">
-            <div className="col-lg-6 order-1 order-lg-2">
-              <img src={websiteContent?.aboutUs?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg"} className="img-fluid" alt="" />
+            <div className="col-lg-6 order-1 order-lg-2" style={{ position: 'relative', minHeight: '400px' }}>
+              <Image
+                src={websiteContent?.aboutUs?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg"}
+                alt="About HallMark"
+                fill
+                style={{ objectFit: 'cover', borderRadius: '15px' }}
+                sizes="(max-width: 992px) 100vw, 50vw"
+              />
             </div>
             <div className="col-lg-6 order-2 order-lg-1 content">
               <h3>{websiteContent?.aboutUs?.title || "Hallmark Enterprises"}</h3>
@@ -570,8 +589,15 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       <section id="stats" className="stats section">
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4 align-items-center justify-content-between">
-            <div className="col-lg-5">
-              <img src={websiteContent?.stats?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566392/hallmark/assets/img/stats-img.jpg"} alt="" className="img-fluid" />
+            <div className="col-lg-5" style={{ position: 'relative', minHeight: '400px' }}>
+              <Image
+                src={websiteContent?.stats?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566392/hallmark/assets/img/stats-img.jpg"}
+                alt="Stats"
+                fill
+                style={{ objectFit: 'cover', borderRadius: '15px' }}
+                priority={false}
+                sizes="(max-width: 992px) 100vw, 40vw"
+              />
             </div>
             <div className="col-lg-6">
               <h3 className="fw-bold fs-2 mb-3">{websiteContent?.stats?.title || "Trusted by homes across India & the Gulf"}</h3>
