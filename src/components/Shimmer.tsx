@@ -25,7 +25,7 @@ export function ProductCardShimmer({ className = "" }: { className?: string }) {
                 backgroundColor: "var(--surface-color)",
             }}
         >
-            <ShimmerBox style={{ width: "100%", aspectRatio: "4/3" }} />
+            <ShimmerBox style={{ width: "100%", aspectRatio: "1/1" }} />
             <div className="p-3 p-md-4 d-flex flex-column flex-grow-1">
                 <ShimmerBox style={{ height: 20, width: "85%", marginBottom: 12 }} />
                 <ShimmerBox style={{ height: 14, width: "100%", marginBottom: 8 }} />
@@ -91,7 +91,7 @@ export function ShopProductDetailShimmer() {
                 <div className="container">
                     <div className="row gy-4">
                         <div className="col-lg-8">
-                            <ShimmerBox style={{ width: "100%", aspectRatio: "4/3", borderRadius: 12 }} />
+                            <ShimmerBox style={{ width: "100%", aspectRatio: "1/1", borderRadius: 12 }} />
                             <div className="mt-5">
                                 <div className="d-flex gap-2 mb-0">
                                     <ShimmerBox style={{ height: 40, width: 100 }} />

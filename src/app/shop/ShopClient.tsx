@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ProductCardShimmer, CategoryFilterShimmer } from "@/components/Shimmer";
+import Image from "next/image";
 
 interface ShopProduct {
     id: string;
@@ -235,10 +236,13 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                 transition: "opacity 1s ease-in-out, transform 1s ease-in-out",
                                 zIndex: currentBanner === index ? 1 : 0,
                             }}>
-                                <img
+                                <Image
                                     src={banner.image}
                                     alt={`Promo Banner ${index}`}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                    fill
+                                    priority={index === 0}
+                                    style={{ objectFit: "cover" }}
+                                    sizes="100vw"
                                 />
                                 <div style={{
                                     position: "absolute",
@@ -246,7 +250,8 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                     left: 0,
                                     right: 0,
                                     bottom: 0,
-                                    background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4))"
+                                    background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4))",
+                                    zIndex: 1
                                 }}></div>
                             </div>
                         ))}
@@ -472,7 +477,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                 {product.category === "food-beverages" ? "Food & Beverages" :
                                                     product.category.replace("-", " ")}
                                             </span>
-                                            <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
+                                            <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', overflow: 'hidden', backgroundColor: '#ffffff' }}>
                                                 <div
                                                     style={{
                                                         display: 'flex',
@@ -484,11 +489,13 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                     }}
                                                 >
                                                     {product.images.map((img, idx) => (
-                                                        <div key={idx} style={{ width: `${100 / product.images.length}%`, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}>
-                                                            <img
+                                                        <div key={idx} style={{ position: 'relative', width: `${100 / product.images.length}%`, height: '100%', padding: '12px' }}>
+                                                            <Image
                                                                 src={img}
                                                                 alt={`${product.name} - ${idx + 1}`}
-                                                                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                                                fill
+                                                                sizes="(max-width: 768px) 50vw, 25vw"
+                                                                style={{ objectFit: 'contain', padding: '12px' }}
                                                             />
                                                         </div>
                                                     ))}
