@@ -28,6 +28,15 @@ interface Product {
     isDeliveredByHallmark?: boolean;
     isFreeDelivery?: boolean;
     isSecureTransaction?: boolean;
+    itemWeight?: string;
+    itemDimensions?: string;
+    scent?: string;
+    skinType?: string;
+    itemPackageQuantity?: string;
+    productBenefits?: string;
+    specialFeature?: string;
+    itemForm?: string;
+    numberOfItems?: string;
 }
 
 interface ProductEditClientProps {
@@ -61,6 +70,15 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         isDeliveredByHallmark: product.isDeliveredByHallmark ?? true,
         isFreeDelivery: product.isFreeDelivery ?? false,
         isSecureTransaction: product.isSecureTransaction ?? true,
+        itemWeight: product.itemWeight || "",
+        itemDimensions: product.itemDimensions || "",
+        scent: product.scent || "",
+        skinType: product.skinType || "",
+        itemPackageQuantity: product.itemPackageQuantity || "",
+        productBenefits: product.productBenefits || "",
+        specialFeature: product.specialFeature || "",
+        itemForm: product.itemForm || "",
+        numberOfItems: product.numberOfItems || "",
     });
     const [existingImageUrls, setExistingImageUrls] = useState<string[]>(initialExisting);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -114,6 +132,15 @@ export default function ProductEditClient({ product, brands, categories }: Produ
         form.set("isDeliveredByHallmark", String(formData.isDeliveredByHallmark));
         form.set("isFreeDelivery", String(formData.isFreeDelivery));
         form.set("isSecureTransaction", String(formData.isSecureTransaction));
+        form.set("itemWeight", formData.itemWeight);
+        form.set("itemDimensions", formData.itemDimensions);
+        form.set("scent", formData.scent);
+        form.set("skinType", formData.skinType);
+        form.set("itemPackageQuantity", formData.itemPackageQuantity);
+        form.set("productBenefits", formData.productBenefits);
+        form.set("specialFeature", formData.specialFeature);
+        form.set("itemForm", formData.itemForm);
+        form.set("numberOfItems", formData.numberOfItems);
         form.set("existingImages", existingImageUrls.join(","));
         imageFiles.forEach((file) => form.append("images", file));
 
@@ -178,6 +205,93 @@ export default function ProductEditClient({ product, brands, categories }: Produ
                                 value={formData.howToUse}
                                 onChange={(e) => setFormData({ ...formData, howToUse: e.target.value })}
                             />
+                        </div>
+                    </div>
+
+                    <div className="form-section">
+                        <h3>Detailed Specifications</h3>
+                        <div className="grid-2">
+                            <div className="input-group">
+                                <label>Item Weight</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 600 Grams"
+                                    value={formData.itemWeight}
+                                    onChange={(e) => setFormData({ ...formData, itemWeight: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Item Dimensions (L x W x H)</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 8 x 10 x 18 Centimeters"
+                                    value={formData.itemDimensions}
+                                    onChange={(e) => setFormData({ ...formData, itemDimensions: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Scent</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Aloe Vera"
+                                    value={formData.scent}
+                                    onChange={(e) => setFormData({ ...formData, scent: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Skin Type</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. All"
+                                    value={formData.skinType}
+                                    onChange={(e) => setFormData({ ...formData, skinType: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Item Package Quantity</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 2"
+                                    value={formData.itemPackageQuantity}
+                                    onChange={(e) => setFormData({ ...formData, itemPackageQuantity: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Product Benefits</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Anti bacterial"
+                                    value={formData.productBenefits}
+                                    onChange={(e) => setFormData({ ...formData, productBenefits: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Special Feature</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Nourishing"
+                                    value={formData.specialFeature}
+                                    onChange={(e) => setFormData({ ...formData, specialFeature: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Item Form</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Liquid"
+                                    value={formData.itemForm}
+                                    onChange={(e) => setFormData({ ...formData, itemForm: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Number of Items</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 2"
+                                    value={formData.numberOfItems}
+                                    onChange={(e) => setFormData({ ...formData, numberOfItems: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
 

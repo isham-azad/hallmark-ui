@@ -173,6 +173,15 @@ export default function ProductDetailsStaticClient() {
                                                 <tr><th>Available Sizes</th><td>250 ml, 500 ml, 1 Litre</td></tr>
                                                 <tr><th>Fragrances</th><td>Lime, Orange, Green Apple</td></tr>
                                                 <tr><th>Key Feature</th><td>Kills germs, cuts grease, leaves utensils shiny</td></tr>
+                                                <tr><th>Item Weight</th><td>600 Grams</td></tr>
+                                                <tr><th>Item Dimensions</th><td>8 x 10 x 18 Centimeters</td></tr>
+                                                <tr><th>Scent</th><td>Aloe Vera</td></tr>
+                                                <tr><th>Skin Type</th><td>All</td></tr>
+                                                <tr><th>Item Package Quantity</th><td>2</td></tr>
+                                                <tr><th>Product Benefits</th><td>Anti bacterial</td></tr>
+                                                <tr><th>Special Feature</th><td>Nourishing</td></tr>
+                                                <tr><th>Item Form</th><td>Liquid</td></tr>
+                                                <tr><th>Number of Items</th><td>2</td></tr>
                                                 <tr><th>Manufactured by</th><td>Hallmark Enterprises</td></tr>
                                             </tbody>
                                         </table>

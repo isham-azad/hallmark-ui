@@ -24,6 +24,15 @@ interface SiteProduct {
     isFreeDelivery?: boolean;
     isSecureTransaction?: boolean;
     b2bPricingTiers?: { minQty: number; price: string }[];
+    itemWeight?: string;
+    itemDimensions?: string;
+    scent?: string;
+    skinType?: string;
+    itemPackageQuantity?: string;
+    productBenefits?: string;
+    specialFeature?: string;
+    itemForm?: string;
+    numberOfItems?: string;
 }
 
 interface Brand {
@@ -337,13 +346,74 @@ export default function ProductDetailClient() {
                                         <p>{product.desc}</p>
                                     </div> */}
                                     <div className="tab-pane fade show active" id="details" role="tabpanel">
-                                        <table className="table table-bordered">
-                                            <tbody>
-                                                <tr><th style={{ width: "35%" }}>Brand</th><td><Link href={`/brand/${product.brand}`}>{brandName}</Link></td></tr>
-                                                <tr><th>Category</th><td><Link href={`/category/${product.category}`}>{categoryName}</Link></td></tr>
-                                                <tr><th>Sold by</th><td>Hallmark Enterprises</td></tr>
-                                            </tbody>
-                                        </table>
+                                        <div className="specs-grid">
+                                            <div className="spec-item">
+                                                <span className="spec-label">Brand</span>
+                                                <span className="spec-value"><Link href={`/brand/${product.brand}`}>{brandName}</Link></span>
+                                            </div>
+                                            <div className="spec-item">
+                                                <span className="spec-label">Category</span>
+                                                <span className="spec-value"><Link href={`/category/${product.category}`}>{categoryName}</Link></span>
+                                            </div>
+                                            {product.itemWeight && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Item Weight</span>
+                                                    <span className="spec-value">{product.itemWeight}</span>
+                                                </div>
+                                            )}
+                                            {product.itemDimensions && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Item Dimensions</span>
+                                                    <span className="spec-value">{product.itemDimensions}</span>
+                                                </div>
+                                            )}
+                                            {product.scent && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Scent</span>
+                                                    <span className="spec-value">{product.scent}</span>
+                                                </div>
+                                            )}
+                                            {product.skinType && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Skin Type</span>
+                                                    <span className="spec-value">{product.skinType}</span>
+                                                </div>
+                                            )}
+                                            {product.itemPackageQuantity && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Package Qty</span>
+                                                    <span className="spec-value">{product.itemPackageQuantity}</span>
+                                                </div>
+                                            )}
+                                            {product.productBenefits && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Product Benefits</span>
+                                                    <span className="spec-value">{product.productBenefits}</span>
+                                                </div>
+                                            )}
+                                            {product.specialFeature && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Special Feature</span>
+                                                    <span className="spec-value">{product.specialFeature}</span>
+                                                </div>
+                                            )}
+                                            {product.itemForm && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Item Form</span>
+                                                    <span className="spec-value">{product.itemForm}</span>
+                                                </div>
+                                            )}
+                                            {product.numberOfItems && (
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Number of Items</span>
+                                                    <span className="spec-value">{product.numberOfItems}</span>
+                                                </div>
+                                            )}
+                                            <div className="spec-item">
+                                                <span className="spec-label">Sold by</span>
+                                                <span className="spec-value">Hallmark Enterprises</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     {product.howToUse && (
                                         <div className="tab-pane fade" id="howto" role="tabpanel">
@@ -721,6 +791,32 @@ export default function ProductDetailClient() {
                 }
                 .trust-badge-item:hover {
                     transform: translateY(-2px);
+                }
+                .specs-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 20px;
+                    background: #f8fafc;
+                    padding: 25px;
+                    border-radius: 12px;
+                    border: 1px solid #f1f5f9;
+                }
+                .spec-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .spec-label {
+                    font-size: 0.7rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                }
+                .spec-value {
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    color: #334155;
                 }
             `}</style>
         </>

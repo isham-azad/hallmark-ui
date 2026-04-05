@@ -100,6 +100,15 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
         const sku = (formData.get("sku") as string)?.trim() || null;
         const stock = parseInt((formData.get("stock") as string) || "0", 10) || 0;
         const howToUse = (formData.get("howToUse") as string)?.trim() ?? "";
+        const itemWeight = (formData.get("itemWeight") as string)?.trim() ?? "";
+        const itemDimensions = (formData.get("itemDimensions") as string)?.trim() ?? "";
+        const scent = (formData.get("scent") as string)?.trim() ?? "";
+        const skinType = (formData.get("skinType") as string)?.trim() ?? "";
+        const itemPackageQuantity = (formData.get("itemPackageQuantity") as string)?.trim() ?? "";
+        const productBenefits = (formData.get("productBenefits") as string)?.trim() ?? "";
+        const specialFeature = (formData.get("specialFeature") as string)?.trim() ?? "";
+        const itemForm = (formData.get("itemForm") as string)?.trim() ?? "";
+        const numberOfItems = (formData.get("numberOfItems") as string)?.trim() ?? "";
 
         if (!title || !brandId || !categoryId) {
             return { success: false, error: "Title, Brand and Category are required." };
@@ -123,6 +132,15 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
             brandId,
             categoryId,
             howToUse,
+            itemWeight,
+            itemDimensions,
+            scent,
+            skinType,
+            itemPackageQuantity,
+            productBenefits,
+            specialFeature,
+            itemForm,
+            numberOfItems,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -138,7 +156,10 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
     }
 }
 
-export async function createProduct(formData: { id: string; title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
+export async function createProduct(formData: { 
+    id: string; title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string;
+    itemWeight?: string; itemDimensions?: string; scent?: string; skinType?: string; itemPackageQuantity?: string; productBenefits?: string; specialFeature?: string; itemForm?: string; numberOfItems?: string;
+}) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         const docId = formData.id || formData.title.toLowerCase().replace(/\s+/g, "-");
@@ -154,6 +175,15 @@ export async function createProduct(formData: { id: string; title: string; desc:
             brandId: formData.brandId,
             categoryId: formData.categoryId,
             howToUse: formData.howToUse ?? "",
+            itemWeight: formData.itemWeight ?? "",
+            itemDimensions: formData.itemDimensions ?? "",
+            scent: formData.scent ?? "",
+            skinType: formData.skinType ?? "",
+            itemPackageQuantity: formData.itemPackageQuantity ?? "",
+            productBenefits: formData.productBenefits ?? "",
+            specialFeature: formData.specialFeature ?? "",
+            itemForm: formData.itemForm ?? "",
+            numberOfItems: formData.numberOfItems ?? "",
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -169,7 +199,10 @@ export async function createProduct(formData: { id: string; title: string; desc:
     }
 }
 
-export async function updateProduct(id: string, formData: { title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string }) {
+export async function updateProduct(id: string, formData: { 
+    title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string;
+    itemWeight?: string; itemDimensions?: string; scent?: string; skinType?: string; itemPackageQuantity?: string; productBenefits?: string; specialFeature?: string; itemForm?: string; numberOfItems?: string;
+}) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
         await db.collection("products").doc(id).update({
@@ -183,6 +216,15 @@ export async function updateProduct(id: string, formData: { title: string; desc:
             brandId: formData.brandId,
             categoryId: formData.categoryId,
             howToUse: formData.howToUse ?? "",
+            itemWeight: formData.itemWeight ?? "",
+            itemDimensions: formData.itemDimensions ?? "",
+            scent: formData.scent ?? "",
+            skinType: formData.skinType ?? "",
+            itemPackageQuantity: formData.itemPackageQuantity ?? "",
+            productBenefits: formData.productBenefits ?? "",
+            specialFeature: formData.specialFeature ?? "",
+            itemForm: formData.itemForm ?? "",
+            numberOfItems: formData.numberOfItems ?? "",
             updatedAt: FieldValue.serverTimestamp(),
         });
 
