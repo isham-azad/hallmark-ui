@@ -35,11 +35,15 @@ export async function getSiteWebsiteContent() {
     }
 }
 
-export async function getSiteProducts() {
+export async function getSiteProducts(limitCount?: number) {
     try {
-        // Fetch all products first to avoid composite index requirement
-        const snapshot = await db.collection("products")
-            .get();
+        let query = db.collection("products");
+        
+        if (limitCount) {
+            query = query.limit(limitCount * 2); // Fetch slightly more to account for in-memory filtering
+        }
+
+        const snapshot = await query.get();
         
         const categorySnap = await db.collection("categories").get();
         const brandSnap = await db.collection("brands").get();
@@ -52,7 +56,6 @@ export async function getSiteProducts() {
         return snapshot.docs
             .map((doc: any) => {
                 const data = doc.data();
-                // Filter "disabled" products in memory
                 if (data.status === "disabled") return null;
                 
                 return {
@@ -73,7 +76,7 @@ export async function getSiteProducts() {
             })
             .filter((p: any): p is any => p !== null)
             // Sort by updatedAt descending in memory
-            .sort((a: any, b: any) => b.updatedAt - a.updatedAt);
+            .sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0));
     } catch (error) {
         console.error("Fetch site-products error:", error);
         return [];

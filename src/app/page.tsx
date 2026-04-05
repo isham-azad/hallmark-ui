@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   const [websiteContent, products, brands, categories, testimonials] = await Promise.all([
     getSiteWebsiteContent(),
-    getSiteProducts(),
+    getSiteProducts(10),
     getSiteBrands(),
     getSiteCategories(),
     getSiteTestimonials(),

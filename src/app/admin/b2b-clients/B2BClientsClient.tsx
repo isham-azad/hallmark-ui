@@ -165,7 +165,7 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                     </div>
                 </div>
 
-                <div className="table-responsive">
+                <div className="table-responsive d-none d-md-block">
                     <table className="customers-table">
                         <thead>
                             <tr>
@@ -267,6 +267,79 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="client-cards-mobile d-md-none">
+                    {filteredClients.length === 0 ? (
+                        <div className="no-results">No B2B clients found.</div>
+                    ) : (
+                        filteredClients.map((client) => (
+                            <div key={client.id} className="client-card">
+                                <div className="card-header-main">
+                                    <div className="avatar-small">
+                                        {(client.companyName?.[0] || client.username?.[0] || "-").toUpperCase()}
+                                    </div>
+                                    <div className="header-text">
+                                        <div className="company-name">{client.companyName}</div>
+                                        <div className="username-tag">@{client.username}</div>
+                                    </div>
+                                    <div className={`status-dot ${client.status === "active" ? "active" : "disabled"}`}></div>
+                                </div>
+                                <div className="card-contact-strip">
+                                    <div className="contact-item">
+                                        <i className="bi bi-envelope"></i>
+                                        <span>{client.email || "—"}</span>
+                                    </div>
+                                    <div className="contact-item">
+                                        <i className="bi bi-telephone"></i>
+                                        <span>{client.phone || "—"}</span>
+                                    </div>
+                                </div>
+                                <div className="card-stats-row">
+                                    <div className="stat-pill">
+                                        <span className="label">Rewards:</span>
+                                        <span className="val">{client.rewardPercentage ?? 2}%</span>
+                                    </div>
+                                    <div className={`status-pill ${client.status === "active" ? "active" : "disabled"}`}>
+                                        {client.status === "active" ? "Active" : "Disabled"}
+                                    </div>
+                                </div>
+                                <div className="card-actions-grid">
+                                    <button className="mobile-action-btn edit" onClick={() => {
+                                        setEditFormData({
+                                            username: client.username || "",
+                                            companyName: client.companyName || "",
+                                            firstName: client.firstName || "",
+                                            lastName: client.lastName || "",
+                                            email: client.email || "",
+                                            phone: client.phone || "",
+                                            address: client.address || "",
+                                            city: client.city || "",
+                                            zip: client.zip || "",
+                                            rewardPercentage: client.rewardPercentage ?? 2
+                                        });
+                                        setIsEditCanvasOpen(client.id);
+                                    }}>
+                                        <i className="bi bi-pencil-square"></i> Edit
+                                    </button>
+                                    <button className="mobile-action-btn key" onClick={() => setIsResetModalOpen(client.id)}>
+                                        <i className="bi bi-key"></i> Key
+                                    </button>
+                                    <button 
+                                        className={`mobile-action-btn ${client.status === "active" ? "pause" : "play"}`}
+                                        onClick={() => handleToggleStatus(client.id, client.status)}
+                                    >
+                                        <i className={`bi ${client.status === "active" ? "bi-pause-circle" : "bi-play-circle"}`}></i>
+                                        {client.status === "active" ? "Pause" : "Start"}
+                                    </button>
+                                    <button className="mobile-action-btn delete" onClick={() => setIsDeleteModalOpen(client.id)}>
+                                        <i className="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -581,8 +654,49 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                 .modal-actions .delete-btn:hover { background: #dc2626; transform: translateY(-2px); }
 
                 @media (max-width: 768px) {
-                    .customers-header { flex-direction: column; align-items: stretch; gap: 1rem; }
-                    .add-client-btn { justify-content: center; }
+                    .b2b-clients-container { padding: 1.25rem 1rem; }
+                    .customers-header { flex-direction: column; align-items: stretch; gap: 1rem; margin-bottom: 2rem; }
+                    .header-info h3 { font-size: 1.75rem; font-weight: 800; }
+                    .add-client-btn { justify-content: center; height: 50px; }
+                    
+                    .table-card { background: transparent; border: none; box-shadow: none; overflow: visible; }
+                    .table-actions { padding: 0; margin-bottom: 1.5rem; }
+                    .search-box { max-width: 100%; }
+
+                    .client-cards-mobile { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 0; background: transparent; }
+                    .client-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+                    .card-header-main { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; position: relative; }
+                    .header-text { flex: 1; min-width: 0; }
+                    .company-name { font-weight: 800; color: #0f172a; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .username-tag { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+                    .status-dot { width: 10px; height: 10px; border-radius: 50%; position: absolute; top: 0; right: 0; }
+                    .status-dot.active { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1); }
+                    .status-dot.disabled { background: #94a3b8; }
+                    
+                    .card-contact-strip { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 12px; }
+                    .contact-item { display: flex; align-items: center; gap: 0.75rem; font-size: 0.8125rem; color: #64748b; font-weight: 500; }
+                    .contact-item i { color: #ffc451; font-size: 1rem; }
+                    
+                    .card-stats-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+                    .stat-pill { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 700; color: #475569; }
+                    .stat-pill .val { color: #b45309; background: #fffbeb; padding: 0.2rem 0.6rem; border-radius: 6px; }
+                    
+                    .card-actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; padding-top: 1rem; border-top: 1px dashed #e2e8f0; }
+                    .mobile-action-btn { height: 44px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #475569; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; gap: 2px; transition: 0.2s; }
+                    .mobile-action-btn i { font-size: 1rem; }
+                    .mobile-action-btn.edit { color: #3b82f6; background: #eff6ff; border-color: #dbeafe; }
+                    .mobile-action-btn.key { color: #6366f1; background: #eef2ff; border-color: #e0e7ff; }
+                    .mobile-action-btn.pause { color: #f59e0b; background: #fffbeb; border-color: #fef3c7; }
+                    .mobile-action-btn.play { color: #10b981; background: #ecfdf5; border-color: #d1fae5; }
+                    .mobile-action-btn.delete { color: #ef4444; background: #fef2f2; border-color: #fee2e2; }
+                    .mobile-action-btn:active { transform: scale(0.95); }
+
+                    /* Make Offcanvas and Modals more mobile friendly */
+                    .offcanvas-container { max-width: 100%; border-radius: 20px 20px 0 0; top: auto; height: 90vh; }
+                    .offcanvas-header { padding: 1.25rem 1.5rem; }
+                    .offcanvas-body { padding: 1.5rem; }
+                    .offcanvas-footer { padding: 1.25rem; grid-template-columns: 1fr 1.5fr; }
+                    .modal-content { padding: 2rem 1.5rem; border-radius: 24px; }
                 }
             `}</style>
         </div>
