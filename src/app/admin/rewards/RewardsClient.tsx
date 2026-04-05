@@ -66,7 +66,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     </div>
                 </div>
 
-                <div className="table-responsive">
+                <div className="table-responsive d-none d-md-block">
                     <table className="rewards-table">
                         <thead>
                             <tr>
@@ -128,6 +128,52 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List */}
+                <div className="rewards-cards-mobile d-md-none">
+                    {paginatedTransactions.length === 0 ? (
+                        <div className="no-results">No reward transactions found.</div>
+                    ) : (
+                        paginatedTransactions.map((tx) => (
+                            <div key={tx.id} className="reward-mobile-card">
+                                <div className="card-header-tx">
+                                    <div className="tx-date-wrap">
+                                        <span className="tx-d">{format(new Date(tx.createdAt), 'MMM dd, yyyy')}</span>
+                                        <span className="tx-t">{format(new Date(tx.createdAt), 'hh:mm a')}</span>
+                                    </div>
+                                    <span className={`type-pill ${tx.type.toLowerCase()}`}>{tx.type}</span>
+                                </div>
+                                <div className="card-body-tx">
+                                    <div className="tx-row">
+                                        <span className="tx-label">Reference</span>
+                                        <span className="tx-val order-ref">{tx.orderNo}</span>
+                                    </div>
+                                    <div className="tx-row">
+                                        <span className="tx-label">B2B Client</span>
+                                        <span className="tx-val client-ref">{tx.b2bClientCompany}</span>
+                                    </div>
+                                    {tx.status && (
+                                        <div className="tx-row">
+                                            <span className="tx-label">Status</span>
+                                            <span className={`status-badge ${getStatusClass(tx.status)}`}>{tx.status}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="card-footer-tx">
+                                    <div className="tx-amount-section">
+                                        <span className="tx-label">Amount</span>
+                                        <span className={`amount-val-mobile ${tx.type === 'Earned' ? 'earned' : 'used'}`}>
+                                            {tx.type === 'Earned' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <Link href={`/admin/orders/${tx.id.replace('_used', '')}`} className="mob-view-btn">
+                                        <i className="bi bi-eye"></i>
+                                    </Link>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {totalPages > 1 && (
@@ -218,9 +264,38 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                 .pager-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
                 @media (max-width: 768px) {
-                    .rewards-header { flex-direction: column; align-items: stretch; gap: 1rem; }
-                    .rewards-table th:not(:first-child):not(:nth-child(2)):not(:last-child) { display: none; }
-                    .rewards-table td:not(:first-child):not(:nth-child(2)):not(:last-child) { display: none; }
+                    .rewards-container { padding: 1.25rem 1rem; }
+                    .rewards-header { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 2rem; }
+                    .header-info h3 { font-size: 1.75rem; font-weight: 800; }
+                    
+                    .table-card { background: transparent; border: none; box-shadow: none; overflow: visible; }
+                    .table-actions { padding: 0; margin-bottom: 1.5rem; }
+                    .search-box { max-width: 100%; }
+
+                    .rewards-cards-mobile { display: grid; grid-template-columns: 1fr; gap: 0.75rem; padding: 0; background: transparent; }
+                    .reward-mobile-card { background: #fff; border-radius: 18px; border: 1px solid #f1f5f9; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+                    .card-header-tx { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #f1f5f9; }
+                    .tx-date-wrap { display: flex; flex-direction: column; }
+                    .tx-d { font-weight: 800; color: #0f172a; font-size: 0.875rem; }
+                    .tx-t { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+                    
+                    .card-body-tx { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
+                    .tx-row { display: flex; justify-content: space-between; align-items: center; }
+                    .tx-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                    .tx-val { font-size: 0.875rem; font-weight: 700; color: #1e293b; }
+                    .order-ref { color: #ffc451; font-family: monospace; }
+                    
+                    .card-footer-tx { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 0.75rem; border-top: 1px solid #f8fafc; }
+                    .tx-amount-section { display: flex; flex-direction: column; gap: 0.25rem; }
+                    .amount-val-mobile { font-size: 1.125rem; font-weight: 800; }
+                    .amount-val-mobile.earned { color: #10b981; }
+                    .amount-val-mobile.used { color: #ef4444; }
+                    
+                    .mob-view-btn { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; text-decoration: none; border: 1px solid #e2e8f0; }
+                    .mob-view-btn:active { background: #ffc451; color: #fff; transform: scale(0.95); }
+                    
+                    .pagination { padding: 1.25rem; gap: 0.35rem; }
+                    .pager-btn { width: 36px; height: 36px; border-radius: 10px; font-size: 0.875rem; }
                 }
             `}</style>
         </div>
