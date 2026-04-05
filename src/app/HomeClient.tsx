@@ -133,54 +133,64 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   const [currentHero, setCurrentHero] = useState(0);
 
   const [products, setProducts] = useState<SiteProduct[]>(initialData?.products ?? []);
-  const [productsLoading, setProductsLoading] = useState(!initialData?.products);
+  const [productsLoading, setProductsLoading] = useState(initialData?.products ? false : true);
 
   const [brands, setBrands] = useState<SiteBrand[]>(initialData?.brands ?? []);
-  const [brandsLoading, setBrandsLoading] = useState(!initialData?.brands);
+  const [brandsLoading, setBrandsLoading] = useState(initialData?.brands ? false : true);
 
   const [testimonials, setTestimonials] = useState<SiteTestimonial[]>(initialData?.testimonials ?? []);
   const [testimonialsLoading, setTestimonialsLoading] = useState(!initialData?.testimonials);
 
   const [categories, setCategories] = useState<NavCategory[]>(initialData?.categories ?? []);
-  const [categoriesLoading, setCategoriesLoading] = useState(!initialData?.categories);
+  const [categoriesLoading, setCategoriesLoading] = useState(initialData?.categories ? false : true);
 
   const [websiteContent, setWebsiteContent] = useState<WebsiteContent | null>(initialData?.websiteContent ?? null);
-  const [websiteLoading, setWebsiteLoading] = useState(!initialData?.websiteContent);
+  const [websiteLoading, setWebsiteLoading] = useState(initialData?.websiteContent ? false : true);
 
   const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
 
   useEffect(() => {
-    if (initialData) return;
+    // Only fetch if initialData is missing (fallback for direct client navigation)
+    if (!initialData?.products) {
+      setProductsLoading(true);
+      fetch("/api/site/products")
+        .then((r) => r.json())
+        .then((data) => setProducts(data.products || []))
+        .finally(() => setProductsLoading(false));
+    }
 
-    fetch("/api/site/products")
-      .then((res) => res.json())
-      .then((data) => setProducts(data.products ?? []))
-      .catch(() => setProducts([]))
-      .finally(() => setProductsLoading(false));
+    if (!initialData?.brands) {
+      setBrandsLoading(true);
+      fetch("/api/site/brands")
+        .then((r) => r.json())
+        .then((data) => setBrands(data.brands || []))
+        .finally(() => setBrandsLoading(false));
+    }
 
-    fetch("/api/site/brands")
-      .then((res) => res.json())
-      .then((data) => setBrands(data.brands ?? []))
-      .catch(() => setBrands([]))
-      .finally(() => setBrandsLoading(false));
+    if (!initialData?.testimonials) {
+      setTestimonialsLoading(true);
+      fetch("/api/site/testimonials")
+        .then((r) => r.json())
+        .then((data) => setTestimonials(data.testimonials || []))
+        .finally(() => setTestimonialsLoading(false));
+    }
 
-    fetch("/api/site/testimonials")
-      .then((res) => res.json())
-      .then((data) => setTestimonials(data.testimonials ?? []))
-      .catch(() => setTestimonials([]))
-      .finally(() => setTestimonialsLoading(false));
+    if (!initialData?.categories) {
+      setCategoriesLoading(true);
+      fetch("/api/site/categories")
+        .then((r) => r.json())
+        .then((data) => setCategories(data.categories || []))
+        .finally(() => setCategoriesLoading(false));
+    }
 
-    fetch("/api/site/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data.categories ?? []))
-      .catch(() => setCategories([]))
-      .finally(() => setCategoriesLoading(false));
-
-    fetch("/api/site/website-content")
-      .then((res) => res.json())
-      .then((data) => setWebsiteContent(data))
-      .catch(() => setWebsiteContent(null))
-      .finally(() => setWebsiteLoading(false));
+    if (!initialData?.websiteContent) {
+      setWebsiteLoading(true);
+      fetch("/api/site/website-content")
+        .then((res) => res.json())
+        .then((data) => setWebsiteContent(data))
+        .catch(() => setWebsiteContent(null))
+        .finally(() => setWebsiteLoading(false));
+    }
   }, [initialData]);
 
   useEffect(() => {
@@ -194,7 +204,9 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   // carousel animate correctly (they were invisible because AOS calculated
   // positions before async data shifted the page layout).
   useEffect(() => {
-    const refreshAOS = () => {
+    if (productsLoading || brandsLoading || testimonialsLoading || categoriesLoading || websiteLoading) return;
+
+    const initAOS = () => {
       const aos = (window as any).AOS;
       if (typeof window !== "undefined" && aos) {
         aos.init({
@@ -209,14 +221,17 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       return false;
     };
 
-    if (productsLoading || brandsLoading || testimonialsLoading || categoriesLoading || websiteLoading) return;
+    // Initial delay to ensure DOM is fully ready
+    const timer = setTimeout(() => {
+      if (!initAOS()) {
+        const interval = setInterval(() => {
+          if (initAOS()) clearInterval(interval);
+        }, 200);
+        return () => clearInterval(interval);
+      }
+    }, 500);
 
-    if (!refreshAOS()) {
-      const interval = setInterval(() => {
-        if (refreshAOS()) clearInterval(interval);
-      }, 100);
-      return () => clearInterval(interval);
-    }
+    return () => clearTimeout(timer);
   }, [productsLoading, brandsLoading, testimonialsLoading, categoriesLoading, websiteLoading]);
 
   useEffect(() => {

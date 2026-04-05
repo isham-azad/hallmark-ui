@@ -90,7 +90,7 @@ export default function VouchersClient({ initialVouchers }: { initialVouchers: G
                     </div>
                 </div>
 
-                <div className="table-responsive">
+                <div className="table-responsive d-none d-md-block">
                     <table className="rewards-table">
                         <thead>
                             <tr>
@@ -153,6 +153,57 @@ export default function VouchersClient({ initialVouchers }: { initialVouchers: G
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List */}
+                <div className="vouchers-cards-mobile d-md-none">
+                    {paginatedVouchers.length > 0 ? (
+                        paginatedVouchers.map((v) => (
+                            <div key={v.id} className="voucher-mobile-card">
+                                <div className="voucher-card-header">
+                                    <div className="voucher-date-wrap">
+                                        <span className="v-d">{format(new Date(v.createdAt), 'dd MMM yyyy')}</span>
+                                        <span className="v-t">{format(new Date(v.createdAt), 'hh:mm aa')}</span>
+                                    </div>
+                                    <span className={`status-badge ${getStatusClass(v.status)} text-uppercase`}>{v.status}</span>
+                                </div>
+                                <div className="voucher-card-body">
+                                    <div className="v-client-info">
+                                        <span className="v-company">{v.b2bClientCompany}</span>
+                                        <span className="v-username">@{v.b2bClientUsername}</span>
+                                    </div>
+                                    <div className="v-code-block">
+                                        <code className="voucher-code">{v.code}</code>
+                                    </div>
+                                    <div className="v-financials">
+                                        <div className="v-fin-item">
+                                            <span className="v-label">Amount</span>
+                                            <span className="v-val">₹{v.amount.toLocaleString()}</span>
+                                        </div>
+                                        <div className="v-fin-item">
+                                            <span className="v-label">Balance</span>
+                                            <span className={`v-val-balance ${v.balance > 0 ? 'active' : ''}`}>₹{v.balance.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    {v.expiryDate && (
+                                        <div className="v-expiry-row">
+                                            <i className="bi bi-calendar-event"></i>
+                                            <span>Expires: {format(new Date(v.expiryDate), 'dd MMM yyyy')}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {v.status === 'Active' && v.balance > 0 && (
+                                    <div className="voucher-card-footer">
+                                        <button className="mob-void-btn" onClick={() => setVoidModal(v.id)}>
+                                            <i className="bi bi-slash-circle"></i> Void Voucher
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-5 text-muted">No gift vouchers found.</div>
+                    )}
                 </div>
 
                 {totalPages > 1 && (
@@ -237,6 +288,46 @@ export default function VouchersClient({ initialVouchers }: { initialVouchers: G
                 .search-box {
                     max-width: 350px;
                     position: relative;
+                }
+                @media (max-width: 768px) {
+                    .rewards-container { padding: 1.25rem 1rem; }
+                    .rewards-header { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 2rem; }
+                    .header-info h3 { font-size: 1.75rem; font-weight: 800; }
+                    
+                    .table-card { background: transparent; border: none; box-shadow: none; overflow: visible; }
+                    .table-actions { padding: 0; margin-bottom: 1.5rem; }
+                    .search-box { max-width: 100%; }
+
+                    .vouchers-cards-mobile { display: grid; grid-template-columns: 1fr; gap: 1rem; background: transparent; padding: 0; }
+                    .voucher-mobile-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+                    .voucher-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #f1f5f9; }
+                    .voucher-date-wrap { display: flex; flex-direction: column; }
+                    .v-d { font-weight: 800; color: #0f172a; font-size: 0.875rem; }
+                    .v-t { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+                    
+                    .voucher-card-body { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+                    .v-client-info { display: flex; flex-direction: column; }
+                    .v-company { font-weight: 700; color: #1e293b; font-size: 0.9375rem; }
+                    .v-username { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+                    
+                    .v-code-block { background: #f1f5f9; border-radius: 10px; padding: 0.75rem; text-align: center; border: 1px solid #e2e8f0; }
+                    .v-code-block .voucher-code { background: transparent; border: none; padding: 0; font-size: 1.1rem; }
+                    
+                    .v-financials { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 12px; }
+                    .v-fin-item { display: flex; flex-direction: column; }
+                    .v-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                    .v-val { font-size: 0.9375rem; font-weight: 700; color: #1e293b; }
+                    .v-val-balance { font-size: 1rem; font-weight: 800; color: #64748b; }
+                    .v-val-balance.active { color: #22c55e; }
+                    
+                    .v-expiry-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+                    .v-expiry-row i { color: #f59e0b; }
+                    
+                    .voucher-card-footer { padding-top: 1rem; border-top: 1px solid #f8fafc; }
+                    .mob-void-btn { width: 100%; height: 44px; border-radius: 12px; background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.875rem; }
+                    .mob-void-btn:active { transform: scale(0.98); background: #fee2e2; }
+
+                    .rewards-pagination { flex-direction: column; gap: 1rem; text-align: center; padding: 1.25rem; }
                 }
                 .search-box i {
                     position: absolute;

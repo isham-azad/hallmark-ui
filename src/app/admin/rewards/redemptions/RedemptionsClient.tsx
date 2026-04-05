@@ -89,7 +89,7 @@ export default function RedemptionsClient({ initialRequests }: { initialRequests
                     </div>
                 </div>
 
-                <div className="table-responsive">
+                <div className="table-responsive d-none d-md-block">
                     <table className="rewards-table">
                         <thead>
                             <tr>
@@ -162,6 +162,58 @@ export default function RedemptionsClient({ initialRequests }: { initialRequests
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List */}
+                <div className="redemptions-cards-mobile d-md-none">
+                    {paginatedRequests.length === 0 ? (
+                        <div className="no-results">No redemption requests found.</div>
+                    ) : (
+                        paginatedRequests.map((request) => (
+                            <div key={request.id} className="redemption-mobile-card">
+                                <div className="red-card-header">
+                                    <div className="red-date">
+                                        <span className="red-d">{format(new Date(request.requestedAt), 'MMM dd, yyyy')}</span>
+                                        <span className="red-t">{format(new Date(request.requestedAt), 'hh:mm a')}</span>
+                                    </div>
+                                    <span className={`status-badge ${getStatusClass(request.status)} text-uppercase`}>{request.status}</span>
+                                </div>
+                                <div className="red-card-body">
+                                    <div className="red-client">
+                                        <span className="v-company">{request.b2bClientCompany}</span>
+                                        <span className="v-username">@{request.b2bClientUsername}</span>
+                                    </div>
+                                    <div className="red-amount-block">
+                                        <span className="red-label">Payout Amount</span>
+                                        <span className="red-val-hero">₹{request.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="red-info-strip">
+                                        <div className="red-info-item">
+                                            <span className="red-label">Method</span>
+                                            <span className="red-val-sm text-capitalize">{request.method.replace('_', ' ')}</span>
+                                        </div>
+                                        <div className="red-info-item">
+                                            <span className="red-label">Details</span>
+                                            <span className="red-val-sm truncate-mobile">{request.details}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="red-card-footer">
+                                    <div className="mobile-status-actions">
+                                        <button className="mob-action-btn req-approved" onClick={() => setConfirmModal({ id: request.id, status: 'Approved' })}>
+                                            Approve
+                                        </button>
+                                        <button className="mob-action-btn req-completed" onClick={() => setConfirmModal({ id: request.id, status: 'Completed' })}>
+                                            Complete
+                                        </button>
+                                        <button className="mob-action-btn req-rejected" onClick={() => setConfirmModal({ id: request.id, status: 'Rejected' })}>
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {totalPages > 1 && (
@@ -287,9 +339,46 @@ export default function RedemptionsClient({ initialRequests }: { initialRequests
                 @keyframes modal-in { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
                 @media (max-width: 768px) {
-                    .rewards-header { flex-direction: column; align-items: stretch; gap: 1rem; }
-                    .rewards-table th:not(:nth-child(2)):not(:nth-child(3)):not(:last-child) { display: none; }
-                    .rewards-table td:not(:nth-child(2)):not(:nth-child(3)):not(:last-child) { display: none; }
+                    .rewards-container { padding: 1.25rem 1rem; }
+                    .rewards-header { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 2rem; }
+                    .header-info h3 { font-size: 1.75rem; font-weight: 800; }
+                    
+                    .table-card { background: transparent; border: none; box-shadow: none; overflow: visible; }
+                    .table-actions { padding: 0; margin-bottom: 1.5rem; }
+                    .search-box { max-width: 100%; }
+
+                    .redemptions-cards-mobile { display: grid; grid-template-columns: 1fr; gap: 1rem; background: transparent; padding: 0; }
+                    .redemption-mobile-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+                    .red-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed #f1f5f9; }
+                    .red-date { display: flex; flex-direction: column; }
+                    .red-d { font-weight: 800; color: #0f172a; font-size: 0.875rem; }
+                    .red-t { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+                    
+                    .red-card-body { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem; }
+                    .red-client { display: flex; flex-direction: column; }
+                    .v-company { font-weight: 700; color: #1e293b; font-size: 0.9375rem; }
+                    .v-username { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+                    
+                    .red-amount-block { background: #f0f9ff; border-radius: 12px; padding: 1rem; border: 1px solid #e0f2fe; text-align: center; }
+                    .red-label { display: block; font-size: 0.65rem; font-weight: 800; color: #0369a1; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+                    .red-val-hero { font-size: 1.5rem; font-weight: 800; color: #0369a1; }
+                    
+                    .red-info-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+                    .red-info-item { display: flex; flex-direction: column; min-width: 0; }
+                    .red-info-item .red-label { color: #94a3b8; }
+                    .red-val-sm { font-size: 0.8125rem; font-weight: 700; color: #475569; }
+                    .truncate-mobile { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    
+                    .red-card-footer { padding-top: 1rem; border-top: 1px solid #f8fafc; }
+                    .mobile-status-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+                    .mob-action-btn { height: 40px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; transition: 0.2s; background: #fff; }
+                    .req-approved { border-color: #d1fae5; color: #059669; background: #ecfdf5; }
+                    .req-completed { border-color: #dbeafe; color: #2563eb; background: #eff6ff; }
+                    .req-rejected { border-color: #fee2e2; color: #dc2626; background: #fef2f2; }
+                    .mob-action-btn:active { transform: scale(0.95); }
+
+                    .pagination { padding: 1.25rem; font-size: 0.8rem; }
+                    .pager-btn { width: 36px; height: 36px; border-radius: 10px; }
                 }
             `}</style>
         </div>

@@ -916,6 +916,9 @@ export default function OrderDetailClient({ order, availableStaff }: OrderDetail
                     .mobile-total-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; color: #fff; }
                     .mobile-total-value { font-size: 1.35rem; font-weight: 800; color: #ffc451; }
 
+                    .rewards-earned-celebration {
+                        display: none;
+                    }
                     .mobile-rewards-celebration {
                         margin-top: 1rem;
                         background: #f0fdf4;
