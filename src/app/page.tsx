@@ -1,9 +1,10 @@
 import { Metadata } from "next";
 import HomeClient from "./HomeClient";
+import Image from "next/image";
 import { getSiteWebsiteContent, getSiteProducts, getSiteBrands, getSiteCategories, getSiteTestimonials } from "@/lib/site-actions";
 import { serializeData } from "@/lib/serialize";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Cache for 1 hour, auto-regenerate in background
 
 export const metadata: Metadata = {
   title: "HallMark Enterprises | Wholesale Distributor & Food Processing Co.",

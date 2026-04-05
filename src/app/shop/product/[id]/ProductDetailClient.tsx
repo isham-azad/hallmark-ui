@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { ShopProductDetailShimmer } from "@/components/Shimmer";
+import Image from "next/image";
 
 interface SiteProduct {
     id: string;
@@ -248,15 +249,17 @@ export default function ProductDetailClient() {
                     <div className="row gy-4">
                         <div className="col-lg-8">
                             <div className="product-details-slider-wrapper mb-4">
-                                <div className="main-image-preview mb-3" style={{ position: 'relative', borderRadius: '15px', overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #eee' }}>
-                                    <div className="shop-slider-track" style={{ display: 'flex', transform: `translateX(-${activeImageIndex * 100}%)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)', width: '100%' }}>
+                                <div className="main-image-preview mb-3" style={{ position: 'relative', borderRadius: '15px', overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #eee', aspectRatio: '1/1' }}>
+                                    <div className="shop-slider-track" style={{ display: 'flex', transform: `translateX(-${activeImageIndex * 100}%)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)', width: '100%', height: '100%' }}>
                                         {images.map((img, idx) => (
-                                            <div key={idx} style={{ flex: '0 0 100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                <img
+                                            <div key={idx} style={{ flex: '0 0 100%', width: '100%', height: '100%', position: 'relative' }}>
+                                                <Image
                                                     src={img}
                                                     alt={`${product.title} - ${idx + 1}`}
-                                                    className="img-fluid"
-                                                    style={{ maxHeight: '500px', width: '100%', objectFit: 'contain' }}
+                                                    fill
+                                                    style={{ objectFit: 'contain' }}
+                                                    priority={idx === 0}
+                                                    sizes="(max-width: 992px) 100vw, 66vw"
                                                 />
                                             </div>
                                         ))}
@@ -672,7 +675,7 @@ export default function ProductDetailClient() {
                                                 >
                                                     {categories.find((c) => c.id === p.category)?.name ?? p.categoryName}
                                                 </span>
-                                                <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
+                                                <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', overflow: 'hidden', backgroundColor: '#ffffff' }}>
                                                     <div
                                                         style={{
                                                             display: 'flex',
@@ -684,11 +687,13 @@ export default function ProductDetailClient() {
                                                         }}
                                                     >
                                                         {pImages.map((img, idx) => (
-                                                            <div key={idx} style={{ width: `${100 / pImages.length}%`, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}>
-                                                                <img
+                                                            <div key={idx} style={{ position: 'relative', width: `${100 / pImages.length}%`, height: '100%', padding: '12px' }}>
+                                                                <Image
                                                                     src={img}
                                                                     alt={`${p.title} - ${idx + 1}`}
-                                                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                                                    fill
+                                                                    style={{ objectFit: 'contain', padding: '12px' }}
+                                                                    sizes="(max-width: 768px) 50vw, 25vw"
                                                                 />
                                                             </div>
                                                         ))}
