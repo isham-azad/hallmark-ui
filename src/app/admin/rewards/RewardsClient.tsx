@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { addManualPoints, getB2BClients } from "./actions";
+import { useRouter } from "next/navigation";
 
 const PAGE_SIZE = 10;
 
@@ -14,11 +16,68 @@ interface RewardTransaction {
     b2bClientCompany: string;
     createdAt: string;
     status?: string;
+    isManual?: boolean;
 }
 
 export default function RewardsClient({ initialTransactions }: { initialTransactions: RewardTransaction[] }) {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Manual Points Modal State
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [clients, setClients] = useState<any[]>([]);
+    const [selectedClient, setSelectedClient] = useState("");
+    const [clientSearchTerm, setClientSearchTerm] = useState("");
+    const [showClientList, setShowClientList] = useState(false);
+    const [pointsAmount, setPointsAmount] = useState("");
+    const [notes, setNotes] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [fetchingClients, setFetchingClients] = useState(false);
+
+    useEffect(() => {
+        if (showAddModal && clients.length === 0) {
+            setFetchingClients(true);
+            getB2BClients().then(res => {
+                setClients(res);
+                setFetchingClients(false);
+            });
+        }
+    }, [showAddModal, clients.length]);
+
+    useEffect(() => {
+        const urlSearch = new URLSearchParams(window.location.search).get("search");
+        if (urlSearch) {
+            setSearchTerm(urlSearch);
+        }
+    }, []);
+
+    const handleAddPoints = async () => {
+        if (!selectedClient || !pointsAmount) {
+            alert("Please select a client and enter points amount.");
+            return;
+        }
+
+        const amt = parseFloat(pointsAmount);
+        if (isNaN(amt) || amt === 0) {
+            alert("Please enter a valid amount.");
+            return;
+        }
+
+        setSubmitting(true);
+        const res = await addManualPoints(selectedClient, amt, notes || "Admin Manual Adjustment");
+        setSubmitting(false);
+
+        if (res.success) {
+            setShowAddModal(false);
+            setSelectedClient("");
+            setPointsAmount("");
+            setNotes("");
+            router.refresh();
+        } else {
+            alert(res.error || "Failed to add points.");
+        }
+    };
 
     const filteredTransactions = initialTransactions.filter(t => 
         t.orderNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,6 +110,13 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     <h3>Reward History</h3>
                     <p>Track all reward point transactions, including earnings and redemptions.</p>
                 </div>
+                <button 
+                    className="add-points-btn"
+                    onClick={() => setShowAddModal(true)}
+                >
+                    <i className="bi bi-plus-lg"></i>
+                    <span>Add Points Manual</span>
+                </button>
             </div>
 
             <div className="table-card">
@@ -116,12 +182,16 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                             </span>
                                         </td>
                                         <td>
-                                            <Link 
-                                                href={`/admin/orders/${tx.id.replace('_used', '')}`} 
-                                                className="view-btn"
-                                            >
-                                                <i className="bi bi-eye"></i> View Order
-                                            </Link>
+                                            {(tx.type === 'Earned' || tx.type === 'Used') && !tx.isManual ? (
+                                                <Link 
+                                                    href={`/admin/orders/${tx.id.replace('_used', '')}`} 
+                                                    className="view-btn"
+                                                >
+                                                    <i className="bi bi-eye"></i> View Order
+                                                </Link>
+                                            ) : (
+                                                <span className="no-action-label">-</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -167,9 +237,11 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                             {tx.type === 'Earned' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                         </span>
                                     </div>
-                                    <Link href={`/admin/orders/${tx.id.replace('_used', '')}`} className="mob-view-btn">
-                                        <i className="bi bi-eye"></i>
-                                    </Link>
+                                    {(tx.type === 'Earned' || tx.type === 'Used') && !tx.isManual && (
+                                        <Link href={`/admin/orders/${tx.id.replace('_used', '')}`} className="mob-view-btn">
+                                            <i className="bi bi-eye"></i>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -208,13 +280,265 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                 )}
             </div>
 
+            {/* Add Points Modal */}
+            {/* Add Points Offcanvas */}
+            {showAddModal && (
+                <div className="modal-overlay" onClick={() => !submitting && setShowAddModal(false)}>
+                    <div className="offcanvas-panel-admin" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header-admin">
+                            <div className="header-title-group">
+                                <h4>Add Reward Points</h4>
+                                <p>Manually adjust client reward balance</p>
+                            </div>
+                            <button className="close-btn" onClick={() => setShowAddModal(false)}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div className="modal-body-admin" onClick={() => setShowClientList(false)}>
+                            <div className="form-group-admin">
+                                <label>Search & Select B2B Client</label>
+                                <div className="searchable-select-container" onClick={e => e.stopPropagation()}>
+                                    <div className="search-input-wrapper">
+                                        <i className="bi bi-search search-icon"></i>
+                                        <input 
+                                            type="text"
+                                            placeholder="Type company name or username..."
+                                            value={clientSearchTerm}
+                                            onChange={(e) => {
+                                                setClientSearchTerm(e.target.value);
+                                                setShowClientList(true);
+                                            }}
+                                            onFocus={() => setShowClientList(true)}
+                                            disabled={fetchingClients || submitting}
+                                            className="search-input-fancy"
+                                        />
+                                        {(selectedClient || clientSearchTerm) && (
+                                            <button 
+                                                className="clear-selection" 
+                                                onClick={() => {
+                                                    setSelectedClient("");
+                                                    setClientSearchTerm("");
+                                                    setShowClientList(true);
+                                                }}
+                                            >
+                                                <i className="bi bi-x-circle-fill"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {showClientList && (
+                                        <div className="client-dropdown-list shadow-lg">
+                                            {fetchingClients ? (
+                                                <div className="list-item loading">
+                                                    <div className="spinner-border spinner-border-sm text-primary me-2"></div>
+                                                    Loading clients...
+                                                </div>
+                                            ) : (
+                                                <div className="list-scroll">
+                                                    {clients
+                                                        .filter(c => 
+                                                            c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) || 
+                                                            c.username?.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                                                        )
+                                                        .map(c => (
+                                                            <div 
+                                                                key={c.id} 
+                                                                className={`list-item-fancy ${selectedClient === c.id ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    setSelectedClient(c.id);
+                                                                    setClientSearchTerm(`${c.companyName} (${c.username})`);
+                                                                    setShowClientList(false);
+                                                                }}
+                                                            >
+                                                                <div className="item-main">
+                                                                    <div className="client-co-fancy">{c.companyName}</div>
+                                                                    <div className="client-un-fancy">@{c.username}</div>
+                                                                </div>
+                                                                {selectedClient === c.id && <i className="bi bi-check2 text-primary"></i>}
+                                                            </div>
+                                                        ))
+                                                    }
+                                                    {clients.filter(c => 
+                                                        c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) || 
+                                                        c.username?.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                                                    ).length === 0 && (
+                                                        <div className="list-item-fancy empty text-center py-4">
+                                                            <i className="bi bi-search text-muted d-block mb-2" style={{ fontSize: '1.5rem' }}></i>
+                                                            No clients found
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                {selectedClient && !showClientList && (
+                                    <div className="selected-indicator-fancy">
+                                        <i className="bi bi-patch-check-fill"></i>
+                                        <span>Client Verified & Selected</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="form-group-admin">
+                                <label>Adjustment Amount (₹)</label>
+                                <div className="amount-input-wrapper">
+                                    <span className="currency-prefix">₹</span>
+                                    <input 
+                                        type="number" 
+                                        placeholder="0.00"
+                                        className="amount-input-fancy"
+                                        value={pointsAmount}
+                                        onChange={(e) => setPointsAmount(e.target.value)}
+                                        disabled={submitting}
+                                    />
+                                </div>
+                                <div className="amount-help">
+                                    <i className="bi bi-info-circle"></i>
+                                    <span>Positive to add, negative to deduct.</span>
+                                </div>
+                            </div>
+                            <div className="form-group-admin">
+                                <label>Notes / Reason</label>
+                                <textarea 
+                                    rows={3}
+                                    placeholder="Enter reason for this adjustment (e.g. Special promotion, Error correction)"
+                                    className="textarea-fancy"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    disabled={submitting}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-footer-admin-fancy">
+                            <button 
+                                className="submit-btn-fancy" 
+                                onClick={handleAddPoints}
+                                disabled={submitting || !selectedClient || !pointsAmount}
+                            >
+                                {submitting ? (
+                                    <><span className="spinner-border spinner-border-sm me-2"></span>Processing...</>
+                                ) : (
+                                    <><i className="bi bi-plus-circle me-2"></i>Apply Points</>
+                                )}
+                            </button>
+                            <button 
+                                className="cancel-btn-fancy" 
+                                onClick={() => setShowAddModal(false)}
+                                disabled={submitting}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style jsx>{`
                 .rewards-container { animation: fadeIn 0.5s ease-out; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 
                 .rewards-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+                .add-points-btn {
+                    padding: 0.75rem 1.25rem;
+                    background: linear-gradient(135deg, #0f172a, #1a1a2e);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+                }
+                .add-points-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+                }
+                .add-points-btn i { font-size: 1rem; color: #ffc451; }
+                
                 .header-info h3 { font-size: 1.5rem; margin: 0; color: #0f172a; font-weight: 700; }
                 .header-info p { color: #64748b; margin: 0; margin-top: 0.25rem; }
+
+                /* Modal Style */
+                .modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.4);
+                    backdrop-filter: blur(8px);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                }
+                .offcanvas-panel-admin {
+                    background: white;
+                    width: 100%;
+                    max-width: 450px;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: -10px 0 50px rgba(0,0,0,0.15);
+                    animation: slideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                @keyframes slideRight {
+                    from { transform: translateX(100%); }
+                    to { transform: translateX(0); }
+                }
+
+                .modal-header-admin {
+                    padding: 2rem;
+                    border-bottom: 1px solid #f1f5f9;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    background: #fff;
+                }
+                .header-title-group h4 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
+                .header-title-group p { margin: 0; font-size: 0.85rem; color: #64748b; margin-top: 0.25rem; }
+                .close-btn { background: #f1f5f9; border: none; color: #64748b; font-size: 1rem; cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+                .close-btn:hover { background: #fee2e2; color: #ef4444; }
+
+                .modal-body-admin { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2rem; }
+                .form-group-admin { display: flex; flex-direction: column; gap: 0.75rem; }
+                .form-group-admin label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                
+                /* Searchable Select */
+                .searchable-select-container { position: relative; }
+                .search-input-wrapper { position: relative; width: 100%; }
+                .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+                .search-input-fancy { width: 100%; padding: 0.875rem 1rem 0.875rem 2.75rem; border-radius: 14px; border: 2px solid #f1f5f9; font-size: 0.95rem; transition: all 0.2s; background: #f8fafc; }
+                .search-input-fancy:focus { outline: none; border-color: #ffc451; background: #fff; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.1); }
+                .clear-selection { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1.1rem; padding: 0; transition: color 0.2s; }
+                .clear-selection:hover { color: #94a3b8; }
+
+                .client-dropdown-list { position: absolute; top: 105%; left: 0; right: 0; background: white; border-radius: 14px; border: 1px solid #f1f5f9; z-index: 100; max-height: 280px; overflow: hidden; display: flex; flex-direction: column; }
+                .list-scroll { overflow-y: auto; padding: 0.5rem; }
+                .list-item-fancy { padding: 0.75rem 1rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+                .list-item-fancy:hover { background: #f8fafc; }
+                .list-item-fancy.active { background: #fffbeb; }
+                .client-co-fancy { font-weight: 700; color: #0f172a; font-size: 0.9rem; }
+                .client-un-fancy { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+                
+                .selected-indicator-fancy { display: flex; align-items: center; gap: 0.5rem; color: #10b981; font-size: 0.75rem; font-weight: 700; background: #f0fdf4; padding: 0.5rem 0.75rem; border-radius: 8px; width: fit-content; }
+
+                /* Amount Input */
+                .amount-input-wrapper { position: relative; }
+                .currency-prefix { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: 800; color: #0f172a; font-size: 1.1rem; }
+                .amount-input-fancy { width: 100%; padding: 1rem 1rem 1rem 2.5rem; border-radius: 14px; border: 2px solid #f1f5f9; font-size: 1.25rem; font-weight: 800; color: #0f172a; transition: all 0.2s; }
+                .amount-input-fancy:focus { outline: none; border-color: #ffc451; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.1); }
+                .amount-help { display: flex; align-items: center; gap: 0.4rem; color: #94a3b8; font-size: 0.7rem; font-weight: 500; }
+
+                .textarea-fancy { width: 100%; padding: 1rem; border-radius: 14px; border: 2px solid #f1f5f9; font-family: inherit; font-size: 0.95rem; transition: all 0.2s; resize: none; background: #f8fafc; }
+                .textarea-fancy:focus { outline: none; border-color: #ffc451; background: #fff; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.1); }
+
+                .modal-footer-admin-fancy { padding: 1.5rem 2rem 2.5rem; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 0.75rem; }
+                .submit-btn-fancy { padding: 1rem; border-radius: 14px; background: #ffc451; color: #1a1a2e; font-weight: 800; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+                .submit-btn-fancy:hover:not(:disabled) { background: #f8a623; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(248, 166, 35, 0.3); }
+                .submit-btn-fancy:disabled { opacity: 0.5; cursor: not-allowed; }
+                .cancel-btn-fancy { padding: 0.75rem; border-radius: 14px; background: transparent; color: #94a3b8; font-weight: 700; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; }
+                .cancel-btn-fancy:hover { background: #f8fafc; color: #64748b; }
 
                 .table-card { background: #fff; border-radius: 20px; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
                 .table-actions { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; }
@@ -254,6 +578,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
 
                 .view-btn { padding: 0.5rem 1rem; background: #f8fafc; color: #0f172a; border-radius: 10px; font-size: 0.8rem; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
                 .view-btn:hover { background: #ffc451; color: #fff; border-color: #ffc451; transform: translateY(-2px); }
+                .no-action-label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
 
                 .no-results { padding: 4rem; text-align: center; color: #94a3b8; font-style: italic; }
 

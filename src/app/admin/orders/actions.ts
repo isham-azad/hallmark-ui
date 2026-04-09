@@ -36,6 +36,7 @@ interface Order {
     paymentStatus?: string;
     rewardsUsed?: number;
     rewardsEarned?: number;
+    voucherAmount?: number;
     createdAt: string;
     updatedAt: string;
     items: OrderItem[];
@@ -74,6 +75,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
             paymentStatus: paymentStatus === "Paid" ? "Paid" : "Pending",
             rewardsUsed: (data.rewardsUsed as number) || 0,
             rewardsEarned: (data.rewardsEarned as number) || 0,
+            voucherAmount: (data.voucherAmount as number) || 0,
             date: toISO(data.date),
             createdAt: toISO(data.createdAt),
             updatedAt: toISO(data.updatedAt),

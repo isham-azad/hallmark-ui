@@ -5,10 +5,11 @@ import { sendVoucherEmail } from "@/lib/email";
 
 export async function getRewardsHistory() {
     try {
-        const [ordersEarnedSnap, ordersUsedSnap, redemptionsSnap] = await Promise.all([
+        const [ordersEarnedSnap, ordersUsedSnap, redemptionsSnap, manualSnap] = await Promise.all([
             db.collection("orders").where("rewardsEarned", ">", 0).get(),
             db.collection("orders").where("rewardsUsed", ">", 0).get(),
-            db.collection("reward_requests").get()
+            db.collection("reward_requests").get(),
+            db.collection("reward_manual_adjustments").get()
         ]);
 
         const transactions: any[] = [];
@@ -52,6 +53,20 @@ export async function getRewardsHistory() {
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 createdAt: data.requestedAt?.toDate?.() ? data.requestedAt.toDate().toISOString() : new Date().toISOString(),
                 status: data.status
+            });
+        });
+
+        // 4. Process Manual Adjustments (Admin added)
+        manualSnap.docs.forEach((doc: any) => {
+            const data = doc.data();
+            transactions.push({
+                id: doc.id,
+                type: (data.amount || 0) >= 0 ? 'Earned' : 'Used',
+                amount: Math.abs(data.amount || 0),
+                orderNo: data.notes || 'Admin Adjustment',
+                b2bClientCompany: data.b2bClientCompany || 'Customer',
+                isManual: true,
+                createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : new Date().toISOString()
             });
         });
 
@@ -103,43 +118,48 @@ export async function updateRedemptionStatus(requestId: string, status: string) 
             updatedAt: new Date()
         });
 
-        // If it's a gift voucher and just completed, generate the voucher
-        if (status === "Completed" && redemptionData.method === "gift_voucher") {
-            const voucherCode = generateVoucherCode();
+        // If it's a gift voucher and just approved or completed, generate the voucher
+        if ((status === "Approved" || status === "Completed") && redemptionData.method === "gift_voucher") {
+            // Check if voucher already exists to prevent duplicate generation
+            const existingVouchers = await db.collection("gift_vouchers").where("redemptionRequestId", "==", requestId).get();
             
-            await db.collection("gift_vouchers").add({
-                code: voucherCode,
-                amount: redemptionData.amount,
-                balance: redemptionData.amount,
-                b2bClientId: redemptionData.b2bClientId,
-                b2bClientUsername: redemptionData.b2bClientUsername,
-                b2bClientCompany: redemptionData.b2bClientCompany,
-                redemptionRequestId: requestId,
-                status: "Active",
-                createdAt: new Date(),
-                expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)) // 1 year expiry
-            });
+            if (existingVouchers.empty) {
+                const voucherCode = generateVoucherCode();
+                
+                await db.collection("gift_vouchers").add({
+                    code: voucherCode,
+                    amount: redemptionData.amount,
+                    balance: redemptionData.amount,
+                    b2bClientId: redemptionData.b2bClientId,
+                    b2bClientUsername: redemptionData.b2bClientUsername,
+                    b2bClientCompany: redemptionData.b2bClientCompany,
+                    redemptionRequestId: requestId,
+                    status: "Active",
+                    createdAt: new Date(),
+                    expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)) // 1 year expiry
+                });
 
-            // Get client's email for notification
-            let clientEmail = "";
-            if (redemptionData.b2bClientId) {
-                const clientDoc = await db.collection("b2b_clients").doc(redemptionData.b2bClientId).get();
-                if (clientDoc.exists) {
-                    clientEmail = clientDoc.data()?.email || "";
+                // Get client's email for notification
+                let clientEmail = "";
+                if (redemptionData.b2bClientId) {
+                    const clientDoc = await db.collection("b2b_clients").doc(redemptionData.b2bClientId).get();
+                    if (clientDoc.exists) {
+                        clientEmail = clientDoc.data()?.email || "";
+                    }
                 }
-            }
 
-            if (clientEmail) {
-                await sendVoucherEmail(
-                    clientEmail,
-                    redemptionData.b2bClientCompany || "Valued Client",
-                    voucherCode,
-                    redemptionData.amount
-                );
-                console.log(`E-Gift Voucher email sent to ${clientEmail}`);
-            }
+                if (clientEmail) {
+                    await sendVoucherEmail(
+                        clientEmail,
+                        redemptionData.b2bClientCompany || "Valued Client",
+                        voucherCode,
+                        redemptionData.amount
+                    );
+                    console.log(`E-Gift Voucher email sent to ${clientEmail}`);
+                }
 
-            console.log(`Generated Gift Voucher ${voucherCode} for ${redemptionData.b2bClientCompany}`);
+                console.log(`Generated Gift Voucher ${voucherCode} for ${redemptionData.b2bClientCompany}`);
+            }
         }
 
         return { success: true };
@@ -197,5 +217,49 @@ export async function voidVoucher(voucherId: string) {
     } catch (error) {
         console.error("Error voiding voucher:", error);
         return { success: false };
+    }
+}
+export async function getB2BClients() {
+    try {
+        const snap = await db.collection("b2b_clients").get();
+        return snap.docs.map((doc: any) => ({
+            id: doc.id,
+            companyName: doc.data().companyName || 'No Company',
+            username: doc.data().username || 'unknown'
+        }));
+    } catch (error) {
+        console.error("Error fetching admin B2B clients:", error);
+        return [];
+    }
+}
+
+export async function addManualPoints(clientId: string, amount: number, notes: string) {
+    try {
+        const clientRef = db.collection("b2b_clients").doc(clientId);
+        const clientDoc = await clientRef.get();
+        if (!clientDoc.exists) return { success: false, error: "Client not found" };
+        const clientData = clientDoc.data()!;
+
+        const batch = db.batch();
+        batch.update(clientRef, {
+            rewardBalance: (clientData.rewardBalance || 0) + amount,
+            updatedAt: new Date()
+        });
+
+        const adjustmentRef = db.collection("reward_manual_adjustments").doc();
+        batch.set(adjustmentRef, {
+            b2bClientId: clientId,
+            b2bClientCompany: clientData.companyName || 'Unknown',
+            amount,
+            notes,
+            createdAt: new Date(),
+            type: amount >= 0 ? 'Earned' : 'Used'
+        });
+
+        await batch.commit();
+        return { success: true };
+    } catch (error) {
+        console.error("Error adding manual points:", error);
+        return { success: false, error: "Database error" };
     }
 }

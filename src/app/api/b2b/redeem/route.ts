@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Invalid amount." }, { status: 400 });
         }
 
-        const minBank = 1000;
-        const minVoucher = 10;
+        const isProduction = process.env.NODE_ENV === "production";
+        const minBank = isProduction ? 1000 : 1;
+        const minVoucher = isProduction ? 10 : 1;
         const currentMin = method === "gift_voucher" ? minVoucher : minBank;
 
         if (amountNum < currentMin) {

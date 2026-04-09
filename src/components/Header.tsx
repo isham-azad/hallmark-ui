@@ -22,7 +22,7 @@ export default function Header() {
     const [brands, setBrands] = useState<NavBrand[]>([]);
     const [categories, setCategories] = useState<NavCategory[]>([]);
     const { cartCount, toggleCart } = useCart();
-    const { setIsInvestOpen } = useInvest();
+    const { setIsInvestOpen, setIsDistributorOpen } = useInvest();
     const [b2bUser, setB2bUser] = useState<{ username: string; companyName: string } | null>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -97,7 +97,7 @@ export default function Header() {
                     </div>
                 </div>
 
-                <div style={{ height: "4px", background: "linear-gradient(90deg, #ffc451 0%, rgba(255,196,81,0.2) 50%, transparent 100%)", width: "100%" }}></div>
+                <div style={{ height: "2px", background: "linear-gradient(90deg, #ffc451 0%, #ffc451 50%, #ffc451 100%)", width: "100%" }}></div>
             </div>
 
             <div className="container-fluid container-xl position-relative d-flex align-items-center justify-content-between header-main-area flex-grow-1 w-100 py-3">
@@ -120,7 +120,11 @@ export default function Header() {
                         Shop Online
                     </Link>
                 ) : (
-                    <></>
+                    <>
+                        <a className="btn-getstarted d-inline-flex position-relative ms-auto" role="button" tabIndex={0} onClick={() => setIsDistributorOpen(true)} style={{ zIndex: 1001, cursor: 'pointer' }}>
+                            Become A Distributor
+                        </a>
+                    </>
                 )}
 
                 <nav id="navmenu" className="navmenu">

@@ -43,6 +43,7 @@ import { EnquiryProvider } from "@/context/EnquiryContext";
 import { InvestProvider } from "@/context/InvestContext";
 import EnquiryOffcanvas from "@/components/EnquiryOffcanvas";
 import InvestOffcanvas from "@/components/InvestOffcanvas";
+import DistributorOffcanvas from "@/components/DistributorOffcanvas";
 
 export default function RootLayout({
   children,
@@ -75,6 +76,7 @@ export default function RootLayout({
               <CartOffcanvas />
               <EnquiryOffcanvas />
               <InvestOffcanvas />
+              <DistributorOffcanvas />
               <SpeedInsights />
               <Analytics />
             </InvestProvider>

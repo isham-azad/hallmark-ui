@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
         const orderNo = generateOrderNo();
         const paymentMethod = normalizePaymentMethod(paymentMethodId, paymentMethodName);
 
-        const earnedRewards = isB2B ? totalNum * (rewardPercentage / 100) : 0;
+        const earnedRewards = 0;
 
         const orderData: Record<string, unknown> = {
             orderNo,
@@ -236,9 +236,9 @@ export async function POST(request: NextRequest) {
 
         const docRef = await db.collection("orders").add(orderData);
 
-        if (isB2B) {
+        if (isB2B && rewardsUsed > 0) {
             await db.collection("b2b_clients").doc(b2bSession.id).update({
-                rewardBalance: FieldValue.increment(earnedRewards - rewardsUsed)
+                rewardBalance: FieldValue.increment(-rewardsUsed)
             });
         }
 
@@ -295,6 +295,7 @@ export async function POST(request: NextRequest) {
             payment: String(orderData.payment),
             rewardsEarned: earnedRewards,
             rewardsUsed,
+            voucherAmount,
         });
     } catch (error) {
         const err = error as Error & { code?: string };

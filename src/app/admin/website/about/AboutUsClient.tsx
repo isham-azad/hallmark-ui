@@ -11,7 +11,8 @@ interface AboutUsData {
     description2: string;
     description3: string;
     points: string[];
-    image: string;
+    image?: string;
+    cards?: { icon: string; title: string; desc: string }[];
 }
 
 interface AboutUsClientProps {
@@ -32,7 +33,13 @@ export default function AboutUsClient({ initialData }: AboutUsClientProps) {
             "PDM Maharaja – spices and dry fruits",
             "Vita Rich – pulses, masala items, rice flakes, and daily staples"
         ],
-        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg"
+        image: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg",
+        cards: [
+            { icon: "bi-calendar-check-fill", title: "Since 2014", desc: "Committed to delivering high-quality, affordable essentials for over a decade." },
+            { icon: "bi-person-vcard-fill", title: "Expert Leadership", desc: "Led by Mr. Vinod Bhaskaran with 25+ years of retail marketing excellence." },
+            { icon: "bi-globe-central-south-asia", title: "Regional Presence", desc: "Proven track record across India and the Gulf with strong market expertise." },
+            { icon: "bi-shield-fill-check", title: "Dependable Value", desc: "A value-driven approach focused on building long-term consumer partnerships." }
+        ]
     });
     
     // Sync local state when props change (after router.refresh())
@@ -44,7 +51,7 @@ export default function AboutUsClient({ initialData }: AboutUsClientProps) {
     }, [initialData]);
 
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string>(formData.image);
+    const [imagePreview, setImagePreview] = useState<string | undefined>(formData.image);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,6 +60,20 @@ export default function AboutUsClient({ initialData }: AboutUsClientProps) {
             setImageFile(file);
             setImagePreview(URL.createObjectURL(file));
         }
+    };
+
+    const handleCardChange = (index: number, key: keyof NonNullable<AboutUsData['cards']>[0], val: string) => {
+        const newCards = [...(formData.cards || [])];
+        newCards[index] = { ...newCards[index], [key]: val };
+        setFormData({ ...formData, cards: newCards });
+    };
+
+    const addCard = () => {
+        setFormData({ ...formData, cards: [...(formData.cards || []), { icon: "", title: "", desc: "" }] });
+    };
+
+    const removeCard = (index: number) => {
+        setFormData({ ...formData, cards: (formData.cards || []).filter((_, i) => i !== index) });
     };
 
     const handlePointChange = (index: number, val: string) => {
@@ -147,6 +168,34 @@ export default function AboutUsClient({ initialData }: AboutUsClientProps) {
                                     required 
                                 />
                             </div>
+                        </div>
+
+                        <div className="form-card mt-4">
+                            <h4>Highlight Cards</h4>
+                            <div className="cards-list">
+                                {(formData.cards || []).map((card, i) => (
+                                    <div key={i} className="card-item" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', position: 'relative' }}>
+                                        <button type="button" className="remove-btn" onClick={() => removeCard(i)} style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                                            <i className="bi bi-x"></i>
+                                        </button>
+                                        <div className="input-group" style={{ marginBottom: '0.75rem' }}>
+                                            <label>Icon Class (e.g., bi-shield-fill-check)</label>
+                                            <input type="text" value={card.icon} onChange={(e) => handleCardChange(i, 'icon', e.target.value)} placeholder="Bootstrap Icon Class" />
+                                        </div>
+                                        <div className="input-group" style={{ marginBottom: '0.75rem' }}>
+                                            <label>Card Title</label>
+                                            <input type="text" value={card.title} onChange={(e) => handleCardChange(i, 'title', e.target.value)} placeholder="Title" />
+                                        </div>
+                                        <div className="input-group" style={{ marginBottom: '0' }}>
+                                            <label>Card Description</label>
+                                            <textarea rows={2} value={card.desc} onChange={(e) => handleCardChange(i, 'desc', e.target.value)} placeholder="Short description..." />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button type="button" className="add-point-btn" onClick={addCard}>
+                                <i className="bi bi-plus-lg"></i> Add Card
+                            </button>
                         </div>
 
                         <div className="form-card mt-4">

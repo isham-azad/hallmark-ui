@@ -131,9 +131,12 @@ export default function CartPage() {
                                                         </div>
                                                         <div className="col-4 col-md-2 text-md-center mt-3 mt-md-0 d-flex flex-column align-items-md-center">
                                                             {item.originalPriceFromDb > item.priceFromDb && (
-                                                                <del className="text-muted small">₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</del>
+                                                                <div className="text-muted small">MRP: ₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</div>
                                                             )}
-                                                            <span className="text-success fw-bold h5 mb-0">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
+                                                            <div className="text-success fw-bold h5 mb-0">
+                                                                <span className="text-muted" style={{ fontSize: '0.65rem', fontWeight: 'normal', textTransform: 'uppercase', display: 'block' }}>Your Price</span>
+                                                                ₹{(item.priceFromDb * item.quantity).toFixed(2)}
+                                                            </div>
                                                         </div>
                                                         <div className="col-2 col-md-2 text-end mt-3 mt-md-0">
                                                             <button
@@ -152,7 +155,7 @@ export default function CartPage() {
                                                             {isB2B ? "MRP Profit for these units" : "Savings for these units"}
                                                         </span>
                                                         <span className="text-success fw-bold" style={{ fontSize: '0.85rem' }}>
-                                                            ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / item.originalPriceFromDb) * 100)}% {isB2B ? "Profit" : "Off"})
+                                                            ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / (isB2B ? item.priceFromDb : item.originalPriceFromDb)) * 100)}% {isB2B ? "Profit" : "Off"})
                                                         </span>
                                                     </div>
                                                 )}
@@ -167,14 +170,14 @@ export default function CartPage() {
                             <div className="cart-summary p-4 border rounded shadow-sm bg-light">
                                 <h4 className="mb-4 fw-bold">Order Summary</h4>
                                 <div className="summary-item d-flex justify-content-between mb-2">
-                                    <span>Subtotal:</span>
+                                    <span>{isB2B ? "MRP Total:" : "Subtotal:"}</span>
                                     <span className="fw-bold">{loading ? "—" : `₹${(cartTotalFromDb + totalSavings).toFixed(2)}`}</span>
                                 </div>
 
                                 {totalSavings > 0 && (
                                     <div className="summary-item d-flex justify-content-between mb-2 text-success">
                                         <span>{isB2B ? "MRP Profit:" : "Volume Savings:"}</span>
-                                        <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)</span>
+                                        <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (isB2B ? cartTotalFromDb : (cartTotalFromDb + totalSavings))) * 100)}%)</span>
                                     </div>
                                 )}
 

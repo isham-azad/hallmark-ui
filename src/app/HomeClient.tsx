@@ -7,6 +7,7 @@ import { useInvest } from "@/context/InvestContext";
 import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
+import AddressTabs from "@/components/AddressTabs";
 
 interface SiteProduct {
   id: string;
@@ -50,7 +51,8 @@ interface AboutUsData {
   description2: string;
   description3: string;
   points: string[];
-  image: string;
+  image?: string;
+  cards?: { icon: string; title: string; desc: string }[];
 }
 
 interface StatItem {
@@ -334,46 +336,68 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       </section>
 
       {/* About Section */}
-      <section id="about" className="about section">
+      <section id="about" className="about section" style={{ background: 'linear-gradient(to bottom, #fff, #fcfcfc)' }}>
         <div className="container" data-aos="fade-up" data-aos-delay="100">
-          <div className="row gy-4">
-            <div className="col-lg-6 order-1 order-lg-2" style={{ position: 'relative', minHeight: '400px' }}>
-              <Image
-                src={websiteContent?.aboutUs?.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566351/hallmark/assets/img/about.jpg"}
-                alt="About HallMark"
-                fill
-                style={{ objectFit: 'cover', borderRadius: '15px' }}
-                sizes="(max-width: 992px) 100vw, 50vw"
-              />
-            </div>
-            <div className="col-lg-6 order-2 order-lg-1 content">
-              <h3>{websiteContent?.aboutUs?.title || "Hallmark Enterprises"}</h3>
-              <p style={{ textAlign: "justify" }}>
-                {websiteContent?.aboutUs?.description1 || "Established in 2014, Hallmark Enterprises is a consumer-focused company committed to delivering high-quality, affordable essentials for everyday living. Founded by Mr. Vinod Bhaskaran, who brings over 25 years of experience in retail marketing and channel sales across India and the Gulf, Hallmark combines market expertise with a strong value-driven approach."}
+          <div className="row gy-4 align-items-center">
+            <div className="col-lg-6 content" data-aos="fade-right" data-aos-delay="200">
+              <h3 className="fw-bold mb-4" style={{ fontSize: '2.5rem', color: 'var(--heading-color)' }}>
+                {websiteContent?.aboutUs?.title || "Hallmark Enterprises"}
+              </h3>
+              <p style={{ textAlign: "justify", fontSize: '1.1rem', lineHeight: '1.8' }}>
+                {websiteContent?.aboutUs?.description1}
               </p>
-              <p style={{ textAlign: "justify" }}>
-                {websiteContent?.aboutUs?.description2 || "Hallmark began with a trusted range of home care products including Soph Detergent Liquid, Soph Dishwash Liquid, Soph Handwash, Soph Washing Powder, Emitol Floor Cleaner and Emitol Toilet Cleaner, which quickly gained market acceptance for their quality and reliability."}
+              <p style={{ textAlign: "justify", fontSize: '1.05rem', lineHeight: '1.7', opacity: 0.85 }}>
+                {websiteContent?.aboutUs?.description2}
               </p>
-              {websiteContent?.aboutUs?.points && websiteContent.aboutUs.points.length > 0 ? (
-                <ul style={{ textAlign: "justify" }}>
+              {websiteContent?.aboutUs?.points && websiteContent.aboutUs.points.length > 0 && (
+                <ul className="mt-3 mb-4" style={{ textAlign: "justify", listStyle: 'none', padding: 0 }}>
                   {websiteContent.aboutUs.points.map((p, i) => (
-                    <li key={i}><i className="bi bi-check2-all"></i> <span>{p}</span></li>
+                    <li key={i} className="mb-2 d-flex align-items-center">
+                      <i className="bi bi-check-circle-fill me-2" style={{ color: 'var(--accent-color)' }}></i>
+                      <span>{p}</span>
+                    </li>
                   ))}
                 </ul>
-              ) : (
-                <>
-                  <p style={{ textAlign: "justify" }}>
-                    Expanding beyond home care, Hallmark has entered the food and grocery segment with:
-                  </p>
-                  <ul style={{ textAlign: "justify" }}>
-                    <li><i className="bi bi-check2-all"></i> <span><b>PDM Maharaja</b> – spices and dry fruits</span></li>
-                    <li><i className="bi bi-check2-all"></i> <span><b>Vita Rich</b> – pulses, masala items, rice flakes, and daily staples</span></li>
-                  </ul>
-                </>
               )}
-              <p style={{ textAlign: "justify" }}>
-                {websiteContent?.aboutUs?.description3 || "With a strong focus on quality, affordability, and long-term partnerships, Hallmark continues to serve households and retailers with dependable products that meet every day needs."}
+              <p style={{ textAlign: "justify", fontSize: '1.05rem', lineHeight: '1.7', opacity: 0.85 }}>
+                {websiteContent?.aboutUs?.description3}
               </p>
+            </div>
+
+            <div className="col-lg-6" data-aos="fade-left" data-aos-delay="300">
+              <div className="row g-4">
+                {(websiteContent?.aboutUs?.cards && websiteContent.aboutUs.cards.length > 0 ? websiteContent.aboutUs.cards : [
+                  { icon: "bi-calendar-check-fill", title: "Since 2014", desc: "Committed to delivering high-quality, affordable essentials for over a decade." },
+                  { icon: "bi-person-vcard-fill", title: "Expert Leadership", desc: "Led by Mr. Vinod Bhaskaran with 25+ years of retail marketing excellence." },
+                  { icon: "bi-globe-central-south-asia", title: "Regional Presence", desc: "Proven track record across India and the Gulf with strong market expertise." },
+                  { icon: "bi-shield-fill-check", title: "Dependable Value", desc: "A value-driven approach focused on building long-term consumer partnerships." }
+                ]).map((item, idx) => (
+                  <div key={idx} className="col-md-6">
+                    <div className="p-4 rounded-4 shadow-sm h-100" style={{
+                      background: 'white',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
+                      cursor: 'default'
+                    }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-10px)';
+                        e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08)';
+                        e.currentTarget.style.borderColor = 'var(--accent-color)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.05)';
+                      }}>
+                      <div className="icon-wrapper mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ background: 'rgba(255, 196, 81, 0.12)', width: '60px', height: '60px' }}>
+                        <i className={`bi ${item.icon} fs-3`} style={{ color: 'var(--accent-color)' }}></i>
+                      </div>
+                      <h4 className="fw-bold mb-2" style={{ fontSize: '1.25rem', color: 'var(--heading-color)' }}>{item.title}</h4>
+                      <p className="small mb-0 text-muted" style={{ lineHeight: '1.6' }}>{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -382,6 +406,9 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       {/* Clients Section */}
       <section id="clients" className="clients section">
         <div className="container" data-aos="fade-up" data-aos-delay="100">
+          <div className="section-header">
+            <h2>Our Brands</h2>
+          </div>
           <div className="swiper init-swiper">
             <script type="application/json" className="swiper-config">
               {`
@@ -729,7 +756,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
         {/* Background decorative elements */}
         <div className="position-absolute top-0 end-0 opacity-25" style={{ width: '400px', height: '400px', background: 'radial-gradient(circle, #ffc451 0%, transparent 70%)', transform: 'translate(30%, -30%)' }}></div>
         <div className="position-absolute bottom-0 start-0 opacity-25" style={{ width: '300px', height: '300px', background: 'radial-gradient(circle, #ffc451 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }}></div>
-        
+
         <div className="container position-relative z-1" data-aos="fade-up">
           <div className="row justify-content-center text-center mb-5">
             <div className="col-lg-8">
@@ -746,9 +773,9 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           <div className="row g-4 mb-5">
             {/* Value Proposition Cards */}
             {(websiteContent?.investors?.cards || [
-                { icon: "bi-bar-chart-fill", title: "Assured ROI", description: "Benefit from consistent, performance-linked returns driven by our high-turnover consumer goods portfolio." },
-                { icon: "bi-shield-check", title: "Transparent Operations", description: "We believe in complete transparency. Our robust business model and supply chain are open to rigorous assessment." },
-                { icon: "bi-globe-central-south-asia", title: "Scalable Expansion", description: "Capitalize on our aggressive expansion plans across India and the Gulf region, unlocking massive growth potential." }
+              { icon: "bi-bar-chart-fill", title: "Assured ROI", description: "Benefit from consistent, performance-linked returns driven by our high-turnover consumer goods portfolio." },
+              { icon: "bi-shield-check", title: "Transparent Operations", description: "We believe in complete transparency. Our robust business model and supply chain are open to rigorous assessment." },
+              { icon: "bi-globe-central-south-asia", title: "Scalable Expansion", description: "Capitalize on our aggressive expansion plans across India and the Gulf region, unlocking massive growth potential." }
             ]).map((card, i) => (
               <div key={i} className="col-md-4" data-aos="fade-up" data-aos-delay={100 + i * 100}>
                 <div className="p-4 h-100 rounded-4" style={{ backgroundColor: '#1a1a1a', border: '1px solid #333', transition: 'transform 0.3s ease, border-color 0.3s ease' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = '#ffc451'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = '#333'; }}>
@@ -763,18 +790,18 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           </div>
 
           <div className="text-center" data-aos="zoom-in" data-aos-delay="400">
-             <div className="d-inline-block p-2 rounded-pill" style={{ backgroundColor: '#222', border: '1px solid #444' }}>
-               <button 
-                 onClick={() => setIsInvestOpen(true)}
-                 className="btn btn-lg px-5 py-3 rounded-pill fw-bold text-dark d-inline-flex align-items-center justify-content-center gap-2 m-0"
-                 style={{ backgroundColor: '#ffc451', border: 'none', transition: 'all 0.3s ease' }}
-                 onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255, 196, 81, 0.3)'; }}
-                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-               >
-                 Express Your Interest <i className="bi bi-arrow-right fs-5"></i>
-               </button>
-             </div>
-             <p className="mt-4 small" style={{ color: '#aaa' }}><i className="bi bi-shield-lock me-1"></i> {websiteContent?.investors?.bottomText || "Minimum investment commitments apply. Complete confidentiality maintained."}</p>
+            <div className="d-inline-block p-2 rounded-pill" style={{ backgroundColor: '#222', border: '1px solid #444' }}>
+              <button
+                onClick={() => setIsInvestOpen(true)}
+                className="btn btn-lg px-5 py-3 rounded-pill fw-bold text-dark d-inline-flex align-items-center justify-content-center gap-2 m-0"
+                style={{ backgroundColor: '#ffc451', border: 'none', transition: 'all 0.3s ease' }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255, 196, 81, 0.3)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                Express Your Interest <i className="bi bi-arrow-right fs-5"></i>
+              </button>
+            </div>
+            <p className="mt-4 small" style={{ color: '#aaa' }}><i className="bi bi-shield-lock me-1"></i> {websiteContent?.investors?.bottomText || "Minimum investment commitments apply. Complete confidentiality maintained."}</p>
           </div>
         </div>
       </section>
@@ -795,9 +822,9 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             <div className="col-lg-4">
               <div className="info-item d-flex" data-aos="fade-up" data-aos-delay="300">
                 <i className="bi bi-geo-alt flex-shrink-0"></i>
-                <div>
+                <div className="w-100">
                   <h3>Address</h3>
-                  <p>Hallmark Enterprises<br />Mannam Nagar, Pandalam<br />Pathanamthitta, Kerala - 689 501<br />India</p>
+                  <AddressTabs />
                 </div>
               </div>
               <div className="info-item d-flex" data-aos="fade-up" data-aos-delay="400">

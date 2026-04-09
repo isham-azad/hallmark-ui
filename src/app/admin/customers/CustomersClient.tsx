@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Customer } from "./actions";
 
 interface CustomersClientProps {
@@ -9,6 +11,7 @@ interface CustomersClientProps {
 }
 
 export default function CustomersClient({ initialCustomers }: CustomersClientProps) {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredCustomers = initialCustomers.filter(customer =>
@@ -47,6 +50,7 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                 <th>Contact Info</th>
                                 <th>Location</th>
                                 <th>Last Order Update</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,6 +98,18 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                                 {customer.updatedAt ? format(new Date(customer.updatedAt), "MMM dd, yyyy") : "—"}
                                             </span>
                                         </td>
+                                        <td>
+                                            <div className="action-btns">
+                                                <button
+                                                    type="button"
+                                                    className="icon-btn history"
+                                                    title="View Profile & History"
+                                                    onClick={() => router.push(`/admin/customers/${customer.id}`)}
+                                                >
+                                                    <i className="bi bi-person-badge"></i>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -134,12 +150,18 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="card-footer-custom">
+                                        <Link className="mobile-action-btn-custom history" href={`/admin/customers/${customer.id}`}>
+                                            <i className="bi bi-person-badge"></i> View Profile
+                                        </Link>
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
             </div>
+
 
             <style jsx>{`
                 .customers-container { animation: fadeIn 0.5s ease-out; }
@@ -174,6 +196,38 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
 
                 .update-date { font-size: 0.875rem; color: #64748b; font-weight: 500; }
                 
+                .action-btns { display: flex; gap: 0.5rem; }
+                .icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid transparent; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+                .icon-btn.history { background: #f8fafc; color: #7c3aed; }
+                .icon-btn:hover { background: #ffc451; color: #fff !important; transform: translateY(-2px); }
+
+                /* Modal Overlay Standard */
+                .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 12000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease; }
+                .modal-content { background: #fff; padding: 2.5rem; border-radius: 28px; width: 100%; max-width: 460px; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25); position: relative; border: 1px solid #f1f5f9; }
+
+                /* History Modal Detail Styles */
+                .history-modal { max-width: 500px !important; padding: 0 !important; overflow: hidden; }
+                .history-modal-header { padding: 2rem; display: flex; align-items: center; gap: 1.25rem; border-bottom: 1px solid #f1f5f9; background: #fafafa; position: relative; }
+                .history-modal-header i.bi-clock-history { font-size: 2.5rem; color: #db2777; background: #fdf2f8; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 18px; }
+                .history-modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+                .history-modal-header p { margin: 0; color: #64748b; font-size: 0.85rem; font-weight: 600; }
+                .close-x { position: absolute; top: 1.5rem; right: 1.5rem; border: none; background: #f1f5f9; color: #94a3b8; width: 32px; height: 32px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+                .close-x:hover { background: #fee2e2; color: #ef4444; }
+
+                .history-options { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+                .history-card { display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; border-radius: 20px; border: 2px solid #f1f5f9; text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                .history-card:hover { border-color: #ffc451; background: #fffbeb; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255, 196, 81, 0.1); }
+                
+                .card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+                .card-icon.orders { background: #eff6ff; color: #3b82f6; }
+                .card-icon.rewards { background: #fefce8; color: #ca8a04; }
+                
+                .card-info { flex: 1; }
+                .card-info h4 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+                .card-info p { margin: 0; font-size: 0.8rem; color: #64748b; font-weight: 500; }
+                .arrow { color: #cbd5e1; transition: 0.3s; }
+                .history-card:hover .arrow { color: #ffc451; transform: translateX(5px); }
+
                 .no-results { padding: 3rem; text-align: center; color: #94a3b8; font-style: italic; }
 
                 .table-responsive { overflow-x: auto; }
@@ -201,6 +255,10 @@ export default function CustomersClient({ initialCustomers }: CustomersClientPro
                     .location-details { display: flex; flex-direction: column; gap: 0.2rem; }
                     .card-city { font-weight: 700; color: #1e293b; }
                     .card-address { font-size: 0.8125rem; color: #64748b; line-height: 1.4; }
+
+                    .card-footer-custom { padding-top: 1rem; border-top: 1px dashed #e2e8f0; margin-top: 1rem; }
+                    .mobile-action-btn-custom { width: 100%; height: 44px; border-radius: 12px; border: none; background: #f0fdfa; color: #0d9488; font-weight: 800; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: 0.2s; text-decoration: none; }
+                    .mobile-action-btn-custom:active { transform: scale(0.95); opacity: 0.8; }
                 }
             `}</style>
         </div>
