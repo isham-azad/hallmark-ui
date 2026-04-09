@@ -100,6 +100,14 @@ export default function OrderSuccessClient() {
                                             <span className="success-order-value text-success">+₹{Number(searchParams.get("rewardsEarned")).toFixed(2)}</span>
                                         </div>
                                     )}
+                                    {Number(searchParams.get("voucherUsed") || 0) > 0 && (
+                                        <div className="success-order-row rewards-row used">
+                                            <span className="success-order-label text-primary">
+                                                <i className="bi bi-card-heading text-primary" aria-hidden /> Voucher Applied
+                                            </span>
+                                            <span className="success-order-value text-primary">-₹{Number(searchParams.get("voucherUsed")).toFixed(2)}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isUpi && (

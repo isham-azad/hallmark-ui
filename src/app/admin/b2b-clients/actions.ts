@@ -250,3 +250,112 @@ export async function deleteB2BClient(id: string) {
         return { success: false, error: "Failed to delete client" };
     }
 }
+
+export async function getB2BClientDetail(id: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return null;
+
+        const clientDoc = await db.collection("b2b_clients").doc(id).get();
+        if (!clientDoc.exists) return null;
+        const clientData = clientDoc.data()!;
+
+        // Fetch Orders
+        const ordersSnap = await db.collection("orders").where("b2bClientId", "==", id).orderBy("createdAt", "desc").get();
+        const orders: any[] = ordersSnap.docs.map((doc: any) => {
+            const d = doc.data();
+            return {
+                id: doc.id,
+                orderNo: d.orderNo,
+                total: d.total,
+                status: d.status,
+                paymentStatus: d.paymentStatus || "Pending",
+                rewardsEarned: d.rewardsEarned || 0,
+                rewardsUsed: d.rewardsUsed || 0,
+                createdAt: d.createdAt?.toDate?.() ? d.createdAt.toDate().toISOString() : new Date().toISOString()
+            };
+        });
+
+        // Fetch Rewards - combining manual and order-based
+        const [manualSnap, redemptionsSnap] = await Promise.all([
+            db.collection("reward_manual_adjustments").where("b2bClientId", "==", id).get(),
+            db.collection("reward_requests").where("b2bClientId", "==", id).get()
+        ]);
+
+        const rewards: any[] = [];
+        
+        // 1. Process Manual Adjustments
+        manualSnap.docs.forEach((doc: any) => {
+            const d = doc.data();
+            rewards.push({
+                id: doc.id,
+                type: (d.amount || 0) >= 0 ? 'Earned' : 'Used',
+                amount: Math.abs(d.amount || 0),
+                note: d.notes || 'Manual Adjustment',
+                createdAt: d.createdAt?.toDate?.() ? d.createdAt.toDate().toISOString() : new Date().toISOString()
+            });
+        });
+
+        // 2. Process Order-based Rewards from the already fetched orders
+        orders.forEach(o => {
+            if (o.rewardsEarned > 0) {
+                rewards.push({
+                    id: o.id + "_earned",
+                    type: 'Earned',
+                    amount: o.rewardsEarned,
+                    note: `Order ${o.orderNo}`,
+                    createdAt: o.createdAt
+                });
+            }
+            if (o.rewardsUsed > 0) {
+                rewards.push({
+                    id: o.id + "_used",
+                    type: 'Used',
+                    amount: o.rewardsUsed,
+                    note: `Used in Order ${o.orderNo}`,
+                    createdAt: o.createdAt
+                });
+            }
+        });
+
+        // 3. Process Redemptions
+        redemptionsSnap.docs.forEach((doc: any) => {
+            const d = doc.data();
+            rewards.push({
+                id: doc.id,
+                type: 'Redeemed',
+                amount: d.amount,
+                note: `Redemption (${d.method?.replace('_', ' ') || 'Requested'})`,
+                status: d.status,
+                createdAt: d.requestedAt?.toDate?.() ? d.requestedAt.toDate().toISOString() : new Date().toISOString()
+            });
+        });
+
+        rewards.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        return {
+            client: {
+                id: clientDoc.id,
+                username: clientData.username || "",
+                companyName: clientData.companyName || "",
+                firstName: clientData.firstName || "",
+                lastName: clientData.lastName || "",
+                email: clientData.email || "",
+                phone: clientData.phone || "",
+                address: clientData.address || "",
+                city: clientData.city || "",
+                zip: clientData.zip || "",
+                rewardPercentage: clientData.rewardPercentage || 0,
+                rewardBalance: clientData.rewardBalance || 0,
+                status: clientData.status || "active",
+                createdAt: clientData.createdAt?.toDate?.() ? clientData.createdAt.toDate().toISOString() : new Date().toISOString(),
+                updatedAt: clientData.updatedAt?.toDate?.() ? clientData.updatedAt.toDate().toISOString() : new Date().toISOString()
+            },
+            orders,
+            rewards
+        };
+    } catch (error) {
+        console.error("Failed to fetch client detail:", error);
+        return null;
+    }
+}

@@ -549,54 +549,56 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="product-info">
-                                            <h4><Link href={`/shop/product/${product.id}`}>{product.name}</Link></h4>
-                                            <p className="product-description">{product.description}</p>
-                                            <div className="product-price-container" style={{ marginTop: '12px' }}>
-                                                {(() => {
-                                                    let displayPrice = product.price;
-                                                    let displayOldPrice = product.oldPrice;
+                                        <Link href={`/shop/product/${product.id}`}>
+                                            <div className="product-info">
+                                                <h4>{product.name}</h4>
+                                                <p className="product-description">{product.description}</p>
+                                                <div className="product-price-container" style={{ marginTop: '12px' }}>
+                                                    {(() => {
+                                                        let displayPrice = product.price;
+                                                        let displayOldPrice = product.oldPrice;
 
-                                                    if (isB2B && product.b2bPricingTiers && product.b2bPricingTiers.length > 0) {
-                                                        const tier1 = product.b2bPricingTiers.find(t => Number(t.minQty) === 1);
-                                                        if (tier1) {
-                                                            displayPrice = parseFloat(tier1.price.replace(/[^0-9.]/g, "")) || displayPrice;
+                                                        if (isB2B && product.b2bPricingTiers && product.b2bPricingTiers.length > 0) {
+                                                            const tier1 = product.b2bPricingTiers.find(t => Number(t.minQty) === 1);
+                                                            if (tier1) {
+                                                                displayPrice = parseFloat(tier1.price.replace(/[^0-9.]/g, "")) || displayPrice;
+                                                            }
                                                         }
-                                                    }
 
-                                                    if (displayPrice > 0) {
-                                                        return (
-                                                            <>
-                                                                <div className="d-flex align-items-end gap-2 flex-wrap" style={{ color: "#1e293b" }}>
-                                                                    <div className="d-flex" style={{ alignItems: 'flex-start' }}>
-                                                                        <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
-                                                                        <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
-                                                                            {displayPrice.toLocaleString('en-IN')}
-                                                                        </span>
-                                                                    </div>
-                                                                    {displayOldPrice > displayPrice && (
-                                                                        <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
-                                                                            <span style={{ fontWeight: "500" }}>M.R.P.:</span>
-                                                                            <span style={{ textDecoration: "line-through" }}>₹{displayOldPrice.toLocaleString('en-IN')}</span>
-                                                                            <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)}% off)</span>
+                                                        if (displayPrice > 0) {
+                                                            return (
+                                                                <>
+                                                                    <div className="d-flex align-items-end gap-2 flex-wrap" style={{ color: "#1e293b" }}>
+                                                                        <div className="d-flex" style={{ alignItems: 'flex-start' }}>
+                                                                            <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
+                                                                            <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
+                                                                                {displayPrice.toLocaleString('en-IN')}
+                                                                            </span>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="d-flex justify-content-between align-items-center">
-                                                                    <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
-                                                                        Inclusive of all taxes
+                                                                        {displayOldPrice > displayPrice && (
+                                                                            <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
+                                                                                <span style={{ fontWeight: "500" }}>M.R.P.:</span>
+                                                                                <span style={{ textDecoration: "line-through" }}>₹{displayOldPrice.toLocaleString('en-IN')}</span>
+                                                                                <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)}% off)</span>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
-                                                                    {/* {isB2B && product.b2bPricingTiers && product.b2bPricingTiers.some(t => Number(t.minQty) === 1 && t.price && t.price.trim() !== "") && (
+                                                                    <div className="d-flex justify-content-between align-items-center">
+                                                                        <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>
+                                                                            Inclusive of all taxes
+                                                                        </div>
+                                                                        {/* {isB2B && product.b2bPricingTiers && product.b2bPricingTiers.some(t => Number(t.minQty) === 1 && t.price && t.price.trim() !== "") && (
                                                                         <span className="badge bg-primary" style={{ fontSize: '0.6rem' }}>B2B Price</span>
                                                                     )} */}
-                                                                </div>
-                                                            </>
-                                                        );
-                                                    }
-                                                    return <span className="current-price" style={{ fontSize: "0.95rem", fontWeight: "600", color: "#64748b" }}>Contact for Price</span>;
-                                                })()}
+                                                                    </div>
+                                                                </>
+                                                            );
+                                                        }
+                                                        return <span className="current-price" style={{ fontSize: "0.95rem", fontWeight: "600", color: "#64748b" }}>Contact for Price</span>;
+                                                    })()}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
                                 </div>
                             ))}

@@ -31,6 +31,7 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
             (e.product?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
         
         if (filterType === "Investor") return matchesSearch && e.type === "INVESTOR_INQUIRY";
+        if (filterType === "Distributor") return matchesSearch && e.type === "DISTRIBUTOR_INQUIRY";
         if (filterType === "Product") return matchesSearch && !!e.product;
         
         return matchesSearch;
@@ -88,7 +89,7 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                         />
                     </div>
                     <div className="filter-tabs">
-                        {["All", "Product", "Investor"].map(type => (
+                        {["All", "Product", "Investor", "Distributor"].map(type => (
                             <button 
                                 key={type}
                                 className={`filter-tab ${filterType === type ? 'active' : ''}`}
@@ -98,6 +99,11 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                 {type === 'Investor' && (
                                     <span className="count-pill">
                                         {enquiries.filter(e => e.type === 'INVESTOR_INQUIRY').length}
+                                    </span>
+                                )}
+                                {type === 'Distributor' && (
+                                    <span className="count-pill">
+                                        {enquiries.filter(e => e.type === 'DISTRIBUTOR_INQUIRY').length}
                                     </span>
                                 )}
                             </button>
@@ -180,6 +186,11 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                                     <i className="bi bi-graph-up-arrow me-1"></i>
                                                     Investor Interest
                                                 </div>
+                                            ) : e.type === "DISTRIBUTOR_INQUIRY" ? (
+                                                <div className="distributor-badge">
+                                                    <i className="bi bi-briefcase me-1"></i>
+                                                    Distributor Interest
+                                                </div>
                                             ) : (
                                                 <span className="text-muted italic small">General Inquiry</span>
                                             )}
@@ -249,6 +260,11 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                                             <div className="info-item">
                                                 <i className="bi bi-graph-up-arrow"></i>
                                                 <span className="investor-badge">Investor Interest</span>
+                                            </div>
+                                        ) : e.type === "DISTRIBUTOR_INQUIRY" ? (
+                                            <div className="info-item">
+                                                <i className="bi bi-briefcase"></i>
+                                                <span className="distributor-badge">Distributor Interest</span>
                                             </div>
                                         ) : (
                                             <div className="info-item">
@@ -339,6 +355,7 @@ export default function EnquiryListClient({ initialEnquiries }: { initialEnquiri
                 .count-pill { background: #ffc451; color: #000; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 800; min-width: 20px; text-align: center; }
 
                 .investor-badge { background: #fffbeb; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #fef3c7; display: inline-flex; align-items: center; }
+                .distributor-badge { background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; }
 
                 .search-box { position: relative; width: 100%; max-width: 350px; }
                 .search-box i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
