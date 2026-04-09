@@ -107,7 +107,8 @@ export async function updateAboutUs(data: {
     description2: string;
     description3: string;
     points: string[];
-    image: string;
+    image?: string;
+    cards?: { icon: string; title: string; desc: string }[];
 }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_WEBSITE);

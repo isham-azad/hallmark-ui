@@ -336,6 +336,7 @@ export default function CheckoutPage() {
                 payment: data.payment || paymentMethodLabel,
                 rewardsEarned: String(data.rewardsEarned || 0),
                 rewardsUsed: String(data.rewardsUsed || 0),
+                voucherUsed: String(data.voucherAmount || 0),
             });
             router.push(`/order-success?${params.toString()}`);
         } catch {
@@ -712,11 +713,19 @@ export default function CheckoutPage() {
                                                     </p>
                                                     {isB2B && item.originalPriceFromDb > item.priceFromDb && (
                                                         <div className="text-success fw-bold" style={{ fontSize: '0.65rem' }}>
-                                                            MRP Profit: ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)}
+                                                            MRP Profit: ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / item.priceFromDb) * 100)}%)
                                                         </div>
                                                     )}
                                                 </div>
-                                                <span className="fw-bold small flex-shrink-0 text-nowrap">₹{(item.priceFromDb * item.quantity).toFixed(2)}</span>
+                                                <div className="text-end flex-shrink-0">
+                                                    {item.originalPriceFromDb > item.priceFromDb && (
+                                                        <div className="text-muted" style={{ fontSize: '0.6rem' }}>MRP: ₹{(item.originalPriceFromDb * item.quantity).toFixed(2)}</div>
+                                                    )}
+                                                    <div className="fw-bold small text-nowrap">
+                                                        <span className="text-muted" style={{ fontSize: '0.6rem', fontWeight: 'normal' }}>Your Price: </span>
+                                                        ₹{(item.priceFromDb * item.quantity).toFixed(2)}
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -727,7 +736,7 @@ export default function CheckoutPage() {
                                     {totalSavings > 0 && (
                                         <div className="summary-item d-flex justify-content-between mb-2 text-success" style={{ fontSize: "0.9rem" }}>
                                             <span>{isB2B ? "MRP Profit:" : "Volume Savings:"}</span>
-                                            <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)</span>
+                                            <span className="fw-bold">₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (isB2B ? cartTotalFromDb : (cartTotalFromDb + totalSavings))) * 100)}%)</span>
                                         </div>
                                     )}
                                     {isB2B && rewardBalance > 0 && (

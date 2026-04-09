@@ -106,6 +106,13 @@ export default function OrdersClient({ initialOrders, availableStaff }: OrdersCl
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [dateDropdownOpen]);
 
+    useEffect(() => {
+        const search = new URLSearchParams(window.location.search).get("search");
+        if (search) {
+            setColumnFilters(prev => ({ ...prev, customer: search }));
+        }
+    }, []);
+
     const generateDays = () => {
         const start = startOfMonth(viewDate);
         const end = endOfMonth(viewDate);

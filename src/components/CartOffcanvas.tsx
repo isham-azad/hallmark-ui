@@ -65,16 +65,16 @@ export default function CartOffcanvas() {
                         </div>
                     ) : (
                         <div className="cart-list">
-                             {cartWithDetails.map((item) => (
+                            {cartWithDetails.map((item) => (
                                 <div key={`${item.id}-${item.packSize}`} className="cart-item d-flex flex-column p-0 border rounded-3 mb-3 bg-white shadow-sm overflow-hidden">
                                     <div className="d-flex p-3 pb-2">
                                         <div className="item-img flex-shrink-0 border rounded" style={{ width: "85px", height: "85px", backgroundColor: "#fff", padding: "2px" }}>
-                                                <img
-                                                    src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
-                                                    alt={item.nameFromDb}
-                                                    className="img-fluid rounded"
-                                                    style={{ objectFit: "contain", width: "100%", height: "100%" }}
-                                                />
+                                            <img
+                                                src={item.imageFromDb ? item.imageFromDb.split(',').filter(Boolean)[0] : (item.image || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg")}
+                                                alt={item.nameFromDb}
+                                                className="img-fluid rounded"
+                                                style={{ objectFit: "contain", width: "100%", height: "100%" }}
+                                            />
                                         </div>
                                         <div className="item-info flex-grow-1 ms-2">
                                             <div className="d-flex justify-content-between align-items-start">
@@ -104,9 +104,12 @@ export default function CartOffcanvas() {
                                             <div className="d-flex justify-content-between align-items-end mt-2">
                                                 <div className="item-price">
                                                     {item.originalPriceFromDb > item.priceFromDb && (
-                                                        <del className="text-muted d-block" style={{fontSize: "0.72rem", marginBottom: '-4px'}}>₹{item.originalPriceFromDb}</del>
+                                                        <div className="text-muted" style={{ fontSize: "0.7rem", marginBottom: '0px' }}>MRP: ₹{item.originalPriceFromDb}</div>
                                                     )}
-                                                    <span className="fw-bold" style={{ fontSize: "1.05rem", color: "#10b981" }}>₹{item.priceFromDb}</span>
+                                                    <div className="fw-bold" style={{ fontSize: "1.05rem", color: "#10b981" }}>
+                                                        <span className="text-muted" style={{ fontSize: '0.65rem', fontWeight: 'normal', textTransform: 'uppercase', marginRight: '4px' }}>Your Price:</span>
+                                                        ₹{item.priceFromDb}
+                                                    </div>
                                                 </div>
 
                                                 <div className="d-flex align-items-center gap-3">
@@ -143,7 +146,7 @@ export default function CartOffcanvas() {
                                                 {isB2B ? "MRP Profit for these units" : "Savings for these units"}
                                             </span>
                                             <span className="text-success fw-bold" style={{ fontSize: '0.85rem' }}>
-                                                ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / item.originalPriceFromDb) * 100)}% {isB2B ? "Profit" : "Off"})
+                                                ₹{((item.originalPriceFromDb - item.priceFromDb) * item.quantity).toFixed(2)} ({Math.round(((item.originalPriceFromDb - item.priceFromDb) / (isB2B ? item.priceFromDb : item.originalPriceFromDb)) * 100)}% {isB2B ? "Profit" : "Off"})
                                             </span>
                                         </div>
                                     )}
@@ -159,8 +162,8 @@ export default function CartOffcanvas() {
                             <span className="h5 mb-0 fw-bold">Grand Total:</span>
                             <div className="text-end">
                                 {totalSavings > 0 && (
-                                    <div className="text-success small fw-bold mb-1" style={{fontSize: "0.85rem"}}>
-                                        {isB2B ? "MRP Profit:" : "Savings:"} ₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (cartTotalFromDb + totalSavings)) * 100)}%)
+                                    <div className="text-success small fw-bold mb-1" style={{ fontSize: "0.85rem" }}>
+                                        {isB2B ? "MRP Profit:" : "Savings:"} ₹{totalSavings.toFixed(2)} ({Math.round((totalSavings / (isB2B ? cartTotalFromDb : (cartTotalFromDb + totalSavings))) * 100)}%)
                                     </div>
                                 )}
                                 <span className="h4 mb-0 fw-bold text-primary">
@@ -169,10 +172,10 @@ export default function CartOffcanvas() {
                             </div>
                         </div>
                         <div className="d-grid gap-2">
-                             <button onClick={() => setIsCartOpen(false)} className="btn btn-primary btn-lg py-2" style={{ fontSize: '0.95rem', fontWeight: '700' }}>
-                                 <i className="bi bi-arrow-left me-2"></i>Continue Shopping
-                             </button>
-                             <div className="row g-2 mt-0">
+                            <button onClick={() => setIsCartOpen(false)} className="btn btn-primary btn-lg py-2" style={{ fontSize: '0.95rem', fontWeight: '700' }}>
+                                <i className="bi bi-arrow-left me-2"></i>Continue Shopping
+                            </button>
+                            <div className="row g-2 mt-0">
                                 <div className="col-6">
                                     <button onClick={() => navigateTo("/cart")} className="btn btn-outline-primary w-100 py-2" style={{ fontSize: '0.85rem', fontWeight: '600' }}>
                                         View Cart
@@ -183,7 +186,7 @@ export default function CartOffcanvas() {
                                         Checkout
                                     </button>
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 )}

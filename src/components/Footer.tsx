@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShimmerBox } from "@/components/Shimmer";
+import AddressTabs from "@/components/AddressTabs";
 
 interface NavBrand {
     id: string;
@@ -72,8 +73,7 @@ export default function Footer() {
                                 <span className="sitename">Hallmark</span>
                             </a>
                             <div className="footer-contact pt-3">
-                                <p>Hallmark Enterprises</p>
-                                <p>Mannam Nagar, Pandalam<br />Pathanamthitta, Kerala - 689 501<br />India</p>
+                                <AddressTabs variant="footer" />
                                 <p className="mt-3"><strong>Phone:</strong> <span>+91 894 3051 632</span></p>
                                 <p><strong>Email:</strong> <span>care@hallmarkworld.com</span></p>
                             </div>

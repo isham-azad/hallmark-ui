@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAdminToast } from "@/components/AdminToast";
 import { B2BClient, addB2BClient, editB2BClient, resetB2BClientPassword, toggleB2BClientStatus, deleteB2BClient } from "./actions";
 
@@ -10,6 +12,7 @@ interface B2BClientsClientProps {
 }
 
 export default function B2BClientsClient({ initialClients }: B2BClientsClientProps) {
+    const router = useRouter();
     const [clients, setClients] = useState<B2BClient[]>(initialClients);
     const [searchTerm, setSearchTerm] = useState("");
     const { showToast, ToastComponent } = useAdminToast();
@@ -260,6 +263,14 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                                                 >
                                                     <i className="bi bi-trash3"></i>
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    className="icon-btn history"
+                                                    title="View Profile & History"
+                                                    onClick={() => router.push(`/admin/b2b-clients/${client.id}`)}
+                                                >
+                                                    <i className="bi bi-person-badge"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -334,8 +345,11 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                                         {client.status === "active" ? "Pause" : "Start"}
                                     </button>
                                     <button className="mobile-action-btn delete" onClick={() => setIsDeleteModalOpen(client.id)}>
-                                        <i className="bi bi-trash3"></i>
+                                        <i className="bi bi-trash3"></i> Delete
                                     </button>
+                                    <Link className="mobile-action-btn history" href={`/admin/b2b-clients/${client.id}`}>
+                                        <i className="bi bi-person-badge"></i> Profile
+                                    </Link>
                                 </div>
                             </div>
                         ))
@@ -590,7 +604,8 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                 .icon-btn.disable { background: #fff7ed; color: #ea580c; }
                 .icon-btn.enable { background: #f0fdf4; color: #16a34a; }
                 .icon-btn.delete { background: #fef2f2; color: #dc2626; }
-                .icon-btn:hover { background: #ffc451; color: #fff; transform: translateY(-2px); }
+                .icon-btn.history { background: #f8fafc; color: #7c3aed; }
+                .icon-btn:hover { background: #ffc451; color: #fff !important; transform: translateY(-2px); }
 
                 /* Offcanvas Styles */
                 .offcanvas-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); z-index: 11000; animation: fadeIn 0.3s ease; }
@@ -681,14 +696,15 @@ export default function B2BClientsClient({ initialClients }: B2BClientsClientPro
                     .stat-pill { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 700; color: #475569; }
                     .stat-pill .val { color: #b45309; background: #fffbeb; padding: 0.2rem 0.6rem; border-radius: 6px; }
                     
-                    .card-actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; padding-top: 1rem; border-top: 1px dashed #e2e8f0; }
-                    .mobile-action-btn { height: 44px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #475569; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; gap: 2px; transition: 0.2s; }
-                    .mobile-action-btn i { font-size: 1rem; }
+                    .card-actions-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.35rem; padding-top: 1rem; border-top: 1px dashed #e2e8f0; }
+                    .mobile-action-btn { height: 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #475569; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; gap: 1px; transition: 0.2s; text-decoration: none; }
+                    .mobile-action-btn i { font-size: 0.9rem; }
                     .mobile-action-btn.edit { color: #3b82f6; background: #eff6ff; border-color: #dbeafe; }
                     .mobile-action-btn.key { color: #6366f1; background: #eef2ff; border-color: #e0e7ff; }
                     .mobile-action-btn.pause { color: #f59e0b; background: #fffbeb; border-color: #fef3c7; }
                     .mobile-action-btn.play { color: #10b981; background: #ecfdf5; border-color: #d1fae5; }
                     .mobile-action-btn.delete { color: #ef4444; background: #fef2f2; border-color: #fee2e2; }
+                    .mobile-action-btn.history { color: #0d9488; background: #f0fdfa; border-color: #ccfbf1; }
                     .mobile-action-btn:active { transform: scale(0.95); }
 
                     /* Make Offcanvas and Modals more mobile friendly */
