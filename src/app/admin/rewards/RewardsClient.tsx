@@ -2,7 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { 
+    format, 
+    startOfMonth, 
+    endOfMonth, 
+    startOfWeek, 
+    endOfWeek, 
+    eachDayOfInterval, 
+    isSameMonth, 
+    isSameDay, 
+    addMonths, 
+    subMonths 
+} from "date-fns";
 import { addManualPoints, getB2BClients } from "./actions";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +28,7 @@ interface RewardTransaction {
     createdAt: string;
     status?: string;
     isManual?: boolean;
+    invoiceDate?: string;
 }
 
 export default function RewardsClient({ initialTransactions }: { initialTransactions: RewardTransaction[] }) {
@@ -31,9 +43,44 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
     const [clientSearchTerm, setClientSearchTerm] = useState("");
     const [showClientList, setShowClientList] = useState(false);
     const [pointsAmount, setPointsAmount] = useState("");
-    const [notes, setNotes] = useState("");
+    const [invoiceNo, setInvoiceNo] = useState("");
+    const [invoiceDate, setInvoiceDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [fetchingClients, setFetchingClients] = useState(false);
+    
+    // Calendar State
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [viewDate, setViewDate] = useState(new Date());
+
+    useEffect(() => {
+        if (!showCalendar) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('.calendar-picker-container')) {
+                setShowCalendar(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showCalendar]);
+
+    const generateDays = () => {
+        const start = startOfMonth(viewDate);
+        const end = endOfMonth(viewDate);
+        const days = eachDayOfInterval({
+            start: startOfWeek(start),
+            end: endOfWeek(end),
+        });
+        return days;
+    };
+
+    const handleDateSelect = (date: Date) => {
+        setInvoiceDate(format(date, "yyyy-MM-dd"));
+        setShowCalendar(false);
+    };
+
+    const nextMonth = () => setViewDate(prev => addMonths(prev, 1));
+    const prevMonth = () => setViewDate(prev => subMonths(prev, 1));
 
     useEffect(() => {
         if (showAddModal && clients.length === 0) {
@@ -65,14 +112,15 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
         }
 
         setSubmitting(true);
-        const res = await addManualPoints(selectedClient, amt, notes || "Admin Manual Adjustment");
+        const res = await addManualPoints(selectedClient, amt, invoiceNo || "Internal Adjustment", invoiceDate);
         setSubmitting(false);
-
+        
         if (res.success) {
             setShowAddModal(false);
             setSelectedClient("");
             setPointsAmount("");
-            setNotes("");
+            setInvoiceNo("");
+            setInvoiceDate("");
             router.refresh();
         } else {
             alert(res.error || "Failed to add points.");
@@ -161,6 +209,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                         <td>
                                             <div className="ref-cell">
                                                 <span className="order-no">{tx.orderNo}</span>
+                                                {tx.invoiceDate && (
+                                                    <span className="invoice-date-sub">{format(new Date(tx.invoiceDate), 'MMM dd, yyyy')}</span>
+                                                )}
                                                 {tx.status && (
                                                     <span className={`status-badge ${getStatusClass(tx.status)}`}>
                                                         {tx.status}
@@ -217,7 +268,12 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 <div className="card-body-tx">
                                     <div className="tx-row">
                                         <span className="tx-label">Reference</span>
-                                        <span className="tx-val order-ref">{tx.orderNo}</span>
+                                        <div className="tx-val-group">
+                                            <span className="tx-val order-ref">{tx.orderNo}</span>
+                                            {tx.invoiceDate && (
+                                                <span className="tx-invoice-date">{format(new Date(tx.invoiceDate), 'MMM dd, yyyy')}</span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="tx-row">
                                         <span className="tx-label">B2B Client</span>
@@ -398,15 +454,63 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 </div>
                             </div>
                             <div className="form-group-admin">
-                                <label>Notes / Reason</label>
-                                <textarea 
-                                    rows={3}
-                                    placeholder="Enter reason for this adjustment (e.g. Special promotion, Error correction)"
-                                    className="textarea-fancy"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
+                                <label>Order / Invoice No</label>
+                                <input 
+                                    type="text"
+                                    placeholder="e.g. INV-2024-001"
+                                    className="search-input-fancy"
+                                    style={{ paddingLeft: '1rem' }}
+                                    value={invoiceNo}
+                                    onChange={(e) => setInvoiceNo(e.target.value)}
                                     disabled={submitting}
                                 />
+                            </div>
+                            <div className="form-group-admin">
+                                <label>Invoice Date</label>
+                                <div className="calendar-picker-container">
+                                    <div 
+                                        className={`calendar-trigger-fancy ${showCalendar ? 'active' : ''}`}
+                                        onClick={() => setShowCalendar(!showCalendar)}
+                                    >
+                                        <i className="bi bi-calendar3"></i>
+                                        <span>{invoiceDate ? format(new Date(invoiceDate), 'MMM dd, yyyy') : 'Select Date'}</span>
+                                        <i className={`bi bi-chevron-${showCalendar ? 'up' : 'down'} ms-auto opacity-50`}></i>
+                                    </div>
+
+                                    {showCalendar && (
+                                        <div className="premium-calendar-dropdown">
+                                            <div className="cal-header">
+                                                <button type="button" onClick={prevMonth} className="nav-btn"><i className="bi bi-chevron-left"></i></button>
+                                                <span className="month-year">{format(viewDate, "MMMM yyyy")}</span>
+                                                <button type="button" onClick={nextMonth} className="nav-btn"><i className="bi bi-chevron-right"></i></button>
+                                            </div>
+                                            <div className="cal-weekdays">
+                                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d} className="wd">{d}</div>)}
+                                            </div>
+                                            <div className="cal-grid">
+                                                {generateDays().map((day, i) => (
+                                                    <button
+                                                        key={i}
+                                                        type="button"
+                                                        className={`cal-day ${!isSameMonth(day, viewDate) ? 'other-month' : ''} ${invoiceDate && isSameDay(day, new Date(invoiceDate)) ? 'selected' : ''} ${isSameDay(day, new Date()) ? 'today' : ''}`}
+                                                        onClick={() => handleDateSelect(day)}
+                                                    >
+                                                        <span className="d-num">{format(day, 'd')}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="cal-footer">
+                                                <button 
+                                                    type="button" 
+                                                    className="today-btn"
+                                                    onClick={() => handleDateSelect(new Date())}
+                                                >
+                                                    Select Today
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer-admin-fancy">
@@ -555,8 +659,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                 .main-date { font-weight: 700; color: #0f172a; font-size: 0.9rem; }
                 .sub-time { color: #94a3b8; font-size: 0.75rem; }
 
-                .ref-cell { display: flex; align-items: center; gap: 0.5rem; }
-                .order-no { font-weight: 700; color: #ffc451; }
+                .ref-cell { display: flex; flex-direction: column; gap: 0.2rem; }
+                .order-no { font-weight: 700; color: #ffc451; font-size: 0.9rem; }
+                .invoice-date-sub { font-size: 0.7rem; color: #94a3b8; font-weight: 500; }
 
                 .client-name { font-weight: 600; color: #475569; }
 
@@ -608,7 +713,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     .tx-row { display: flex; justify-content: space-between; align-items: center; }
                     .tx-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
                     .tx-val { font-size: 0.875rem; font-weight: 700; color: #1e293b; }
+                    .tx-val-group { display: flex; flex-direction: column; align-items: flex-end; }
                     .order-ref { color: #ffc451; font-family: monospace; }
+                    .tx-invoice-date { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
                     
                     .card-footer-tx { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 0.75rem; border-top: 1px solid #f8fafc; }
                     .tx-amount-section { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -622,6 +729,88 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     .pagination { padding: 1.25rem; gap: 0.35rem; }
                     .pager-btn { width: 36px; height: 36px; border-radius: 10px; font-size: 0.875rem; }
                 }
+
+                /* Premium Calendar Styles */
+                .calendar-picker-container { position: relative; width: 100%; }
+                .calendar-trigger-fancy {
+                    width: 100%;
+                    padding: 0.875rem 1rem;
+                    border-radius: 14px;
+                    border: 2px solid #f1f5f9;
+                    background: #f8fafc;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 0.95rem;
+                    color: #475569;
+                }
+                .calendar-trigger-fancy:hover { border-color: #cbd5e1; background: #fff; }
+                .calendar-trigger-fancy.active { border-color: #ffc451; background: #fff; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.1); }
+                .calendar-trigger-fancy i { color: #94a3b8; font-size: 1.1rem; }
+                .calendar-trigger-fancy.active i { color: #ffc451; }
+                
+                .premium-calendar-dropdown {
+                    position: absolute;
+                    top: 110%;
+                    right: 0;
+                    width: 320px;
+                    background: white;
+                    border-radius: 20px;
+                    border: 1px solid #f1f5f9;
+                    box-shadow: 0 15px 45px rgba(15, 23, 42, 0.2);
+                    z-index: 1000;
+                    padding: 1.5rem;
+                    animation: calPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                @media (max-width: 450px) {
+                    .premium-calendar-dropdown {
+                        width: 280px;
+                        padding: 1rem;
+                    }
+                }
+                @keyframes calPopUp {
+                    from { transform: translateY(10px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+
+                .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+                .month-year { font-weight: 800; color: #0f172a; font-size: 1rem; }
+                .nav-btn { background: #f8fafc; border: none; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s; }
+                .nav-btn:hover { background: #f1f5f9; color: #0f172a; }
+
+                .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; }
+                .wd { text-align: center; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+
+                .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+                .cal-day {
+                    aspect-ratio: 1;
+                    padding: 0;
+                    background: transparent;
+                    border: none;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    position: relative;
+                }
+                .d-num { font-size: 0.9rem; font-weight: 600; color: #475569; z-index: 2; }
+                .cal-day:hover { background: #f8fafc; }
+                .cal-day:hover .d-num { color: #0f172a; }
+                
+                .cal-day.other-month { opacity: 0.3; }
+                .cal-day.today { background: #fffbeb; border: 1px solid #ffc451; }
+                .cal-day.today .d-num { color: #92400e; font-weight: 800; }
+                
+                .cal-day.selected { background: #ffc451; box-shadow: 0 4px 12px rgba(255, 196, 81, 0.4); border: none; }
+                .cal-day.selected .d-num { color: #1a1a2e; font-weight: 800; }
+                
+                .cal-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+                .today-btn { width: 100%; padding: 0.6rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.8rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
+                .today-btn:hover { background: #ffc451; border-color: #ffc451; color: #1a1a2e; }
             `}</style>
         </div>
     );
