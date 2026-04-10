@@ -63,9 +63,10 @@ export async function getRewardsHistory() {
                 id: doc.id,
                 type: (data.amount || 0) >= 0 ? 'Earned' : 'Used',
                 amount: Math.abs(data.amount || 0),
-                orderNo: data.notes || 'Admin Adjustment',
+                orderNo: data.invoiceNo || data.notes || 'Admin Adjustment',
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 isManual: true,
+                invoiceDate: data.invoiceDate || null,
                 createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : new Date().toISOString()
             });
         });
@@ -233,7 +234,7 @@ export async function getB2BClients() {
     }
 }
 
-export async function addManualPoints(clientId: string, amount: number, notes: string) {
+export async function addManualPoints(clientId: string, amount: number, invoiceNo: string, invoiceDate?: string) {
     try {
         const clientRef = db.collection("b2b_clients").doc(clientId);
         const clientDoc = await clientRef.get();
@@ -251,7 +252,8 @@ export async function addManualPoints(clientId: string, amount: number, notes: s
             b2bClientId: clientId,
             b2bClientCompany: clientData.companyName || 'Unknown',
             amount,
-            notes,
+            invoiceNo,
+            invoiceDate: invoiceDate || null,
             createdAt: new Date(),
             type: amount >= 0 ? 'Earned' : 'Used'
         });
