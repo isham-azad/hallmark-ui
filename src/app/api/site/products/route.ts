@@ -55,6 +55,7 @@ export async function GET() {
                     specialFeature: data.specialFeature as string | undefined,
                     itemForm: data.itemForm as string | undefined,
                     numberOfItems: data.numberOfItems as string | undefined,
+                    specifications: data.specifications || [],
                 };
             })
             .filter(Boolean);

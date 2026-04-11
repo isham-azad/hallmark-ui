@@ -34,6 +34,7 @@ interface SiteProduct {
     specialFeature?: string;
     itemForm?: string;
     numberOfItems?: string;
+    specifications?: { name: string; value: string }[];
 }
 
 interface Brand {
@@ -358,60 +359,12 @@ export default function ProductDetailClient() {
                                                 <span className="spec-label">Category</span>
                                                 <span className="spec-value"><Link href={`/category/${product.category}`}>{categoryName}</Link></span>
                                             </div>
-                                            {product.itemWeight && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Item Weight</span>
-                                                    <span className="spec-value">{product.itemWeight}</span>
+                                            {product.specifications && product.specifications.map((spec, idx) => (
+                                                <div key={idx} className="spec-item">
+                                                    <span className="spec-label">{spec.name}</span>
+                                                    <span className="spec-value">{spec.value}</span>
                                                 </div>
-                                            )}
-                                            {product.itemDimensions && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Item Dimensions</span>
-                                                    <span className="spec-value">{product.itemDimensions}</span>
-                                                </div>
-                                            )}
-                                            {product.scent && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Scent</span>
-                                                    <span className="spec-value">{product.scent}</span>
-                                                </div>
-                                            )}
-                                            {product.skinType && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Skin Type</span>
-                                                    <span className="spec-value">{product.skinType}</span>
-                                                </div>
-                                            )}
-                                            {product.itemPackageQuantity && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Package Qty</span>
-                                                    <span className="spec-value">{product.itemPackageQuantity}</span>
-                                                </div>
-                                            )}
-                                            {product.productBenefits && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Product Benefits</span>
-                                                    <span className="spec-value">{product.productBenefits}</span>
-                                                </div>
-                                            )}
-                                            {product.specialFeature && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Special Feature</span>
-                                                    <span className="spec-value">{product.specialFeature}</span>
-                                                </div>
-                                            )}
-                                            {product.itemForm && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Item Form</span>
-                                                    <span className="spec-value">{product.itemForm}</span>
-                                                </div>
-                                            )}
-                                            {product.numberOfItems && (
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Number of Items</span>
-                                                    <span className="spec-value">{product.numberOfItems}</span>
-                                                </div>
-                                            )}
+                                            ))}
                                             <div className="spec-item">
                                                 <span className="spec-label">Sold by</span>
                                                 <span className="spec-value">Hallmark Enterprises</span>
