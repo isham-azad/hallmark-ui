@@ -121,8 +121,8 @@ export async function updateRedemptionStatus(requestId: string, status: string) 
             updatedAt: new Date()
         });
 
-        // If it's a gift voucher and just approved or completed, generate the voucher
-        if ((status === "Approved" || status === "Completed") && redemptionData.method === "gift_voucher") {
+        // If it's a gift voucher and just marked as completed, generate the voucher
+        if (status === "Completed" && redemptionData.method === "gift_voucher") {
             // Check if voucher already exists to prevent duplicate generation
             const existingVouchers = await db.collection("gift_vouchers").where("redemptionRequestId", "==", requestId).get();
             
@@ -142,9 +142,16 @@ export async function updateRedemptionStatus(requestId: string, status: string) 
                     expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)) // 1 year expiry
                 });
 
-                // Get client's email for notification
+                // Get target email for notification
                 let clientEmail = "";
-                if (redemptionData.b2bClientId) {
+                
+                // Priority: 1. Email entered during redemption, 2. Client's registered email
+                const enteredEmail = redemptionData.details?.trim();
+                const isEmail = enteredEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail);
+
+                if (isEmail) {
+                    clientEmail = enteredEmail;
+                } else if (redemptionData.b2bClientId) {
                     const clientDoc = await db.collection("b2b_clients").doc(redemptionData.b2bClientId).get();
                     if (clientDoc.exists) {
                         clientEmail = clientDoc.data()?.email || "";
@@ -158,7 +165,7 @@ export async function updateRedemptionStatus(requestId: string, status: string) 
                         voucherCode,
                         redemptionData.amount
                     );
-                    console.log(`E-Gift Voucher email sent to ${clientEmail}`);
+                    console.log(`E-Gift Voucher email sent to ${clientEmail} (Source: ${isEmail ? 'Redemption Details' : 'Client Profile'})`);
                 }
 
                 console.log(`Generated Gift Voucher ${voucherCode} for ${redemptionData.b2bClientCompany}`);
