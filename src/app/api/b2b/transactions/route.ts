@@ -11,12 +11,16 @@ export async function GET() {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const [ordersSnap, redemptionsSnap] = await Promise.all([
+        const [ordersSnap, redemptionsSnap, manualSnap] = await Promise.all([
             db.collection("orders")
                 .where("b2bClientId", "==", session.id)
                 .limit(50)
                 .get(),
             db.collection("reward_requests")
+                .where("b2bClientId", "==", session.id)
+                .limit(50)
+                .get(),
+            db.collection("reward_manual_adjustments")
                 .where("b2bClientId", "==", session.id)
                 .limit(50)
                 .get()
@@ -31,6 +35,7 @@ export async function GET() {
                 status: data.status,
                 rewardsUsed: data.rewardsUsed || 0,
                 rewardsEarned: data.rewardsEarned || 0,
+                invoiceAmount: data.total,
                 createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             };
         });
@@ -44,13 +49,29 @@ export async function GET() {
                 status: data.status,
                 rewardsUsed: data.amount, // Redemptions reduce the balance
                 rewardsEarned: 0,
+                invoiceAmount: data.amount,
                 createdAt: data.requestedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             };
         });
 
-        const transactions = [...orderTransactions, ...redemptionTransactions]
+        const manualTransactions = manualSnap.docs.map((doc: any) => {
+            const data = doc.data();
+            const amt = data.amount || 0;
+            return {
+                id: `man_${doc.id}`,
+                orderNo: data.invoiceNo || "Admin Adjustment",
+                total: data.invoiceAmount || 0,
+                status: "Approved",
+                rewardsUsed: amt < 0 ? Math.abs(amt) : 0,
+                rewardsEarned: amt > 0 ? amt : 0,
+                invoiceAmount: data.invoiceAmount || 0,
+                createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            };
+        });
+
+        const transactions = [...orderTransactions, ...redemptionTransactions, ...manualTransactions]
             .sort((a: { createdAt: string }, b: { createdAt: string }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 10);
+            .slice(0, 20);
 
         return NextResponse.json({ success: true, transactions });
     } catch (error) {
