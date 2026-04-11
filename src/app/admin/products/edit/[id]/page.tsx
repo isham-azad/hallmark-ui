@@ -32,6 +32,16 @@ export default async function EditProductPage(props: { params: Promise<{ id: str
         isDeliveredByHallmark: data.isDeliveredByHallmark as boolean | undefined,
         isFreeDelivery: data.isFreeDelivery as boolean | undefined,
         isSecureTransaction: data.isSecureTransaction as boolean | undefined,
+        itemWeight: data.itemWeight,
+        itemDimensions: data.itemDimensions,
+        scent: data.scent,
+        skinType: data.skinType,
+        itemPackageQuantity: data.itemPackageQuantity,
+        productBenefits: data.productBenefits,
+        specialFeature: data.specialFeature,
+        itemForm: data.itemForm,
+        numberOfItems: data.numberOfItems,
+        specifications: data.specifications,
     };
 
     const [brandsSnap, categoriesSnap] = await Promise.all([

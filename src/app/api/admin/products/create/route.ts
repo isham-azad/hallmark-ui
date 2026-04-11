@@ -36,6 +36,10 @@ const ProductSchema = z.object({
     specialFeature: z.string().optional(),
     itemForm: z.string().optional(),
     numberOfItems: z.string().optional(),
+    specifications: z.array(z.object({
+        name: z.string(),
+        value: z.string()
+    })).optional(),
 });
 
 function slugifyFolder(name: string): string {
@@ -73,6 +77,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         specialFeature: (formData.get("specialFeature") as string)?.trim() ?? "",
         itemForm: (formData.get("itemForm") as string)?.trim() ?? "",
         numberOfItems: (formData.get("numberOfItems") as string)?.trim() ?? "",
+        specifications: formData.get("specifications") ? JSON.parse(formData.get("specifications") as string) : [],
     };
 
     // Validate with Zod
@@ -143,6 +148,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         specialFeature: validation.data.specialFeature ?? "",
         itemForm: validation.data.itemForm ?? "",
         numberOfItems: validation.data.numberOfItems ?? "",
+        specifications: validation.data.specifications || [],
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });
