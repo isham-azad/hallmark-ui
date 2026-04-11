@@ -109,6 +109,9 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
         const specialFeature = (formData.get("specialFeature") as string)?.trim() ?? "";
         const itemForm = (formData.get("itemForm") as string)?.trim() ?? "";
         const numberOfItems = (formData.get("numberOfItems") as string)?.trim() ?? "";
+        
+        const specsJson = formData.get("specifications") as string;
+        const specifications = specsJson ? JSON.parse(specsJson) : [];
 
         if (!title || !brandId || !categoryId) {
             return { success: false, error: "Title, Brand and Category are required." };
@@ -141,6 +144,7 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
             specialFeature,
             itemForm,
             numberOfItems,
+            specifications: specifications || [],
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -159,6 +163,7 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
 export async function createProduct(formData: { 
     id: string; title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string;
     itemWeight?: string; itemDimensions?: string; scent?: string; skinType?: string; itemPackageQuantity?: string; productBenefits?: string; specialFeature?: string; itemForm?: string; numberOfItems?: string;
+    specifications?: { name: string; value: string }[];
 }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
@@ -184,6 +189,7 @@ export async function createProduct(formData: {
             specialFeature: formData.specialFeature ?? "",
             itemForm: formData.itemForm ?? "",
             numberOfItems: formData.numberOfItems ?? "",
+            specifications: formData.specifications || [],
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -202,6 +208,8 @@ export async function createProduct(formData: {
 export async function updateProduct(id: string, formData: { 
     title: string; desc: string; howToUse?: string; image?: string; price?: string; wasPrice?: string; sku?: string; stock?: number; brandId: string; categoryId: string;
     itemWeight?: string; itemDimensions?: string; scent?: string; skinType?: string; itemPackageQuantity?: string; productBenefits?: string; specialFeature?: string; itemForm?: string; numberOfItems?: string;
+    existingImages?: string; 
+    specifications?: string;
 }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_PRODUCTS);
@@ -225,6 +233,7 @@ export async function updateProduct(id: string, formData: {
             specialFeature: formData.specialFeature ?? "",
             itemForm: formData.itemForm ?? "",
             numberOfItems: formData.numberOfItems ?? "",
+            specifications: formData.specifications ? JSON.parse(formData.specifications) : [],
             updatedAt: FieldValue.serverTimestamp(),
         });
 
