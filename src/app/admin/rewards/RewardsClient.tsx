@@ -29,6 +29,7 @@ interface RewardTransaction {
     status?: string;
     isManual?: boolean;
     invoiceDate?: string;
+    invoiceAmount?: number | string;
 }
 
 export default function RewardsClient({ initialTransactions }: { initialTransactions: RewardTransaction[] }) {
@@ -42,12 +43,28 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
     const [selectedClient, setSelectedClient] = useState("");
     const [clientSearchTerm, setClientSearchTerm] = useState("");
     const [showClientList, setShowClientList] = useState(false);
+    const [invoiceAmountInput, setInvoiceAmountInput] = useState("");
     const [pointsAmount, setPointsAmount] = useState("");
     const [invoiceNo, setInvoiceNo] = useState("");
     const [invoiceDate, setInvoiceDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [fetchingClients, setFetchingClients] = useState(false);
     
+    // Auto-calculate points when amount or client changes
+    useEffect(() => {
+        if (selectedClient && invoiceAmountInput) {
+            const client = clients.find(c => c.id === selectedClient);
+            if (client) {
+                const percentage = client.rewardPercentage || 2;
+                const amt = parseFloat(invoiceAmountInput);
+                if (!isNaN(amt)) {
+                    const calculatedPoints = (amt * percentage) / 100;
+                    setPointsAmount(calculatedPoints.toFixed(2));
+                }
+            }
+        }
+    }, [selectedClient, invoiceAmountInput, clients]);
+
     // Calendar State
     const [showCalendar, setShowCalendar] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
@@ -112,12 +129,14 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
         }
 
         setSubmitting(true);
-        const res = await addManualPoints(selectedClient, amt, invoiceNo || "Internal Adjustment", invoiceDate);
+        const invAmt = parseFloat(invoiceAmountInput) || 0;
+        const res = await addManualPoints(selectedClient, amt, invoiceNo || "Internal Adjustment", invoiceDate, invAmt);
         setSubmitting(false);
         
         if (res.success) {
             setShowAddModal(false);
             setSelectedClient("");
+            setInvoiceAmountInput("");
             setPointsAmount("");
             setInvoiceNo("");
             setInvoiceDate("");
@@ -141,6 +160,36 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
         setCurrentPage(1);
     }, [searchTerm]);
 
+    const exportToCSV = () => {
+        const headers = ["Date", "Time", "Reference", "Invoice Date", "B2B Client", "Type", "Invoice Amount", "Points", "Status"];
+        const rows = filteredTransactions.map(tx => [
+            format(new Date(tx.createdAt), 'yyyy-MM-dd'),
+            format(new Date(tx.createdAt), 'hh:mm a'),
+            tx.orderNo.replace(/"/g, '""'),
+            tx.invoiceDate || "",
+            tx.b2bClientCompany.replace(/"/g, '""'),
+            tx.type,
+            tx.invoiceAmount || 0,
+            tx.amount,
+            tx.status || ""
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(r => r.map(val => `"${val}"`).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reward_history_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const getStatusClass = (status: string) => {
         switch (status) {
             case "Pending": return "status-warning";
@@ -158,13 +207,23 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     <h3>Reward History</h3>
                     <p>Track all reward point transactions, including earnings and redemptions.</p>
                 </div>
-                <button 
-                    className="add-points-btn"
-                    onClick={() => setShowAddModal(true)}
-                >
-                    <i className="bi bi-plus-lg"></i>
-                    <span>Add Points Manual</span>
-                </button>
+                <div className="header-actions">
+                    <button 
+                        className="export-btn"
+                        onClick={exportToCSV}
+                        title="Export filtered history to CSV"
+                    >
+                        <i className="bi bi-download"></i>
+                        <span>Export Data</span>
+                    </button>
+                    <button 
+                        className="add-points-btn"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        <i className="bi bi-plus-lg"></i>
+                        <span>Add Points Manual</span>
+                    </button>
+                </div>
             </div>
 
             <div className="table-card">
@@ -188,7 +247,8 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 <th style={{ width: '150px' }}>Reference</th>
                                 <th style={{ width: '200px' }}>B2B Client</th>
                                 <th style={{ width: '120px' }}>Type</th>
-                                <th style={{ width: '150px' }}>Amount</th>
+                                <th style={{ width: '120px' }}>Invoice Amt</th>
+                                <th style={{ width: '120px' }}>Points</th>
                                 <th style={{ width: '120px' }}>Actions</th>
                             </tr>
                         </thead>
@@ -228,8 +288,15 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                             </span>
                                         </td>
                                         <td>
+                                            <span className="amount-val">
+                                                {tx.invoiceAmount ? (
+                                                    typeof tx.invoiceAmount === 'string' ? (tx.invoiceAmount.startsWith('₹') ? tx.invoiceAmount : `₹${tx.invoiceAmount}`) : `₹${tx.invoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                                                ) : "-"}
+                                            </span>
+                                        </td>
+                                        <td>
                                             <span className={`amount-val ${tx.type === 'Earned' ? 'earned' : 'used'}`}>
-                                                {tx.type === 'Earned' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                {tx.type === 'Earned' ? '+' : '-'}{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                             </span>
                                         </td>
                                         <td>
@@ -287,10 +354,18 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                     )}
                                 </div>
                                 <div className="card-footer-tx">
+                                    <div className="tx-row">
+                                        <span className="tx-label">Invoice Amount</span>
+                                        <span className="tx-val">
+                                            {tx.invoiceAmount ? (
+                                                typeof tx.invoiceAmount === 'string' ? (tx.invoiceAmount.startsWith('₹') ? tx.invoiceAmount : `₹${tx.invoiceAmount}`) : `₹${tx.invoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                                            ) : "-"}
+                                        </span>
+                                    </div>
                                     <div className="tx-amount-section">
-                                        <span className="tx-label">Amount</span>
+                                        <span className="tx-label">Points</span>
                                         <span className={`amount-val-mobile ${tx.type === 'Earned' ? 'earned' : 'used'}`}>
-                                            {tx.type === 'Earned' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                            {tx.type === 'Earned' ? '+' : '-'}{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                     {(tx.type === 'Earned' || tx.type === 'Used') && !tx.isManual && (
@@ -436,21 +511,42 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 )}
                             </div>
                             <div className="form-group-admin">
-                                <label>Adjustment Amount (₹)</label>
+                                <label>Invoice Amount (₹)</label>
                                 <div className="amount-input-wrapper">
                                     <span className="currency-prefix">₹</span>
                                     <input 
                                         type="number" 
                                         placeholder="0.00"
                                         className="amount-input-fancy"
+                                        value={invoiceAmountInput}
+                                        onChange={(e) => setInvoiceAmountInput(e.target.value)}
+                                        disabled={submitting}
+                                    />
+                                </div>
+                                {selectedClient && (
+                                    <div className="amount-help">
+                                        <i className="bi bi-info-circle"></i>
+                                        <span>Client Reward Rate: <strong>{clients.find(c => c.id === selectedClient)?.rewardPercentage || 2}%</strong></span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="form-group-admin">
+                                <label>Reward Points</label>
+                                <div className="amount-input-wrapper">
+                                    <span className="currency-prefix" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>PTS</span>
+                                    <input 
+                                        type="number" 
+                                        placeholder="0.00"
+                                        className="amount-input-fancy"
+                                        style={{ color: '#10b981' }}
                                         value={pointsAmount}
                                         onChange={(e) => setPointsAmount(e.target.value)}
-                                        disabled={submitting}
+                                        disabled={true}
                                     />
                                 </div>
                                 <div className="amount-help">
                                     <i className="bi bi-info-circle"></i>
-                                    <span>Positive to add, negative to deduct.</span>
+                                    <span>Points to be added to client balance.</span>
                                 </div>
                             </div>
                             <div className="form-group-admin">
@@ -542,6 +638,29 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 
                 .rewards-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+                .header-actions { display: flex; gap: 1rem; align-items: center; }
+                
+                .export-btn {
+                    padding: 0.75rem 1.25rem;
+                    background: white;
+                    color: #475569;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .export-btn:hover {
+                    background: #f8fafc;
+                    border-color: #cbd5e1;
+                    color: #0f172a;
+                    transform: translateY(-2px);
+                }
+                .export-btn i { color: #64748b; }
+
                 .add-points-btn {
                     padding: 0.75rem 1.25rem;
                     background: linear-gradient(135deg, #0f172a, #1a1a2e);
@@ -695,7 +814,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
 
                 @media (max-width: 768px) {
                     .rewards-container { padding: 1.25rem 1rem; }
-                    .rewards-header { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 2rem; }
+                    .rewards-header { flex-direction: column; align-items: stretch; gap: 1.25rem; margin-bottom: 2rem; }
+                    .header-actions { flex-direction: column; gap: 0.75rem; }
+                    .export-btn, .add-points-btn { width: 100%; justify-content: center; }
                     .header-info h3 { font-size: 1.75rem; font-weight: 800; }
                     
                     .table-card { background: transparent; border: none; box-shadow: none; overflow: visible; }

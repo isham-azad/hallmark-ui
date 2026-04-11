@@ -21,6 +21,7 @@ export async function getRewardsHistory() {
                 id: doc.id,
                 type: 'Earned',
                 amount: data.rewardsEarned,
+                invoiceAmount: data.total || 0,
                 orderNo: data.orderNo,
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : new Date().toISOString()
@@ -34,6 +35,7 @@ export async function getRewardsHistory() {
                 id: doc.id + '_used',
                 type: 'Used',
                 amount: data.rewardsUsed,
+                invoiceAmount: data.total || 0,
                 orderNo: data.orderNo,
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : new Date().toISOString()
@@ -43,12 +45,11 @@ export async function getRewardsHistory() {
         // 3. Process Redemptions (Bank Transfer, etc.)
         redemptionsSnap.docs.forEach((doc: any) => {
             const data = doc.data();
-            // Only show Approved or Completed redemptions in history usually, 
-            // or show all with status? Let's show all for full audit.
             transactions.push({
                 id: doc.id,
                 type: 'Redeemed',
                 amount: data.amount,
+                invoiceAmount: data.amount || 0,
                 orderNo: `Redemption (${data.method.replace('_', ' ')})`,
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 createdAt: data.requestedAt?.toDate?.() ? data.requestedAt.toDate().toISOString() : new Date().toISOString(),
@@ -63,6 +64,7 @@ export async function getRewardsHistory() {
                 id: doc.id,
                 type: (data.amount || 0) >= 0 ? 'Earned' : 'Used',
                 amount: Math.abs(data.amount || 0),
+                invoiceAmount: data.invoiceAmount || 0,
                 orderNo: data.invoiceNo || data.notes || 'Admin Adjustment',
                 b2bClientCompany: data.b2bClientCompany || 'Customer',
                 isManual: true,
@@ -226,7 +228,8 @@ export async function getB2BClients() {
         return snap.docs.map((doc: any) => ({
             id: doc.id,
             companyName: doc.data().companyName || 'No Company',
-            username: doc.data().username || 'unknown'
+            username: doc.data().username || 'unknown',
+            rewardPercentage: doc.data().rewardPercentage ?? 2
         }));
     } catch (error) {
         console.error("Error fetching admin B2B clients:", error);
@@ -234,7 +237,7 @@ export async function getB2BClients() {
     }
 }
 
-export async function addManualPoints(clientId: string, amount: number, invoiceNo: string, invoiceDate?: string) {
+export async function addManualPoints(clientId: string, amount: number, invoiceNo: string, invoiceDate?: string, invoiceAmount?: number) {
     try {
         const clientRef = db.collection("b2b_clients").doc(clientId);
         const clientDoc = await clientRef.get();
@@ -252,6 +255,7 @@ export async function addManualPoints(clientId: string, amount: number, invoiceN
             b2bClientId: clientId,
             b2bClientCompany: clientData.companyName || 'Unknown',
             amount,
+            invoiceAmount: invoiceAmount || 0,
             invoiceNo,
             invoiceDate: invoiceDate || null,
             createdAt: new Date(),

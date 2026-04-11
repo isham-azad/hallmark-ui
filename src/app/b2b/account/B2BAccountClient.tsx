@@ -22,6 +22,7 @@ interface Transaction {
     status: string;
     rewardsUsed: number;
     rewardsEarned: number;
+    invoiceAmount?: string | number;
     createdAt: string;
 }
 
@@ -606,6 +607,11 @@ export default function B2BAccountClient() {
                                                             <div className="d-flex justify-content-between align-items-center">
                                                                 <div>
                                                                     <div className="fw-bold small">{tx.orderNo}</div>
+                                                                    {tx.invoiceAmount && (
+                                                                        <div className="text-muted" style={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                                                                            Amt: {typeof tx.invoiceAmount === 'number' ? `₹${tx.invoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : tx.invoiceAmount}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
                                                                 </div>
                                                                 <div className="text-end">
@@ -1121,6 +1127,11 @@ export default function B2BAccountClient() {
                                                         )}
                                                         {tx.orderNo}
                                                     </div>
+                                                    {tx.invoiceAmount && (
+                                                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginLeft: '26px', marginTop: '2px' }}>
+                                                            Invoice: {typeof tx.invoiceAmount === 'number' ? `₹${tx.invoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : tx.invoiceAmount}
+                                                        </div>
+                                                    )}
                                                     <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "4px" }}>
                                                         <i className="bi bi-calendar3 me-1"></i>
                                                         {new Date(tx.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}
