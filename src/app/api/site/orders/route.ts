@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendSms } from "@/lib/sms";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 import { getB2BSession } from "@/lib/b2b-auth";
 
 
@@ -268,7 +269,24 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Send confirmation SMS to customer
+        // Send confirmation email to customer
+        if (email) {
+            try {
+                await sendOrderConfirmationEmail({
+                    orderNo,
+                    customer,
+                    email: String(email).trim(),
+                    total: orderData.total,
+                    items: orderItems,
+                    paymentMethod,
+                });
+            } catch (emailError) {
+                console.warn("Failed to send order confirmation email:", emailError);
+            }
+        }
+
+        /* 
+        // SMS disabled as per request - using email instead
         if (phone) {
             try {
                 let smsMessage = `Thank you for your order! Your order ${orderNo} of ${orderData.total} has been placed successfully. - HallMark`;
@@ -283,9 +301,9 @@ export async function POST(request: NextRequest) {
                 await sendSms(String(phone).trim(), smsMessage);
             } catch (smsError) {
                 console.warn("Failed to send order confirmation SMS:", smsError);
-                // Don't fail the request if SMS fails
             }
         }
+        */
 
         return NextResponse.json({
             success: true,
