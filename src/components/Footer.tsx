@@ -90,8 +90,9 @@ export default function Footer() {
                             <ul>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#hero"> Home</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#about"> About Us</a></li>
+                                <li><i className="bi bi-chevron-right"></i> <a href="/#investors"> Investors</a></li>
                                 <li><i className="bi bi-chevron-right"></i> <a href="/#contact"> Contact Us</a></li>
-                                {mounted && b2bUser && <li><i className="bi bi-chevron-right"></i> <a href="/shop"> Shop Online</a></li>}
+                                {mounted && b2bUser && <li><i className="bi bi-chevron-right"></i> <a href="/shop"> Order Online</a></li>}
                             </ul>
                         </div>
 

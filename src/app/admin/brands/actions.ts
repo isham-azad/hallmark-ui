@@ -24,7 +24,7 @@ async function verifyAuth(permission?: string) {
     return session;
 }
 
-export async function createBrand(formData: { id: string; name: string; summary: string; image?: string; banner?: string }) {
+export async function createBrand(formData: { id: string; name: string; summary: string; image?: string; banner?: string; bannerMobile?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         const docId = formData.id || formData.name.toLowerCase().replace(/\s+/g, "-");
@@ -34,6 +34,7 @@ export async function createBrand(formData: { id: string; name: string; summary:
             summary: formData.summary,
             image: formData.image || null,
             banner: formData.banner || null,
+            bannerMobile: formData.bannerMobile || null,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -48,7 +49,7 @@ export async function createBrand(formData: { id: string; name: string; summary:
     }
 }
 
-export async function updateBrand(id: string, formData: { name: string; summary: string; image?: string; banner?: string }) {
+export async function updateBrand(id: string, formData: { name: string; summary: string; image?: string; banner?: string; bannerMobile?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         await db.collection("brands").doc(id).update({
@@ -56,6 +57,7 @@ export async function updateBrand(id: string, formData: { name: string; summary:
             summary: formData.summary,
             image: formData.image || null,
             banner: formData.banner || null,
+            bannerMobile: formData.bannerMobile || null,
             updatedAt: FieldValue.serverTimestamp(),
         });
 
@@ -102,6 +104,7 @@ export async function deleteBrand(id: string) {
             const data = doc.data();
             const img = data?.image;
             const banner = data?.banner;
+            const bannerMobile = data?.bannerMobile;
             if (img && typeof img === "string" && img.includes("cloudinary")) {
                 try {
                     await deleteImageByUrl(img);
@@ -114,6 +117,13 @@ export async function deleteBrand(id: string) {
                     await deleteImageByUrl(banner);
                 } catch (err) {
                     console.warn("Could not delete brand banner from Cloudinary:", err);
+                }
+            }
+            if (bannerMobile && typeof bannerMobile === "string" && bannerMobile.includes("cloudinary")) {
+                try {
+                    await deleteImageByUrl(bannerMobile);
+                } catch (err) {
+                    console.warn("Could not delete brand mobile banner from Cloudinary:", err);
                 }
             }
             try {

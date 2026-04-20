@@ -12,6 +12,7 @@ interface Brand {
   summary: string;
   image: string | null;
   banner: string | null;
+  bannerMobile?: string | null;
 }
 
 interface BrandEditClientProps {
@@ -30,16 +31,21 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
     website: "",
     status: "active",
     image: brand.image || "",
-    banner: brand.banner || ""
+    banner: brand.banner || "",
+    bannerMobile: brand.bannerMobile || ""
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [bannerMobileFile, setBannerMobileFile] = useState<File | null>(null);
+  const [bannerMobilePreviewUrl, setBannerMobilePreviewUrl] = useState<string>("");
+  const bannerMobileInputRef = useRef<HTMLInputElement>(null);
 
   const displayImageUrl = imagePreviewUrl || formData.image;
   const displayBannerUrl = bannerPreviewUrl || formData.banner;
+  const displayBannerMobileUrl = bannerMobilePreviewUrl || formData.bannerMobile;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,6 +79,22 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
     setFormData((prev) => ({ ...prev, banner: "" }));
   };
 
+  const handleBannerMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
+    setBannerMobileFile(file);
+    setBannerMobilePreviewUrl(URL.createObjectURL(file));
+    if (bannerMobileInputRef.current) bannerMobileInputRef.current.value = "";
+  };
+
+  const removeBannerMobile = () => {
+    if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
+    setBannerMobileFile(null);
+    setBannerMobilePreviewUrl("");
+    setFormData((prev) => ({ ...prev, bannerMobile: "" }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -84,6 +106,12 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
         form.set("summary", formData.summary);
         if (imageFile) form.set("image", imageFile);
         if (bannerFile) form.set("banner", bannerFile);
+        if (bannerMobileFile) form.set("bannerMobile", bannerMobileFile);
+        
+        // Keep existing URLs if needed
+        if (!bannerFile && formData.banner) form.set("existingBanner", formData.banner);
+        if (!bannerMobileFile && formData.bannerMobile) form.set("existingBannerMobile", formData.bannerMobile);
+        if (!imageFile && formData.image) form.set("existingImage", formData.image);
         
         const res = await fetch("/api/admin/brands/update", { method: "POST", body: form });
         const result = await res.json();
@@ -98,7 +126,8 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
           name: formData.name,
           summary: formData.summary,
           image: formData.image || undefined,
-          banner: formData.banner || undefined
+          banner: formData.banner || undefined,
+          bannerMobile: formData.bannerMobile || undefined
         });
         if (result.success) {
           showToast("Brand updated successfully!");
@@ -158,7 +187,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
             <h3>Identity & Status</h3>
             <div className="grid-inputs">
               <div className="input-group">
-                <label>Brand Logo / Image</label>
+                <label>Brand Logo / Image (500 x 500 px)</label>
                 <div
                   className="upload-zone existing"
                   onClick={() => fileInputRef.current?.click()}
@@ -203,7 +232,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
               </div>
 
               <div className="input-group">
-                <label>Brand Banner (Header Background)</label>
+                <label>Desktop Banner (1920 x 450 px)</label>
                 <div
                   className="upload-zone banner-zone existing"
                   onClick={() => bannerInputRef.current?.click()}
@@ -223,7 +252,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
                       <img src={displayBannerUrl} alt="Current Banner" className="preview-img banner-preview" />
                       <div className="upload-overlay">
                         <i className="bi bi-aspect-ratio"></i>
-                        <span>Change Banner (uploaded on Save)</span>
+                        <span>Change Desktop Banner (uploaded on Save)</span>
                       </div>
                     </>
                   ) : (
@@ -233,7 +262,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
                       </div>
                       <div className="upload-overlay">
                         <i className="bi bi-aspect-ratio"></i>
-                        <span>Choose Banner (uploaded on Save)</span>
+                        <span>Choose Desktop Banner (uploaded on Save)</span>
                       </div>
                     </>
                   )}
@@ -244,7 +273,54 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
                     className="remove-image-btn"
                     onClick={removeBanner}
                   >
-                    Remove banner
+                    Remove desktop banner
+                  </button>
+                )}
+              </div>
+
+              <div className="input-group">
+                <label>Mobile Banner (800 x 500 px)</label>
+                <div
+                  className="upload-zone banner-zone existing"
+                  onClick={() => bannerMobileInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && bannerMobileInputRef.current?.click()}
+                >
+                  <input
+                    ref={bannerMobileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerMobileChange}
+                    className="hidden-input"
+                  />
+                  {displayBannerMobileUrl ? (
+                    <>
+                      <img src={displayBannerMobileUrl} alt="Current Mobile Banner" className="preview-img banner-preview" />
+                      <div className="upload-overlay">
+                        <i className="bi bi-phone"></i>
+                        <span>Change Mobile Banner (uploaded on Save)</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="no-image-placeholder banner-placeholder">
+                        <i className="bi bi-image" style={{ fontSize: '2rem' }}></i>
+                      </div>
+                      <div className="upload-overlay">
+                        <i className="bi bi-phone"></i>
+                        <span>Choose Mobile Banner (uploaded on Save)</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {displayBannerMobileUrl && (
+                  <button
+                    type="button"
+                    className="remove-image-btn"
+                    onClick={removeBannerMobile}
+                  >
+                    Remove mobile banner
                   </button>
                 )}
               </div>

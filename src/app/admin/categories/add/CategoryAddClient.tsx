@@ -94,9 +94,9 @@ export default function CategoryAddClient() {
                     </div>
 
                     <div className="form-section image-section">
-                        <h3>Category Image</h3>
+                        <h3>Category Banner</h3>
                         <div className="input-group">
-                            <label>Image</label>
+                            <label>Banner Image (1920 x 450 px)</label>
                             <div
                                 className="upload-zone"
                                 onClick={() => fileInputRef.current?.click()}

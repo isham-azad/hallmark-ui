@@ -22,6 +22,9 @@ export default function BrandAddClient() {
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
     const bannerInputRef = useRef<HTMLInputElement>(null);
+    const [bannerMobileFile, setBannerMobileFile] = useState<File | null>(null);
+    const [bannerMobilePreviewUrl, setBannerMobilePreviewUrl] = useState<string>("");
+    const bannerMobileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -53,6 +56,21 @@ export default function BrandAddClient() {
         setBannerPreviewUrl("");
     };
 
+    const handleBannerMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !file.type.startsWith("image/")) return;
+        if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
+        setBannerMobileFile(file);
+        setBannerMobilePreviewUrl(URL.createObjectURL(file));
+        if (bannerMobileInputRef.current) bannerMobileInputRef.current.value = "";
+    };
+
+    const removeBannerMobile = () => {
+        if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
+        setBannerMobileFile(null);
+        setBannerMobilePreviewUrl("");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -62,6 +80,7 @@ export default function BrandAddClient() {
             form.set("summary", formData.summary);
             if (imageFile) form.set("image", imageFile);
             if (bannerFile) form.set("banner", bannerFile);
+            if (bannerMobileFile) form.set("bannerMobile", bannerMobileFile);
 
             const res = await fetch("/api/admin/brands/create", { method: "POST", body: form });
             const result = await res.json();
@@ -119,7 +138,7 @@ export default function BrandAddClient() {
                         <h3>Identity & Status</h3>
                         <div className="grid-inputs">
                             <div className="input-group">
-                                <label>Brand Logo / Image</label>
+                                <label>Brand Logo / Image (500 x 500 px)</label>
                                 <div
                                     className="upload-zone"
                                     onClick={() => fileInputRef.current?.click()}
@@ -158,7 +177,7 @@ export default function BrandAddClient() {
                             </div>
 
                             <div className="input-group">
-                                <label>Brand Banner (Header Background)</label>
+                                <label>Desktop Banner (1920 x 450 px)</label>
                                 <div
                                     className="upload-zone banner-zone"
                                     onClick={() => bannerInputRef.current?.click()}
@@ -176,12 +195,12 @@ export default function BrandAddClient() {
                                     {bannerPreviewUrl ? (
                                         <>
                                             <img src={bannerPreviewUrl} alt="Banner Preview" className="preview-img banner-preview" />
-                                            <span>Click to change banner</span>
+                                            <span>Click to change desktop banner</span>
                                         </>
                                     ) : (
                                         <>
                                             <i className="bi bi-aspect-ratio"></i>
-                                            <span>Choose banner image</span>
+                                            <span>Choose desktop banner</span>
                                         </>
                                     )}
                                 </div>
@@ -191,7 +210,46 @@ export default function BrandAddClient() {
                                         className="remove-image-btn"
                                         onClick={removeBanner}
                                     >
-                                        Remove banner
+                                        Remove desktop banner
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="input-group">
+                                <label>Mobile Banner (800 x 500 px)</label>
+                                <div
+                                    className="upload-zone banner-zone"
+                                    onClick={() => bannerMobileInputRef.current?.click()}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => e.key === "Enter" && bannerMobileInputRef.current?.click()}
+                                >
+                                    <input
+                                        ref={bannerMobileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleBannerMobileChange}
+                                        className="hidden-input"
+                                    />
+                                    {bannerMobilePreviewUrl ? (
+                                        <>
+                                            <img src={bannerMobilePreviewUrl} alt="Mobile Banner Preview" className="preview-img banner-preview" />
+                                            <span>Click to change mobile banner</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-phone"></i>
+                                            <span>Choose mobile banner</span>
+                                        </>
+                                    )}
+                                </div>
+                                {bannerMobileFile && (
+                                    <button
+                                        type="button"
+                                        className="remove-image-btn"
+                                        onClick={removeBannerMobile}
+                                    >
+                                        Remove mobile banner
                                     </button>
                                 )}
                             </div>

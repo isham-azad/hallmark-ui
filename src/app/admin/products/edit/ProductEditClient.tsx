@@ -461,8 +461,7 @@ export default function ProductEditClient({ product, brands, categories }: Produ
                     <div className="form-section">
                         <h3>Media</h3>
                         <div className="input-group">
-                            <label>Product Images (max {MAX_IMAGES})</label>
-                            <p className="media-hint">Images are saved under hallmark/products/[SKU or ID]/</p>
+                            <label>Product Images (500 x 500 px, max {MAX_IMAGES})</label>
 
                             {existingImageUrls.length > 0 && (
                                 <div className="current-images-block">

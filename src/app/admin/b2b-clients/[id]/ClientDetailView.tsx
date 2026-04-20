@@ -13,13 +13,85 @@ interface ClientDetailViewProps {
 }
 
 export default function ClientDetailView({ data }: ClientDetailViewProps) {
-    const [activeTab, setActiveTab] = useState<"overview" | "orders" | "rewards">("overview");
+    const [activeTab, setActiveTab] = useState<"overview" | "orders" | "rewards" | "ledger">("overview");
+    const [ordersSearch, setOrdersSearch] = useState("");
+    const [rewardsSearch, setRewardsSearch] = useState("");
+    const [ledgerSearch, setLedgerSearch] = useState("");
     const { client, orders, rewards } = data;
 
     const totalOrdersValue = orders.reduce((sum, o) => {
         const val = parseFloat(o.total?.replace(/[^\d.-]/g, '') || "0");
         return sum + val;
     }, 0);
+
+    let financialPending = 0;
+    let financialPaid = 0;
+    let financialBalance = 0;
+    const financialEntries: any[] = [];
+    
+    [...orders]
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .forEach(data => {
+            const invoiceAmount = parseFloat(data.total?.replace(/[^\d.-]/g, '') || "0");
+            const isPaid = data.paymentStatus === "Paid" || data.paymentStatus === "Credit Card" || data.paymentStatus === "Tabby" || data.paymentStatus === "Stripe";
+            const dateStr = data.createdAt;
+
+            financialBalance += invoiceAmount;
+            financialEntries.push({
+                id: `inv-${data.id}`,
+                date: dateStr,
+                referenceNo: data.orderNo || `INV-${data.id.slice(0, 5)}`,
+                description: `Invoice for order`,
+                amount: invoiceAmount,
+                type: "Debit",
+                balance: financialBalance
+            });
+
+            if (isPaid) {
+                financialPaid += invoiceAmount;
+                financialBalance -= invoiceAmount;
+                const paidDate = data.paidAt || dateStr; 
+                financialEntries.push({
+                    id: `pmt-${data.id}`,
+                    date: paidDate,
+                    referenceNo: `PMT-${data.orderNo || data.id.slice(0, 5)}`,
+                    description: `Payment received via ${data.paymentMethod || data.payment || 'system'}`,
+                    amount: invoiceAmount,
+                    type: "Credit",
+                    balance: financialBalance
+                });
+            } else {
+                financialPending += invoiceAmount;
+            }
+        });
+        
+    financialEntries.reverse();
+
+    const exportFinancialLedgerCSV = () => {
+        if (financialEntries.length === 0) return;
+
+        const headers = ["Reference No", "Date", "Description", "Type", "Amount", "Balance"];
+        const rows = financialEntries.map(l => [
+            l.referenceNo,
+            format(new Date(l.date), "MMM dd, yyyy HH:mm"),
+            l.description,
+            l.type,
+            l.amount,
+            l.balance
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"`).join(","))
+            .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `client_${client.username}_ledger_${new Date().toISOString().split("T")[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <div className="client-detail-container">
@@ -97,6 +169,12 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
                 >
                     <i className="bi bi-clock-history"></i> Points Ledger
                 </button>
+                <button 
+                    className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ledger')}
+                >
+                    <i className="bi bi-journal-text"></i> Financial Ledger
+                </button>
             </div>
 
             <div className="tab-content">
@@ -143,6 +221,36 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
 
                 {activeTab === 'orders' && (
                     <div className="table-wrapper">
+                        {/* Toolbar */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#fff" }}>
+                            <div style={{ position: "relative", flex: 1 }}>
+                                <i className="bi bi-search" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: "0.8rem", pointerEvents: "none" }}></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search by order no..."
+                                    value={ordersSearch}
+                                    onChange={e => setOrdersSearch(e.target.value)}
+                                    style={{ width: "100%", height: 36, paddingLeft: 30, paddingRight: 10, borderRadius: 8, border: "1px solid #e2e8f0", fontSize: "0.85rem", outline: "none", background: "#f8fafc" }}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const filtered = orders.filter(o => !ordersSearch || o.orderNo?.toLowerCase().includes(ordersSearch.toLowerCase()));
+                                    if (!filtered.length) return;
+                                    const headers = ["Order No", "Date", "Total", "Payment Status", "Delivery Status"];
+                                    const rows = filtered.map(o => [o.orderNo, format(new Date(o.createdAt), "MMM dd, yyyy"), o.total, o.paymentStatus, o.status]);
+                                    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, "\"\"")}"`).join(",")).join("\n");
+                                    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a"); a.href = url; a.download = `client_${client.username}_orders_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+                                    URL.revokeObjectURL(url);
+                                }}
+                                style={{ background: "#0f172a", border: "none", color: "#fff", borderRadius: 8, padding: "0 14px", height: 36, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.82rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+                            >
+                                <i className="bi bi-download"></i> Export CSV
+                            </button>
+                        </div>
                         <table className="detail-table">
                             <thead>
                                 <tr>
@@ -155,10 +263,10 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {orders.length === 0 ? (
+                                {orders.filter(o => !ordersSearch || o.orderNo?.toLowerCase().includes(ordersSearch.toLowerCase())).length === 0 ? (
                                     <tr><td colSpan={6} className="empty-state">No orders found for this client.</td></tr>
                                 ) : (
-                                    orders.map(order => (
+                                    orders.filter(o => !ordersSearch || o.orderNo?.toLowerCase().includes(ordersSearch.toLowerCase())).map(order => (
                                         <tr key={order.id}>
                                             <td className="fw-bold">{order.orderNo}</td>
                                             <td>{format(new Date(order.createdAt), "MMM dd, yyyy")}</td>
@@ -188,6 +296,37 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
 
                 {activeTab === 'rewards' && (
                     <div className="table-wrapper">
+                        {/* Toolbar */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#fff" }}>
+                            <div style={{ position: "relative", flex: 1 }}>
+                                <i className="bi bi-search" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: "0.8rem", pointerEvents: "none" }}></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search by type or note..."
+                                    value={rewardsSearch}
+                                    onChange={e => setRewardsSearch(e.target.value)}
+                                    style={{ width: "100%", height: 36, paddingLeft: 30, paddingRight: 10, borderRadius: 8, border: "1px solid #e2e8f0", fontSize: "0.85rem", outline: "none", background: "#f8fafc" }}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const q = rewardsSearch.toLowerCase();
+                                    const filtered = rewards.filter(r => !q || r.type?.toLowerCase().includes(q) || r.note?.toLowerCase().includes(q));
+                                    if (!filtered.length) return;
+                                    const headers = ["Date", "Type", "Amount", "Note", "Status"];
+                                    const rows = filtered.map(r => [format(new Date(r.createdAt), "MMM dd, yyyy HH:mm"), r.type, r.amount, r.note || "", r.status || ""]);
+                                    const csv = [headers, ...rows].map(row => row.map(c => `"${String(c).replace(/"/g, "\"\"")}"`).join(",")).join("\n");
+                                    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a"); a.href = url; a.download = `client_${client.username}_points_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+                                    URL.revokeObjectURL(url);
+                                }}
+                                style={{ background: "#0f172a", border: "none", color: "#fff", borderRadius: 8, padding: "0 14px", height: 36, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.82rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+                            >
+                                <i className="bi bi-download"></i> Export CSV
+                            </button>
+                        </div>
                         <table className="detail-table">
                             <thead>
                                 <tr>
@@ -199,10 +338,10 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {rewards.length === 0 ? (
+                                {rewards.filter(r => { const q = rewardsSearch.toLowerCase(); return !q || r.type?.toLowerCase().includes(q) || r.note?.toLowerCase().includes(q); }).length === 0 ? (
                                     <tr><td colSpan={5} className="empty-state">No point transactions yet.</td></tr>
                                 ) : (
-                                    rewards.map(r => (
+                                    rewards.filter(r => { const q = rewardsSearch.toLowerCase(); return !q || r.type?.toLowerCase().includes(q) || r.note?.toLowerCase().includes(q); }).map(r => (
                                         <tr key={r.id}>
                                             <td>{format(new Date(r.createdAt), "MMM dd, yyyy HH:mm")}</td>
                                             <td>
@@ -215,6 +354,85 @@ export default function ClientDetailView({ data }: ClientDetailViewProps) {
                                             </td>
                                             <td className="text-muted small">{r.note}</td>
                                             <td>{r.status || "—"}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {activeTab === 'ledger' && (
+                    <div className="table-wrapper">
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", padding: "1.5rem", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+                            <div style={{ background: "#fff", padding: "1rem", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Pending</div>
+                                <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#d97706" }}>₹{financialPending.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                            </div>
+                            <div style={{ background: "#fff", padding: "1rem", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Paid</div>
+                                <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#166534" }}>₹{financialPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                            </div>
+                            <div style={{ background: "#fff", padding: "1rem", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Current Balance</div>
+                                <div style={{ fontSize: "1.25rem", fontWeight: 800, color: financialEntries[0]?.balance > 0 ? "#dc2626" : "#2563eb" }}>₹{(financialEntries[0]?.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                        {/* Toolbar */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#fff" }}>
+                            <div style={{ position: "relative", flex: 1 }}>
+                                <i className="bi bi-search" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: "0.8rem", pointerEvents: "none" }}></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search by reference no..."
+                                    value={ledgerSearch}
+                                    onChange={e => setLedgerSearch(e.target.value)}
+                                    style={{ width: "100%", height: 36, paddingLeft: 30, paddingRight: 10, borderRadius: 8, border: "1px solid #e2e8f0", fontSize: "0.85rem", outline: "none", background: "#f8fafc" }}
+                                />
+                            </div>
+                            {financialEntries.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={exportFinancialLedgerCSV}
+                                    style={{ background: "#0f172a", border: "none", color: "#fff", borderRadius: 8, padding: "0 14px", height: 36, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.82rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = "#1e293b"}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = "#0f172a"}
+                                >
+                                    <i className="bi bi-download"></i> Export CSV
+                                </button>
+                            )}
+                        </div>
+                        <table className="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Ref No</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th className="text-end">Amount</th>
+                                    <th className="text-end">Run Bal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {financialEntries.filter(e => !ledgerSearch || e.referenceNo?.toLowerCase().includes(ledgerSearch.toLowerCase())).length === 0 ? (
+                                    <tr><td colSpan={6} className="empty-state">No financial transactions yet.</td></tr>
+                                ) : (
+                                    financialEntries.filter(e => !ledgerSearch || e.referenceNo?.toLowerCase().includes(ledgerSearch.toLowerCase())).map(e => (
+                                        <tr key={e.id}>
+                                            <td>{format(new Date(e.date), "MMM dd, yyyy HH:mm")}</td>
+                                            <td className="fw-bold">{e.referenceNo}</td>
+                                            <td className="text-muted small">{e.description}</td>
+                                            <td>
+                                                <span className={`type-tag ${e.type.toLowerCase()}`} style={{ background: e.type === 'Credit' ? '#dcfce7' : '#fee2e2', color: e.type === 'Credit' ? '#166534' : '#991b1b' }}>
+                                                    {e.type}
+                                                </span>
+                                            </td>
+                                            <td className={`fw-bold text-end ${e.type === 'Debit' ? 'text-danger' : 'text-success'}`}>
+                                                {e.type === 'Debit' ? '+' : '-'}₹{e.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="fw-bold text-end">
+                                                ₹{e.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                            </td>
                                         </tr>
                                     ))
                                 )}

@@ -12,6 +12,7 @@ interface Brand {
     summary: string;
     image: string;
     banner?: string;
+    bannerMobile?: string;
 }
 
 interface SiteProduct {
@@ -51,7 +52,7 @@ export default function BrandClient() {
 
     if (loading) {
         return (
-            <div className="brand-page mt-5 pt-4">
+            <div className="brand-page">
                 <BrandOrCategoryPageShimmer cardCount={8} />
             </div>
         );
@@ -68,17 +69,35 @@ export default function BrandClient() {
 
     return (
         <div className="brand-page" style={{ marginTop: '132px' }}>
-            {brand.banner && (
-                <div className="collection-banner overflow-hidden" style={{ height: '400px' }}>
-                    <img
-                        src={brand.banner}
-                        alt={`${brand.name} banner`}
-                        className="w-100 h-100 object-fit-cover"
-                    />
+            {(brand.banner || brand.bannerMobile) && (
+                <div className="collection-banner overflow-hidden" style={{ minHeight: '200px' }}>
+                    {brand.banner && (
+                        <img
+                            src={brand.banner}
+                            alt={`${brand.name} desktop banner`}
+                            className={`w-100 object-fit-cover d-none d-md-block`}
+                            style={{ height: '400px' }}
+                        />
+                    )}
+                    {brand.bannerMobile ? (
+                        <img
+                            src={brand.bannerMobile}
+                            alt={`${brand.name} mobile banner`}
+                            className={`w-100 object-fit-cover d-block d-md-none`}
+                            style={{ aspectRatio: '8/12', height: 'auto', maxHeight: '500px' }}
+                        />
+                    ) : brand.banner ? (
+                         <img
+                            src={brand.banner}
+                            alt={`${brand.name} banner fallback`}
+                            className={`w-100 object-fit-cover d-block d-md-none`}
+                            style={{ height: '250px' }}
+                        />
+                    ) : null}
                 </div>
             )}
 
-            <section id="brand-header" className="section light-background pt-4 pb-5" data-aos="fade-up">
+            {/* <section id="brand-header" className="section light-background pt-4 pb-5" data-aos="fade-up">
                 <div className="container">
                     <div className="row align-items-center">
                         <div className="col-lg-4 text-center mb-4 mb-lg-0">
@@ -103,7 +122,7 @@ export default function BrandClient() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             <section id="brand-products" className="section">
                 <div className="container">
