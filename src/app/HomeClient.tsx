@@ -236,6 +236,36 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
     return () => clearTimeout(timer);
   }, [productsLoading, brandsLoading, testimonialsLoading, categoriesLoading, websiteLoading]);
 
+  // Handle hash scrolling on dynamic mount/navigation
+  useEffect(() => {
+    if (websiteLoading) return;
+
+    const handleHashScroll = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const id = hash.replace('#', '');
+        const element = document.getElementById(id);
+        if (element) {
+          setTimeout(() => {
+            const headerOffset = 30; // generous offset for sticky header
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }, 600); // More time for images and AOS to settle
+        }
+      }
+    };
+
+    handleHashScroll();
+    // Also listen for hash changes
+    window.addEventListener('hashchange', handleHashScroll);
+    return () => window.removeEventListener('hashchange', handleHashScroll);
+  }, [websiteLoading]);
+
   useEffect(() => {
     const banners = websiteContent?.heroBanners;
     if (!banners || banners.length <= 1) return;
@@ -279,6 +309,62 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
 
   return (
     <>
+      <style>{`
+        @keyframes icon-bounce {
+          0%, 100% { transform: translateY(0); -webkit-transform: translateY(0); }
+          50% { transform: translateY(-5px); -webkit-transform: translateY(-5px); }
+        }
+        @keyframes icon-swing {
+          0%, 100% { transform: rotate(0); -webkit-transform: rotate(0); }
+          25% { transform: rotate(-10deg); -webkit-transform: rotate(-10deg); }
+          75% { transform: rotate(10deg); -webkit-transform: rotate(10deg); }
+        }
+        @keyframes icon-spin {
+          from { transform: rotate(0deg); -webkit-transform: rotate(0deg); }
+          to { transform: rotate(360deg); -webkit-transform: rotate(360deg); }
+        }
+        @keyframes icon-pulse {
+          0%, 100% { transform: scale(1); -webkit-transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); -webkit-transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .about-icon-anim {
+          display: inline-block !important;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+        }
+
+        .icon-calendar, .icon-bounce { animation: icon-bounce 2s ease-in-out infinite; -webkit-animation: icon-bounce 2s ease-in-out infinite; }
+        .icon-vcard, .icon-swing { animation: icon-swing 2.5s ease-in-out infinite; -webkit-animation: icon-swing 2.5s ease-in-out infinite; }
+        .icon-globe, .icon-spin { animation: icon-spin 7s linear infinite; -webkit-animation: icon-spin 7s linear infinite; }
+        .icon-shield, .icon-pulse { animation: icon-pulse 1.8s ease-in-out infinite; -webkit-animation: icon-pulse 1.8s ease-in-out infinite; }
+
+        /* Features Specific Animations */
+        .icon-gem { animation: icon-pulse 1.5s ease-in-out infinite; -webkit-animation: icon-pulse 1.5s ease-in-out infinite; }
+        .icon-shield-feat { animation: icon-bounce 1.5s ease-in-out infinite; -webkit-animation: icon-bounce 1.5s ease-in-out infinite; }
+        .icon-smile { animation: icon-swing 2s ease-in-out infinite; -webkit-animation: icon-swing 2s ease-in-out infinite; }
+        .icon-shop { animation: icon-bounce 2s ease-in-out infinite; -webkit-animation: icon-bounce 2s ease-in-out infinite; }
+
+        .about-card:hover .icon-calendar, .features-item:hover .icon-calendar, .stats-item:hover .icon-calendar, .investors-card:hover .icon-calendar, .icon-box:hover .icon-calendar, .stats-item:hover .icon-bounce, .stats-item:hover .icon-shop, .investors-card:hover .icon-bounce, .icon-box:hover .icon-bounce { animation: icon-bounce 0.5s ease-in-out infinite !important; -webkit-animation: icon-bounce 0.5s ease-in-out infinite !important; }
+        .about-card:hover .icon-vcard, .features-item:hover .icon-vcard, .stats-item:hover .icon-vcard, .investors-card:hover .icon-vcard, .icon-box:hover .icon-vcard, .stats-item:hover .icon-swing, .investors-card:hover .icon-swing, .icon-box:hover .icon-swing { animation: icon-swing 0.6s ease-in-out infinite !important; -webkit-animation: icon-swing 0.6s ease-in-out infinite !important; }
+        .about-card:hover .icon-globe, .features-item:hover .icon-globe, .stats-item:hover .icon-globe, .investors-card:hover .icon-globe, .icon-box:hover .icon-globe, .stats-item:hover .icon-spin, .investors-card:hover .icon-spin, .investors-card:hover .icon-globe, .icon-box:hover .icon-spin { animation: icon-spin 1.5s linear infinite !important; -webkit-animation: icon-spin 1.5s linear infinite !important; }
+        .about-card:hover .icon-shield, .features-item:hover .icon-shield, .features-item:hover .icon-gem, .features-item:hover .icon-shield-feat, .stats-item:hover .icon-shield, .stats-item:hover .icon-gem, .stats-item:hover .icon-shield-feat, .stats-item:hover .icon-pulse, .investors-card:hover .icon-shield, .investors-card:hover .icon-pulse, .icon-box:hover .icon-shield, .icon-box:hover .icon-pulse { animation: icon-pulse 0.7s ease-in-out infinite !important; -webkit-animation: icon-pulse 0.7s ease-in-out infinite !important; }
+        .features-item:hover .icon-smile, .stats-item:hover .icon-smile, .investors-card:hover .icon-smile, .icon-box:hover .icon-smile { animation: icon-bounce 0.5s ease-in-out infinite !important; -webkit-animation: icon-bounce 0.5s ease-in-out infinite !important; }
+
+        .about-card:hover .icon-wrapper, .investors-card:hover .icon-wrapper, .icon-box:hover .icon-wrapper {
+          background-color: #ffc451 !important;
+          transform: scale(1.1) !important;
+          -webkit-transform: scale(1.1) !important;
+        }
+        .about-card:hover i {
+          color: #fff !important;
+        }
+        .icon-box i, .investors-card i, .stats-item i, .features-item i {
+          color: #ffc451 !important;
+        }
+      `}</style>
       {/* Hero Section */}
       <section id="hero" className="hero section dark-background">
         {websiteContent?.heroBanners && websiteContent.heroBanners.length > 0 ? (
@@ -320,13 +406,13 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             {categories.map((c) => (
               <div key={c.id} className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
                 <div className="icon-box">
-                  {c.name === "Home Care" && <i className="bi bi-house-door-fill"></i>}
-                  {c.name === "Fabric Care" && <i className="fa fa-shirt"></i>}
-                  {c.name === "Cleaning Liquids" && <i className="bi bi-droplet-fill"></i>}
-                  {c.name === "Fancy Supplies" && <i className="bi bi-stars"></i>}
-                  {c.name === "Food & Beverages" && <i className="bi bi-cup-straw"></i>}
-                  {c.name === "Personal Care" && <i className="bi bi-person-hearts"></i>}
-                  {c.name === "Ritual Essentials" && <i className="bi bi-sun"></i>}
+                  {c.name === "Home Care" && <i className="bi bi-house-door-fill about-icon-anim icon-bounce"></i>}
+                  {c.name === "Fabric Care" && <i className="fa fa-shirt about-icon-anim icon-vcard"></i>}
+                  {c.name === "Cleaning Liquids" && <i className="bi bi-droplet-fill about-icon-anim icon-pulse"></i>}
+                  {c.name === "Fancy Supplies" && <i className="bi bi-stars about-icon-anim icon-spin"></i>}
+                  {c.name === "Food & Beverages" && <i className="bi bi-cup-straw about-icon-anim icon-bounce"></i>}
+                  {c.name === "Personal Care" && <i className="bi bi-person-hearts about-icon-anim icon-vcard"></i>}
+                  {c.name === "Ritual Essentials" && <i className="bi bi-sun about-icon-anim icon-spin"></i>}
                   <h3><a href={`/category/${c.id}`}>{c.name}</a></h3>
                 </div>
               </div>
@@ -373,7 +459,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                   { icon: "bi-shield-fill-check", title: "Dependable Value", desc: "A value-driven approach focused on building long-term consumer partnerships." }
                 ]).map((item, idx) => (
                   <div key={idx} className="col-md-6">
-                    <div className="p-4 rounded-4 shadow-sm h-100" style={{
+                    <div className="about-card p-4 rounded-4 shadow-sm h-100" style={{
                       background: 'white',
                       border: '1px solid rgba(0,0,0,0.05)',
                       transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
@@ -389,8 +475,12 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                         e.currentTarget.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
                         e.currentTarget.style.borderColor = 'rgba(0,0,0,0.05)';
                       }}>
-                      <div className="icon-wrapper mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ background: 'rgba(255, 196, 81, 0.12)', width: '60px', height: '60px' }}>
-                        <i className={`bi ${item.icon} fs-3`} style={{ color: 'var(--accent-color)' }}></i>
+                      <div className="icon-wrapper mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ background: 'rgba(255, 196, 81, 0.12)', width: '60px', height: '60px', transition: 'all 0.3s ease' }}>
+                        <i className={`bi ${item.icon} fs-3 about-icon-anim ${item.icon.includes('calendar') ? 'icon-calendar' :
+                          item.icon.includes('vcard') ? 'icon-vcard' :
+                            item.icon.includes('globe') ? 'icon-globe' :
+                              item.icon.includes('shield') ? 'icon-shield' : ''
+                          }`} style={{ color: 'var(--accent-color)' }}></i>
                       </div>
                       <h4 className="fw-bold mb-2" style={{ fontSize: '1.25rem', color: 'var(--heading-color)' }}>{item.title}</h4>
                       <p className="small mb-0 text-muted" style={{ lineHeight: '1.6' }}>{item.desc}</p>
@@ -517,7 +607,10 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                 }
               ].map((feature, idx) => (
                 <div key={idx} className={`features-item d-flex ${idx > 0 ? "mt-5" : "pt-4 pt-lg-0"} ps-0 ps-lg-3`} data-aos="fade-up" data-aos-delay={feature.delay}>
-                  <i className={`bi bi-${feature.icon} flex-shrink-0`} style={{ fontSize: '48px', color: 'var(--accent-color)', marginRight: '20px', lineHeight: '1' }}></i>
+                  <i className={`bi bi-${feature.icon} flex-shrink-0 about-icon-anim ${feature.icon === 'gem' ? 'icon-gem' :
+                    feature.icon === 'shield-check' ? 'icon-shield-feat' :
+                      feature.icon === 'emoji-smile' ? 'icon-smile' : ''
+                    }`} style={{ fontSize: '48px', color: 'var(--accent-color)', marginRight: '20px', lineHeight: '1' }}></i>
                   <div>
                     <h4 style={{ fontWeight: '700', fontSize: '1.25rem' }}>{feature.title}</h4>
                     <p style={{ color: 'color-mix(in srgb, var(--default-color), transparent 20%)', fontSize: '15px' }}>{feature.desc}</p>
@@ -620,7 +713,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
               <div className="text-center">
                 <h3>"All because we understand you better"</h3>
                 <p>From home care to food and grocery essentials, Hallmark Enterprises delivers trusted quality and real value to homes across the region. Explore our full range of products and discover the Hallmark difference.</p>
-                {mounted && b2bUser && <a className="cta-btn" href="/shop">Shop Online</a>}
+                {mounted && b2bUser && <a className="cta-btn" href="/shop">Order Online</a>}
               </div>
             </div>
           </div>
@@ -666,7 +759,11 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                   return (
                     <div key={i} className="col-6 col-lg-6">
                       <div className="stats-item d-flex">
-                        <i className={`bi bi-${stat.icon} flex-shrink-0`}></i>
+                        <i className={`bi bi-${stat.icon} flex-shrink-0 about-icon-anim ${stat.icon === 'emoji-smile' ? 'icon-smile' :
+                          stat.icon === 'box-seam' ? 'icon-bounce' :
+                            stat.icon === 'shop' ? 'icon-shop' :
+                              stat.icon === 'people' ? 'icon-vcard' : ''
+                          }`} style={{ transition: 'all 0.3s ease' }}></i>
                         <div>
                           <span style={{ color: 'var(--heading-color)', fontSize: '40px', display: 'block', fontWeight: 700, lineHeight: '40px' }}>{displayValue}</span>
                           <p><strong dangerouslySetInnerHTML={{ __html: stat.label }} /></p>
@@ -778,9 +875,12 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
               { icon: "bi-globe-central-south-asia", title: "Scalable Expansion", description: "Capitalize on our aggressive expansion plans across India and the Gulf region, unlocking massive growth potential." }
             ]).map((card, i) => (
               <div key={i} className="col-md-4" data-aos="fade-up" data-aos-delay={100 + i * 100}>
-                <div className="p-4 h-100 rounded-4" style={{ backgroundColor: '#1a1a1a', border: '1px solid #333', transition: 'transform 0.3s ease, border-color 0.3s ease' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = '#ffc451'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = '#333'; }}>
-                  <div className="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ backgroundColor: 'rgba(255, 196, 81, 0.1)', width: '64px', height: '64px' }}>
-                    <i className={`bi ${card.icon} fs-3`} style={{ color: '#ffc451' }}></i>
+                <div className="investors-card p-4 h-100 rounded-4" style={{ backgroundColor: '#1a1a1a', border: '1px solid #333', transition: 'transform 0.3s ease, border-color 0.3s ease' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = '#ffc451'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = '#333'; }}>
+                  <div className="icon-wrapper mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style={{ backgroundColor: 'rgba(255, 196, 81, 0.1)', width: '64px', height: '64px', transition: 'all 0.3s ease' }}>
+                    <i className={`bi ${card.icon} fs-3 about-icon-anim ${card.icon.includes('chart') ? 'icon-bounce' :
+                      card.icon.includes('shield') ? 'icon-shield' :
+                        card.icon.includes('globe') ? 'icon-globe' : ''
+                      }`} style={{ color: '#ffc451', transition: 'all 0.3s ease' }}></i>
                   </div>
                   <h4 className="fw-bold mb-3 text-white">{card.title}</h4>
                   <p className="mb-0" style={{ color: '#ccc' }}>{card.description}</p>

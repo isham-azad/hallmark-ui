@@ -186,11 +186,12 @@ export async function getShopBanners() {
     }
 }
 
-export async function addShopBanner(image: string, order: number) {
+export async function addShopBanner(image: string, order: number, bannerMobile?: string) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_WEBSITE);
         const docRef = await db.collection("shop_banners").add({
             image,
+            bannerMobile: bannerMobile || null,
             order: order || 0,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
@@ -206,14 +207,17 @@ export async function addShopBanner(image: string, order: number) {
     }
 }
 
-export async function updateShopBanner(id: string, image: string, order: number) {
+export async function updateShopBanner(id: string, image: string, order: number, bannerMobile?: string) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_WEBSITE);
-        await db.collection("shop_banners").doc(id).update({
+        const updateData: any = {
             image,
             order,
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+        if (bannerMobile !== undefined) updateData.bannerMobile = bannerMobile;
+
+        await db.collection("shop_banners").doc(id).update(updateData);
 
         await logAction(session.email, session.name, "UPDATE_SHOP_BANNER", { id });
         revalidatePath("/shop");

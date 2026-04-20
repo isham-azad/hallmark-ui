@@ -21,6 +21,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const summary = (formData.get("summary") as string)?.trim() ?? "";
     const file = formData.get("image") as File | null;
     const bannerFile = formData.get("banner") as File | null;
+    const bannerMobileFile = formData.get("bannerMobile") as File | null;
 
     const validation = BrandUpdateSchema.safeParse({ id, name, summary });
     if (!validation.success) {
@@ -32,6 +33,11 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         summary,
         updatedAt: FieldValue.serverTimestamp(),
     };
+
+    // Handle removals
+    if (formData.has("image") && formData.get("image") === "") updateData.image = null;
+    if (formData.has("banner") && formData.get("banner") === "") updateData.banner = null;
+    if (formData.has("bannerMobile") && formData.get("bannerMobile") === "") updateData.bannerMobile = null;
 
     if (file && file.size > 0 && file.type.startsWith("image/")) {
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -53,6 +59,17 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
             "banner"
         );
         updateData.banner = bannerUrl;
+    }
+
+    if (bannerMobileFile && bannerMobileFile.size > 0 && bannerMobileFile.type.startsWith("image/")) {
+        const buffer = Buffer.from(await bannerMobileFile.arrayBuffer());
+        const bannerMobileUrl = await uploadSingleImage(
+            buffer,
+            bannerMobileFile.type,
+            `brands/${id}`,
+            "mobile-banner"
+        );
+        updateData.bannerMobile = bannerMobileUrl;
     }
 
     await db.collection("brands").doc(id).update(updateData);

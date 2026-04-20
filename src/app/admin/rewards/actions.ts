@@ -2,6 +2,7 @@
 
 import db from "@/lib/firebase";
 import { sendVoucherEmail } from "@/lib/email";
+import { logAction, getAdminSession } from "@/lib/auth";
 
 export async function getRewardsHistory() {
     try {
@@ -172,6 +173,18 @@ export async function updateRedemptionStatus(requestId: string, status: string) 
             }
         }
 
+        // Log action
+        const admin = await getAdminSession();
+        if (admin) {
+            await logAction(admin.email, admin.name, "REWARD_STATUS_UPDATE", {
+                requestId,
+                status,
+                client: redemptionData.b2bClientCompany,
+                amount: redemptionData.amount,
+                method: redemptionData.method
+            });
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error updating redemption:", error);
@@ -219,10 +232,24 @@ export async function getGiftVouchers() {
 
 export async function voidVoucher(voucherId: string) {
     try {
+        const voucherDoc = await db.collection("gift_vouchers").doc(voucherId).get();
+        const voucherData = voucherDoc.data();
+
         await db.collection("gift_vouchers").doc(voucherId).update({
             status: "Void",
             updatedAt: new Date()
         });
+
+        // Log action
+        const admin = await getAdminSession();
+        if (admin) {
+            await logAction(admin.email, admin.name, "GIFT_VOUCHER_VOID", {
+                voucherId,
+                code: voucherData?.code,
+                client: voucherData?.b2bClientCompany
+            });
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error voiding voucher:", error);
@@ -270,6 +297,19 @@ export async function addManualPoints(clientId: string, amount: number, invoiceN
         });
 
         await batch.commit();
+
+        // Log action
+        const admin = await getAdminSession();
+        if (admin) {
+            await logAction(admin.email, admin.name, amount >= 0 ? "REWARD_ADD_MANUAL" : "REWARD_DEDUCT_MANUAL", {
+                clientId,
+                client: clientData.companyName,
+                amount,
+                invoiceAmount: invoiceAmount || 0,
+                invoiceNo
+            });
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error adding manual points:", error);

@@ -15,18 +15,18 @@ const addresses = [
             </>
         )
     },
-    {
-        id: "tamilnadu",
-        label: "Tamil Nadu",
-        content: (
-            <>
-                <strong>Hallmark Enterprises</strong><br />
-                C.Puthoor, Aralvaimozhi,<br />
-                Kanyakumari Dist<br />
-                Tamil Nadu - 629301
-            </>
-        )
-    },
+    // {
+    //     id: "tamilnadu",
+    //     label: "Tamil Nadu",
+    //     content: (
+    //         <>
+    //             <strong>Hallmark Enterprises</strong><br />
+    //             C.Puthoor, Aralvaimozhi,<br />
+    //             Kanyakumari Dist<br />
+    //             Tamil Nadu - 629301
+    //         </>
+    //     )
+    // },
     {
         id: "newdelhi",
         label: "New Delhi",

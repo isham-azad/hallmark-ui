@@ -117,12 +117,13 @@ export default function Header() {
                     </button>
                 ) : mounted && b2bUser ? (
                     <Link className="btn-getstarted d-inline-flex position-relative ms-auto" href="/shop" style={{ zIndex: 1001 }}>
-                        Shop Online
+                        Order Online
                     </Link>
                 ) : (
                     <>
-                        <a className="btn-getstarted d-inline-flex position-relative ms-auto" role="button" tabIndex={0} onClick={() => setIsDistributorOpen(true)} style={{ zIndex: 1001, cursor: 'pointer' }}>
-                            Become A Distributor
+                        <a className="btn-getstarted d-inline-flex position-relative ms-auto" role="button" tabIndex={0} onClick={() => setIsDistributorOpen(true)} style={{ zIndex: 1001, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <span className="d-none d-sm-inline">Become A Distributor</span>
+                            <span className="d-inline d-sm-none">Distributor</span>
                         </a>
                     </>
                 )}
@@ -147,8 +148,8 @@ export default function Header() {
                                 ))}
                             </ul>
                         </li>
+                        <li><Link href="/#investors">Investors</Link></li>
                         <li><Link href="/#contact">Contact Us</Link></li>
-                        <li><Link href="/#investors" className={pathname === "#investors" ? "active" : ""}>Investors</Link></li>
                     </ul>
                     <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>
