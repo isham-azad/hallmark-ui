@@ -29,6 +29,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const summary = (formData.get("summary") as string)?.trim() ?? "";
     const file = formData.get("image") as File | null;
     const bannerFile = formData.get("banner") as File | null;
+    const bannerMobileFile = formData.get("bannerMobile") as File | null;
 
     const validation = BrandSchema.safeParse({ name, summary });
     if (!validation.success) {
@@ -38,6 +39,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const id = slugify(name);
     let imageUrl: string | null = null;
     let bannerUrl: string | null = null;
+    let bannerMobileUrl: string | null = null;
 
     if (file && file.size > 0 && file.type.startsWith("image/")) {
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -59,11 +61,22 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
         );
     }
 
+    if (bannerMobileFile && bannerMobileFile.size > 0 && bannerMobileFile.type.startsWith("image/")) {
+        const buffer = Buffer.from(await bannerMobileFile.arrayBuffer());
+        bannerMobileUrl = await uploadSingleImage(
+            buffer,
+            bannerMobileFile.type,
+            `brands/${id}`,
+            "mobile-banner"
+        );
+    }
+
     await db.collection("brands").doc(id).set({
         name,
         summary,
         image: imageUrl,
         banner: bannerUrl,
+        bannerMobile: bannerMobileUrl,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });

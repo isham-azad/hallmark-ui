@@ -138,36 +138,34 @@ export function PaymentMethodsShimmer() {
 export function BrandOrCategoryPageShimmer({ cardCount = 8 }: { cardCount?: number }) {
     return (
         <>
-            <section className="section light-background" style={{ padding: "80px 0" }}>
-                <div className="container">
-                    <div className="row align-items-center">
-                        <div className="col-lg-4 text-center mb-4 mb-lg-0">
-                            <ShimmerBox style={{ width: 150, height: 150, margin: "0 auto", borderRadius: 12 }} />
-                        </div>
-                        <div className="col-lg-8">
-                            <ShimmerBox style={{ height: 40, width: "60%", marginBottom: 16 }} />
-                            <ShimmerBox style={{ height: 16, width: "100%", marginBottom: 8 }} />
-                            <ShimmerBox style={{ height: 16, width: "95%", marginBottom: 8 }} />
-                            <ShimmerBox style={{ height: 16, width: "80%" }} />
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section className="section">
-                <div className="container">
-                    <div className="section-title text-center mb-5">
-                        <ShimmerBox style={{ height: 32, width: 280, margin: "0 auto 12px" }} />
-                        <ShimmerBox style={{ height: 18, width: 200, margin: "0 auto" }} />
-                    </div>
-                    <div className="row gy-4">
-                        {Array.from({ length: cardCount }).map((_, i) => (
-                            <div key={i} className="col-lg-3 col-md-6">
-                                <ProductCardShimmer />
+            <div className="brand-shimmer" style={{ marginTop: '132px' }}>
+                {/* Banner Shimmer */}
+                <ShimmerBox style={{ width: '100%', height: '400px', marginBottom: '0' }} />
+
+                {/* Content Header Shimmer (Previously commented out but kept for spacing/structure) */}
+                <section className="section light-background" style={{ padding: "40px 0" }}>
+                    <div className="container">
+                        <div className="row align-items-center">
+                            <div className="col-lg-12 text-center">
+                                <ShimmerBox style={{ height: 40, width: "300px", margin: "0 auto 16px" }} />
+                                <ShimmerBox style={{ height: 18, width: "200px", margin: "0 auto" }} />
                             </div>
-                        ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <section className="section">
+                    <div className="container">
+                        <div className="row gy-4 mt-2">
+                            {Array.from({ length: cardCount }).map((_, i) => (
+                                <div key={i} className="col-lg-3 col-md-6 col-6 d-flex align-items-stretch">
+                                    <ProductCardShimmer />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            </div>
         </>
     );
 }
@@ -999,7 +997,7 @@ export function B2BAccountShimmer() {
                         <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
                             <ShimmerBox style={{ height: 50, width: '100%', marginBottom: 20 }} />
                             <div className="p-4 pt-0 d-flex flex-column gap-3">
-                                {[1, 2, 3].map(i => (
+                                {[1, 2, 3, 4].map(i => (
                                     <div key={i} className="p-3 rounded-4 bg-light border d-flex align-items-center gap-3">
                                         <ShimmerBox style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0 }} />
                                         <div className="flex-grow-1">
@@ -1087,6 +1085,90 @@ export function B2BAccountShimmer() {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+/** Comprehensive skeleton for the full Shop page (Banner + Filters + Grid) */
+export function ShopPageShimmer() {
+    return (
+        <div className="shop-shimmer">
+            {/* Banner Shimmer */}
+            <div className="container" style={{ marginTop: "160px", marginBottom: "20px" }}>
+                <div className="shop-banner-slider-container">
+                    <ShimmerBox style={{ width: "100%", height: "100%" }} />
+                </div>
+            </div>
+
+            {/* Breadcrumbs & Title Shimmer */}
+            <div className="container py-4">
+                <nav className="breadcrumbs" style={{ background: "transparent", borderBottom: "none", padding: "15px 0" }}>
+                    <div className="d-flex gap-2">
+                        <ShimmerBox style={{ height: 16, width: 40 }} />
+                        <ShimmerBox style={{ height: 16, width: 80 }} />
+                    </div>
+                </nav>
+
+                <div className="heading text-center" style={{ paddingTop: '50px' }}>
+                    <div className="row d-flex justify-content-center">
+                        <div className="col-lg-10">
+                            <ShimmerBox style={{ height: 48, width: 300, margin: "0 auto 12px", borderRadius: 12 }} />
+                            <ShimmerBox style={{ height: 20, width: "60%", margin: "0 auto 40px" }} />
+
+                            <div className="row justify-content-center">
+                                <div className="col-lg-10">
+                                    <ShimmerBox style={{ height: 60, width: "100%", borderRadius: 50 }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Shop Content Grid Shimmer */}
+            <section className="section shop">
+                <div className="container">
+                    <div className="shop-header mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <ShimmerBox style={{ height: 32, width: 220 }} />
+                            <div className="d-flex gap-2">
+                                <ShimmerBox style={{ height: 40, width: 140, borderRadius: 10 }} />
+                            </div>
+                        </div>
+
+                        <CategoryFilterShimmer />
+
+                        <div className="results-info mt-3">
+                            <ShimmerBox style={{ height: 16, width: 250 }} />
+                        </div>
+                    </div>
+
+                    <div className="row gy-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="col-6 col-lg-3 col-md-4 col-sm-6">
+                                <ProductCardShimmer />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <style jsx>{`
+                .shop-banner-slider-container {
+                    position: relative;
+                    height: min(400px, 60vw);
+                    border-radius: 24px;
+                    overflow: hidden;
+                    background: #f1f5f9;
+                }
+                
+                @media (max-width: 768px) {
+                    .shop-banner-slider-container {
+                        height: 250px;
+                        border-radius: 16px;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

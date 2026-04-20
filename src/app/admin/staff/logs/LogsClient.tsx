@@ -8,6 +8,8 @@ export default function LogsClient({ initialLogs }: { initialLogs: AuditLog[] })
   const [logs, setLogs] = useState<AuditLog[]>(initialLogs);
   const [loading, setLoading] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const refreshLogs = async () => {
     setLoading(true);
     const data = await getAuditLogs();
@@ -16,10 +18,40 @@ export default function LogsClient({ initialLogs }: { initialLogs: AuditLog[] })
   };
 
   useEffect(() => {
-    // Optional: auto-refresh every 30 seconds
     const interval = setInterval(refreshLogs, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const filteredLogs = logs.filter(log => 
+    log.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    JSON.stringify(log.details).toLowerCase().includes(searchQuery.toLowerCase()) ||
+    log.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const exportToCSV = () => {
+    const headers = ["Timestamp", "Admin Name", "Email", "Action", "Details"];
+    const rows = filteredLogs.map(log => [
+      new Date(log.timestamp).toLocaleString(),
+      log.name,
+      log.email,
+      log.action,
+      JSON.stringify(log.details)
+    ]);
+
+    const csvContent = "\uFEFF" + [headers, ...rows].map(row => 
+      row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="logs-container">
@@ -28,25 +60,47 @@ export default function LogsClient({ initialLogs }: { initialLogs: AuditLog[] })
           <h2 className="section-title">Audit Logs</h2>
           <p className="section-desc">Track all administrative changes and actions across the system.</p>
         </div>
-        <button
-          className="refresh-button"
-          onClick={refreshLogs}
-          disabled={loading}
-        >
-          <i className={`bi bi-arrow-clockwise ${loading ? 'spin' : ''}`}></i>
-          <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
-        </button>
+        <div className="header-actions">
+          <button className="export-button" onClick={exportToCSV} title="Export to CSV">
+            <i className="bi bi-download"></i>
+            <span>Export CSV</span>
+          </button>
+          <button
+            className="refresh-button"
+            onClick={refreshLogs}
+            disabled={loading}
+          >
+            <i className={`bi bi-arrow-clockwise ${loading ? 'spin' : ''}`}></i>
+            <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="controls-row">
+        <div className="search-wrapper">
+          <i className="bi bi-search"></i>
+          <input 
+            type="text" 
+            placeholder="Search by name, action, or details..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        <div className="logs-count">
+          Showing {filteredLogs.length} of {logs.length} entries
+        </div>
       </div>
 
       <div className="card logs-card">
         <div className="logs-list">
-          {logs.length === 0 ? (
+          {filteredLogs.length === 0 ? (
             <div className="empty-logs">
               <i className="bi bi-journal-text"></i>
-              <p>No activity logs found.</p>
+              <p>{searchQuery ? 'No logs match your search.' : 'No activity logs found.'}</p>
             </div>
           ) : (
-            logs.map((log) => (
+            filteredLogs.map((log) => (
               <div key={log.id} className="log-item">
                 <div className="log-left">
                   <div className="log-avatar">
@@ -89,21 +143,47 @@ export default function LogsClient({ initialLogs }: { initialLogs: AuditLog[] })
         .section-header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 2rem;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+
+        .header-actions {
+          display: flex;
+          gap: 0.75rem;
         }
 
         .section-title {
           font-size: 1.5rem;
           font-weight: 700;
           color: #1e293b;
-          margin: 0 0 0.5rem 0;
+          margin: 0 0 0.25rem 0;
         }
 
         .section-desc {
           color: #64748b;
           font-size: 0.875rem;
           margin: 0;
+        }
+
+        .export-button {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.625rem 1.25rem;
+          background: white;
+          color: #475569;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          font-weight: 600;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .export-button:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          color: #1e293b;
         }
 
         .refresh-button {
@@ -119,6 +199,52 @@ export default function LogsClient({ initialLogs }: { initialLogs: AuditLog[] })
           font-size: 0.875rem;
           cursor: pointer;
           transition: all 0.2s;
+        }
+
+        .controls-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.25rem;
+          gap: 1rem;
+        }
+
+        .search-wrapper {
+          position: relative;
+          flex: 1;
+          max-width: 400px;
+        }
+
+        .search-wrapper i {
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+          font-size: 0.875rem;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 0.625rem 1rem 0.625rem 2.5rem;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          font-size: 0.875rem;
+          color: #1e293b;
+          outline: none;
+          transition: all 0.2s;
+        }
+
+        .search-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .logs-count {
+          font-size: 0.8125rem;
+          color: #64748b;
+          font-weight: 500;
         }
 
         .refresh-button:hover:not(:disabled) {

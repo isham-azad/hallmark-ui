@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { ProductCardShimmer, CategoryFilterShimmer } from "@/components/Shimmer";
+import { ProductCardShimmer, CategoryFilterShimmer, ShopPageShimmer } from "@/components/Shimmer";
 import Image from "next/image";
 
 interface ShopProduct {
@@ -62,7 +62,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
     const [productsLoading, setProductsLoading] = useState(!initialData?.products);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
-    const [shopBanners, setShopBanners] = useState<{ id: string; image: string }[]>(initialData?.banners ?? []);
+    const [shopBanners, setShopBanners] = useState<{ id: string; image: string; bannerMobile?: string }[]>(initialData?.banners ?? []);
     const [currentBanner, setCurrentBanner] = useState(0);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [hoverImgIdx, setHoverImgIdx] = useState(0);
@@ -198,14 +198,8 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
         }
     }, [authChecking, isB2B, router]);
 
-    if (authChecking) {
-        return (
-            <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
-                <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}>
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
+    if (authChecking || productsLoading) {
+        return <ShopPageShimmer />;
     }
 
     if (!isB2B) {
@@ -217,77 +211,123 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
             {/* Shop Banners Slider */}
             {shopBanners.length > 0 && (
                 <div className="container" style={{ marginTop: "160px", marginBottom: "20px" }} data-aos="fade-up">
-                    <div className="shop-banner-slider" style={{
-                        position: "relative",
-                        height: "min(400px, 60vw)",
-                        borderRadius: "24px",
-                        overflow: "hidden",
-                        // boxShadow: "0 20px 40px rgba(0,0,0,0.12)"
-                    }}>
-                        {shopBanners.map((banner, index) => (
-                            <div key={banner.id} style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                opacity: currentBanner === index ? 1 : 0,
-                                transform: currentBanner === index ? "scale(1)" : "scale(1.05)",
-                                transition: "opacity 1s ease-in-out, transform 1s ease-in-out",
-                                zIndex: currentBanner === index ? 1 : 0,
-                            }}>
-                                <Image
-                                    src={banner.image}
-                                    alt={`Promo Banner ${index}`}
-                                    fill
-                                    priority={index === 0}
-                                    style={{ objectFit: "cover" }}
-                                    sizes="100vw"
-                                />
-                                <div style={{
-                                    position: "absolute",
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    background: "linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4))",
-                                    zIndex: 1
-                                }}></div>
-                            </div>
-                        ))}
-                        {shopBanners.length > 1 && (
-                            <div className="slider-dots" style={{
-                                position: "absolute",
-                                bottom: "20px",
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                display: "flex",
-                                gap: "10px",
-                                zIndex: 10
-                            }}>
-                                {shopBanners.map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => setCurrentBanner(i)}
-                                        style={{
-                                            width: currentBanner === i ? "24px" : "10px",
-                                            height: "10px",
-                                            borderRadius: "5px",
-                                            border: "none",
-                                            background: currentBanner === i ? "#ffc451" : "rgba(255,255,255,0.6)",
-                                            cursor: "pointer",
-                                            padding: 0,
-                                            transition: "0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
-                                        }}
-                                        aria-label={`Go to slide ${i + 1}`}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                    <div className="shop-banner-slider-container">
+                        <div className="shop-banner-slider">
+                            {shopBanners.map((banner, index) => (
+                                <div key={banner.id} className={`banner-slide ${currentBanner === index ? 'active' : ''}`}>
+                                    {/* Desktop Banner */}
+                                    <div className="d-none d-md-block h-100 w-100 position-relative">
+                                        <Image
+                                            src={banner.image}
+                                            alt={`Promo Banner Desktop ${index}`}
+                                            fill
+                                            priority={index === 0}
+                                            style={{ objectFit: "cover" }}
+                                            sizes="100vw"
+                                        />
+                                    </div>
+                                    {/* Mobile Banner */}
+                                    <div className="d-block d-md-none h-100 w-100 position-relative">
+                                        <Image
+                                            src={banner.bannerMobile || banner.image}
+                                            alt={`Promo Banner Mobile ${index}`}
+                                            fill
+                                            priority={index === 0}
+                                            style={{ objectFit: "cover" }}
+                                            sizes="100vw"
+                                        />
+                                    </div>
+                                    <div className="banner-overlay"></div>
+                                </div>
+                            ))}
+                            {shopBanners.length > 1 && (
+                                <div className="slider-dots">
+                                    {shopBanners.map((_, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setCurrentBanner(i)}
+                                            className={currentBanner === i ? "active" : ""}
+                                            aria-label={`Go to slide ${i + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
+
+            <style jsx>{`
+                .shop-banner-slider-container {
+                    position: relative;
+                    height: min(400px, 60vw);
+                    border-radius: 24px;
+                    overflow: hidden;
+                    background: #f1f5f9;
+                }
+                
+                @media (max-width: 768px) {
+                    .shop-banner-slider-container {
+                        height: 250px;
+                        border-radius: 16px;
+                    }
+                }
+
+                .shop-banner-slider {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .banner-slide {
+                    position: absolute;
+                    inset: 0;
+                    opacity: 0;
+                    transform: scale(1.05);
+                    transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+                    z-index: 0;
+                }
+
+                .banner-slide.active {
+                    opacity: 1;
+                    transform: scale(1);
+                    z-index: 1;
+                }
+
+                .banner-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3));
+                    z-index: 1;
+                }
+
+                .slider-dots {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    gap: 10px;
+                    z-index: 10;
+                }
+
+                .slider-dots button {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 5px;
+                    border: none;
+                    background: rgba(255,255,255,0.6);
+                    cursor: pointer;
+                    padding: 0;
+                    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                }
+
+                .slider-dots button.active {
+                    width: 24px;
+                    background: #ffc451;
+                }
+            `}</style>
 
             {/* Breadcrumbs (Refined) */}
             <div className="page-title mt-2" data-aos="fade">
@@ -296,7 +336,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                         <ol style={{ display: 'flex', listStyle: 'none', padding: 0, margin: 0, gap: '5px', fontSize: '14px', color: '#64748b' }}>
                             <li><Link href="/" style={{ color: '#ffc451', textDecoration: 'none' }}>Home</Link></li>
                             {/* <li style={{ color: '#94a3b8' }}>/</li> */}
-                            <li className="current" style={{ color: '#1e293b', fontWeight: '500' }}>Shop Online</li>
+                            <li className="current" style={{ color: '#1e293b', fontWeight: '500' }}>Order Online</li>
                         </ol>
                     </div>
                 </nav>
@@ -305,7 +345,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                     <div className="container">
                         <div className="row d-flex justify-content-center text-center">
                             <div className="col-lg-10">
-                                <h1 style={{ fontSize: "2.5rem", fontWeight: "800", color: "#221f51", marginBottom: "0.5rem" }}>Shop Online</h1>
+                                <h1 style={{ fontSize: "2.5rem", fontWeight: "800", color: "#221f51", marginBottom: "0.5rem" }}>Order Online</h1>
                                 <p className="mb-4" style={{ fontSize: "clamp(0.9rem, 2vw, 1.05rem)", color: "#64748b" }}>Elevate your lifestyle with Hallmark Essentials.</p>
                                 <div className="row justify-content-center">
                                     <div className="col-lg-10 col-md-11 col-12">
@@ -404,52 +444,40 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                             </div>
                         </div>
 
-                        {productsLoading ? (
-                            <CategoryFilterShimmer />
-                        ) : (
-                            <div className="filter-scroll-wrapper">
-                                <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
+                        <div className="filter-scroll-wrapper">
+                            <div id="shop-categories-chips" className="chip-list" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', border: 'none' }}>
+                                <span
+                                    role="button"
+                                    onClick={() => { setSelectedCategory("all"); setDisplayCount(8); }}
+                                    className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
+                                >
+                                    {selectedCategory === "all" && <i className="bi bi-check2 me-1"></i>}
+                                    All Products
+                                </span>
+                                {categories.map((c) => (
                                     <span
+                                        key={c.id}
                                         role="button"
-                                        onClick={() => { setSelectedCategory("all"); setDisplayCount(8); }}
-                                        className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
+                                        onClick={() => { setSelectedCategory(c.id); setDisplayCount(8); }}
+                                        className={`filter-chip ${selectedCategory === c.id ? "active" : ""}`}
                                     >
-                                        {selectedCategory === "all" && <i className="bi bi-check2 me-1"></i>}
-                                        All Products
+                                        {selectedCategory === c.id && (
+                                            <span onClick={(e) => { e.stopPropagation(); setSelectedCategory("all"); }} className="me-2 text-muted">
+                                                <i className="bi bi-x-lg" style={{ fontSize: '0.7rem', color: 'white' }}></i>
+                                            </span>
+                                        )}
+                                        {c.name}
                                     </span>
-                                    {categories.map((c) => (
-                                        <span
-                                            key={c.id}
-                                            role="button"
-                                            onClick={() => { setSelectedCategory(c.id); setDisplayCount(8); }}
-                                            className={`filter-chip ${selectedCategory === c.id ? "active" : ""}`}
-                                        >
-                                            {selectedCategory === c.id && (
-                                                <span onClick={(e) => { e.stopPropagation(); setSelectedCategory("all"); }} className="me-2 text-muted">
-                                                    <i className="bi bi-x-lg" style={{ fontSize: '0.7rem', color: 'white' }}></i>
-                                                </span>
-                                            )}
-                                            {c.name}
-                                        </span>
-                                    ))}
-                                </div>
+                                ))}
                             </div>
-                        )}
+                        </div>
 
                         <div className="results-info mt-3">
                             <span className="text-muted small">{filteredProducts.length} Results for <strong>"{selectedCategory === 'all' ? 'All Products' : categories.find(c => c.id === selectedCategory)?.name}"</strong></span>
                         </div>
                     </div>
 
-                    {productsLoading ? (
-                        <div className="row gy-4" id="productsContainer">
-                            {Array.from({ length: 8 }).map((_, i) => (
-                                <div key={i} className="col-6 col-lg-3 col-md-4 col-sm-6">
-                                    <ProductCardShimmer />
-                                </div>
-                            ))}
-                        </div>
-                    ) : displayedProducts.length > 0 ? (
+                    {displayedProducts.length > 0 ? (
                         <div className="row gy-4" id="productsContainer">
                             {displayedProducts.map((product) => (
                                 <div key={product.id} className="col-6 col-lg-3 col-md-4 col-sm-6 product-item-wrapper" data-aos="fade-up">

@@ -401,8 +401,7 @@ export default function ProductAddClient({ brands, categories }: ProductAddClien
                     <div className="form-section">
                         <h3>Media</h3>
                         <div className="input-group">
-                            <label>Product Images (max {MAX_IMAGES})</label>
-                            <p className="media-hint">Images are saved under public/assets/img/products/[SKU]/</p>
+                            <label>Product Images (500 x 500 px, max {MAX_IMAGES})</label>
                             <input
                                 ref={fileInputRef}
                                 type="file"

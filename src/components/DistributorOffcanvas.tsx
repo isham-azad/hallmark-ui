@@ -180,7 +180,7 @@ export default function DistributorOffcanvas() {
                         </div>
 
                         <div className="mb-3">
-                            <label htmlFor="pin" className="form-label small fw-bold text-muted">PIN Code *</label>
+                            <label htmlFor="pin" className="form-label small fw-bold text-muted">PIN Code</label>
                             <input
                                 type="text"
                                 className="form-control bg-light"
@@ -188,7 +188,6 @@ export default function DistributorOffcanvas() {
                                 placeholder="6-digit PIN"
                                 value={formData.pin}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
 
@@ -206,7 +205,7 @@ export default function DistributorOffcanvas() {
                         </div>
 
                         <div className="mb-4">
-                            <label htmlFor="email" className="form-label small fw-bold text-muted">Email ID *</label>
+                            <label htmlFor="email" className="form-label small fw-bold text-muted">Email ID</label>
                             <input
                                 type="email"
                                 className="form-control bg-light"
@@ -214,7 +213,6 @@ export default function DistributorOffcanvas() {
                                 placeholder="example@email.com"
                                 value={formData.email}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
 

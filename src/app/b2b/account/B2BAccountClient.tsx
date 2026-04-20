@@ -64,6 +64,16 @@ interface B2BOrder {
     createdAt: string;
 }
 
+interface LedgerEntry {
+    id: string;
+    date: string;
+    referenceNo: string;
+    description: string;
+    amount: number;
+    type: "Debit" | "Credit";
+    balance: number;
+}
+
 export default function B2BAccountClient() {
     const router = useRouter();
     const [user, setUser] = useState<B2BUser | null>(null);
@@ -100,6 +110,13 @@ export default function B2BAccountClient() {
     const [orderSearch, setOrderSearch] = useState("");
     const [orderStatusFilter, setOrderStatusFilter] = useState("All");
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+    // Ledger offcanvas
+    const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+    const [loadingLedger, setLoadingLedger] = useState(false);
+    const [showLedgerOffcanvas, setShowLedgerOffcanvas] = useState(false);
+    const [ledgerSearch, setLedgerSearch] = useState("");
+    const [ledgerStats, setLedgerStats] = useState({ pending: 0, paid: 0, redeemed: 0 });
 
     const isProduction = process.env.NODE_ENV === "production";
 
@@ -149,6 +166,23 @@ export default function B2BAccountClient() {
         }
     };
 
+    const openLedgerHistory = () => {
+        setShowLedgerOffcanvas(true);
+        if (ledgerEntries.length === 0) {
+            setLoadingLedger(true);
+            fetch("/api/b2b/ledger")
+                .then((r) => r.json())
+                .then((res) => {
+                    if (res.success) {
+                        setLedgerEntries(res.entries || []);
+                        if (res.stats) setLedgerStats(res.stats);
+                    }
+                })
+                .catch(console.error)
+                .finally(() => setLoadingLedger(false));
+        }
+    };
+
     const exportOrdersCSV = () => {
         const filtered = orders.filter(o => {
             const q = orderSearch.toLowerCase().trim();
@@ -172,7 +206,7 @@ export default function B2BAccountClient() {
         ]);
 
         const csvContent = [headers, ...rows]
-            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"` ).join(","))
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"`).join(","))
             .join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -208,7 +242,7 @@ export default function B2BAccountClient() {
         ]);
 
         const csvContent = [headers, ...rows]
-            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"` ).join(","))
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"`).join(","))
             .join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -216,6 +250,37 @@ export default function B2BAccountClient() {
         const link = document.createElement("a");
         link.href = url;
         link.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const exportLedgerCSV = () => {
+        const filtered = ledgerEntries.filter(l => {
+            const q = ledgerSearch.toLowerCase().trim();
+            if (q && !l.referenceNo.toLowerCase().includes(q)) return false;
+            return true;
+        });
+        if (filtered.length === 0) return;
+
+        const headers = ["Reference No", "Date", "Description", "Type", "Amount", "Balance"];
+        const rows = filtered.map(l => [
+            l.referenceNo,
+            new Date(l.date).toLocaleDateString("en-IN"),
+            l.description,
+            l.type,
+            l.amount,
+            l.balance
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, "\"\"")}"`).join(","))
+            .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `payments_ledger-${new Date().toISOString().split("T")[0]}.csv`;
         link.click();
         URL.revokeObjectURL(url);
     };
@@ -435,7 +500,7 @@ export default function B2BAccountClient() {
                                         </Link>
                                     ))}
                                     {/* Order History button */}
-                                    <button
+                                    {/* <button
                                         type="button"
                                         onClick={openOrderHistory}
                                         style={{
@@ -481,6 +546,57 @@ export default function B2BAccountClient() {
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontWeight: 700, fontSize: "0.9rem", lineHeight: 1.2 }}>Order History</div>
                                             <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>View all your past orders</div>
+                                        </div>
+                                        <i className="bi bi-arrow-right" style={{ color: "#cbd5e1", flexShrink: 0 }}></i>
+                                    </button> */}
+
+                                    {/* Payments Ledger button */}
+                                    <button
+                                        type="button"
+                                        onClick={openLedgerHistory}
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            gap: "1rem",
+                                            padding: "0.875rem 1rem",
+                                            borderRadius: "14px",
+                                            background: "#f8fafc",
+                                            border: "1px solid #e2e8f0",
+                                            textAlign: "left",
+                                            cursor: "pointer",
+                                            color: "#0f172a",
+                                            transition: "all 0.22s ease",
+                                            width: "100%",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            const el = e.currentTarget;
+                                            el.style.background = "linear-gradient(135deg, #1a1a2e, #0f3460)";
+                                            el.style.color = "white";
+                                            el.style.borderColor = "transparent";
+                                            el.style.transform = "translateX(4px)";
+                                            el.style.boxShadow = "0 6px 20px rgba(15,52,96,0.18)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            const el = e.currentTarget;
+                                            el.style.background = "#f8fafc";
+                                            el.style.color = "#0f172a";
+                                            el.style.borderColor = "#e2e8f0";
+                                            el.style.transform = "none";
+                                            el.style.boxShadow = "none";
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: "42px", height: "42px", borderRadius: "10px",
+                                            background: "linear-gradient(135deg, #ffc451, #f8a623)",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            fontSize: "1.1rem", color: "#1a1a2e", flexShrink: 0,
+                                        }}>
+                                            <i className="bi bi-journal-text"></i>
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontWeight: 700, fontSize: "0.9rem", lineHeight: 1.2 }}>Payments Ledger</div>
+                                            <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>View your payment statements</div>
                                         </div>
                                         <i className="bi bi-arrow-right" style={{ color: "#cbd5e1", flexShrink: 0 }}></i>
                                     </button>
@@ -529,7 +645,7 @@ export default function B2BAccountClient() {
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h5 className="mb-0 fw-bold"><i className="bi bi-gift-fill me-2"></i> Rewards Program</h5>
-                                            <div className="small mt-1 opacity-75">Earn {user.rewardPercentage ?? 0}% points on every purchase!</div>
+                                            <div className="small mt-1 opacity-75">Earn {user.rewardPercentage ?? 0}% cash back on every purchase!</div>
                                         </div>
                                         <div className="text-end">
                                             <div className="small opacity-75">Available Balance</div>
@@ -655,45 +771,43 @@ export default function B2BAccountClient() {
                                                         ))}
                                                     </div>
                                                 ) : vouchers.length > 0 ? (
-                                                    <div className="d-flex flex-wrap gap-3">
+                                                    <div className="row g-3">
                                                         {vouchers.map((v) => {
                                                             const isExhausted = v.balance <= 0 || v.status?.toLowerCase().includes('exhaust');
                                                             const isExpired = v.expiryDate && new Date(v.expiryDate) < new Date() || v.status?.toLowerCase().includes('expire');
                                                             const isInactive = isExhausted || isExpired;
 
                                                             return (
-                                                                <div 
-                                                                    key={v.id} 
-                                                                    className={`voucher-mini-box ${isInactive ? 'is-disabled' : ''}`}
-                                                                    onClick={() => !isInactive && setViewingVoucher(v)}
-                                                                >
-                                                                    <div className="mini-box-icon">
-                                                                        <i className={`bi ${isInactive ? 'bi-ticket-x' : 'bi-ticket-perforated'}`}></i>
-                                                                    </div>
-                                                                    <div className="mini-box-content">
-                                                                        <div className="mini-box-code">{v.code.substring(0, 4)}...{v.code.slice(-4)}</div>
-                                                                        <div className="mini-box-balance" style={{ color: isInactive ? '#94a3b8' : '#16a34a' }}>
-                                                                            ₹{v.balance.toLocaleString()}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div 
-                                                                        className="mini-box-badge"
-                                                                        style={{ 
-                                                                            background: isExhausted ? '#fff1f2' : isExpired ? '#f1f5f9' : '#f1f5f9',
-                                                                            color: isExhausted ? '#e11d48' : '#64748b'
-                                                                        }}
+                                                                <div key={v.id} className="col-xl-3 col-lg-4 col-sm-6">
+                                                                    <div
+                                                                        className={`voucher-mini-box ${isInactive ? 'is-disabled' : ''}`}
+                                                                        onClick={() => !isInactive && setViewingVoucher(v)}
                                                                     >
-                                                                        {v.status}
-                                                                    </div>
-                                                                    <div className={`mini-box-hover ${isInactive ? 'bg-secondary opacity-75' : ''}`}>
-                                                                        {isInactive ? (
-                                                                            <span className="small">{isExhausted ? 'Balance Empty' : 'Expired'}</span>
-                                                                        ) : (
-                                                                            <>
-                                                                                <span>View Details</span>
-                                                                                <i className="bi bi-arrow-up-right ms-1"></i>
-                                                                            </>
-                                                                        )}
+                                                                        <div className="mini-box-top">
+                                                                            <div className="mini-box-icon">
+                                                                                <i className={`bi ${isInactive ? 'bi-ticket-x' : 'bi-ticket-perforated'}`}></i>
+                                                                            </div>
+                                                                            <div className="mini-box-badge" style={{ position: 'static' }}>
+                                                                                {v.status}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="mini-box-content mt-2">
+                                                                            <div className="text-muted" style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Voucher Code</div>
+                                                                            <div className="mini-box-code mb-1">{v.code.substring(0, 4)}...{v.code.slice(-4)}</div>
+                                                                            <div className="mini-box-balance">
+                                                                                ₹{v.balance.toLocaleString()}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className={`mini-box-hover ${isInactive ? 'bg-secondary opacity-75' : ''}`}>
+                                                                            {isInactive ? (
+                                                                                <span className="small">{isExhausted ? 'Balance Empty' : 'Expired'}</span>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <span>View Details</span>
+                                                                                    <i className="bi bi-arrow-up-right ms-1"></i>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             );
@@ -717,7 +831,7 @@ export default function B2BAccountClient() {
                         <div className="col-12">
                             <div className="account-card">
                                 <div className="card-head">
-                                    <i className="bi bi-info-circle-fill me-2"></i> How B2B Pricing Works
+                                    <i className="bi bi-info-circle-fill me-2"></i> Example How B2B Pricing Works
                                 </div>
                                 <div className="card-body-inner">
                                     <p className="text-muted mb-3">
@@ -758,6 +872,150 @@ export default function B2BAccountClient() {
                             )}
                         </button>
                     </div>
+                </div>
+            </div>
+
+            {/* Payments Ledger Offcanvas */}
+            <div
+                className={`offcanvas offcanvas-end ${showLedgerOffcanvas ? "show" : ""}`}
+                style={{ visibility: showLedgerOffcanvas ? "visible" : "hidden", width: "480px", zIndex: 1055, display: "flex", flexDirection: "column" }}
+                tabIndex={-1}
+            >
+                {/* Header */}
+                <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", padding: "1.25rem 1.5rem", flexShrink: 0 }}>
+                    <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 style={{ color: "#fff", fontWeight: 800, fontSize: "1.15rem", margin: 0 }}>
+                                <i className="bi bi-journal-text me-2" style={{ color: "#ffc451" }}></i>Payments Ledger
+                            </h5>
+                            <p style={{ color: "#94a3b8", fontSize: "0.78rem", margin: "4px 0 0" }}>
+                                {ledgerEntries.length} record{ledgerEntries.length !== 1 ? "s" : ""} total
+                            </p>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            {ledgerEntries.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={exportLedgerCSV}
+                                    style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "8px", padding: "0 10px", height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "0.80rem", fontWeight: 600, gap: "6px" }}
+                                >
+                                    <i className="bi bi-download"></i> Export
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setShowLedgerOffcanvas(false)}
+                                aria-label="Close"
+                                style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "8px", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "0.85rem" }}
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Search inside header */}
+                    <div className="mt-3 position-relative">
+                        <i className="bi bi-search position-absolute" style={{ left: "12px", top: "50%", transform: "translateY(-50%)", color: "#64748b", fontSize: "0.82rem", pointerEvents: "none" }}></i>
+                        <input
+                            type="text"
+                            placeholder="Search by reference no..."
+                            value={ledgerSearch}
+                            onChange={(e) => setLedgerSearch(e.target.value)}
+                            style={{ width: "100%", paddingLeft: "34px", paddingRight: ledgerSearch ? "34px" : "12px", height: "38px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.07)", color: "#fff", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }}
+                        />
+                        {ledgerSearch && (
+                            <button onClick={() => setLedgerSearch("")} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: 0 }}>
+                                <i className="bi bi-x-lg" style={{ fontSize: "0.8rem" }}></i>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "1rem 1.25rem", background: "#f8fafc" }}>
+                    {/* Stats Row */}
+                    {!loadingLedger && ledgerEntries.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "0.75rem", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                                <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Pending</div>
+                                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#d97706" }}>₹{ledgerStats.pending.toLocaleString("en-IN")}</div>
+                            </div>
+                            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "0.75rem", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                                <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Paid</div>
+                                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#166534" }}>₹{ledgerStats.paid.toLocaleString("en-IN")}</div>
+                            </div>
+                            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "0.75rem", textAlign: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                                <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.5px" }}>Redeemed</div>
+                                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#2563eb" }}>₹{ledgerStats.redeemed.toLocaleString("en-IN")}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {loadingLedger ? (
+                        <div className="d-flex flex-column gap-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} style={{ background: "#fff", borderRadius: "16px", padding: "1rem", border: "1px solid #e2e8f0" }}>
+                                    <div className="placeholder-glow mb-2"><span className="placeholder col-5 rounded" style={{ height: 16 }}></span></div>
+                                    <div className="placeholder-glow"><span className="placeholder col-3 rounded" style={{ height: 12 }}></span></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : ledgerEntries.filter(l => {
+                        const q = ledgerSearch.toLowerCase().trim();
+                        if (q && !l.referenceNo.toLowerCase().includes(q)) return false;
+                        return true;
+                    }).length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "4rem 1rem" }}>
+                            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem", color: "#94a3b8", fontSize: "1.75rem" }}>
+                                <i className="bi bi-journal-x"></i>
+                            </div>
+                            <h6 style={{ fontWeight: 800, color: "#0f172a", marginBottom: "0.5rem" }}>No Records Found</h6>
+                            <p style={{ color: "#64748b", fontSize: "0.85rem", margin: 0 }}>
+                                {ledgerSearch ? "Try adjusting your search filters." : "Your payments ledger is empty."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="d-flex flex-column gap-3">
+                            {ledgerEntries.filter(l => {
+                                const q = ledgerSearch.toLowerCase().trim();
+                                if (q && !l.referenceNo.toLowerCase().includes(q)) return false;
+                                return true;
+                            }).map(entry => (
+                                <div key={entry.id} style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", position: "relative" }}>
+                                    <div style={{ padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                                        <div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                                                <h6 style={{ margin: 0, fontWeight: 800, color: "#0f172a", fontSize: "0.95rem" }}>
+                                                    {entry.referenceNo}
+                                                </h6>
+                                                <span style={{
+                                                    padding: "3px 8px", borderRadius: "6px", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px",
+                                                    background: entry.type === 'Credit' ? "#dcfce7" : "#fee2e2",
+                                                    color: entry.type === 'Credit' ? "#166534" : "#991b1b"
+                                                }}>
+                                                    {entry.type}
+                                                </span>
+                                            </div>
+                                            <div style={{ color: "#64748b", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "5px" }}>
+                                                <i className="bi bi-calendar3"></i> {new Date(entry.date).toLocaleDateString("en-IN")}
+                                            </div>
+                                            <div style={{ color: "#475569", fontSize: "0.85rem", marginTop: "8px", lineHeight: "1.4" }}>
+                                                {entry.description}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                            <div style={{ fontWeight: 800, fontSize: "1rem", color: entry.type === "Debit" ? "#991b1b" : "#166534", marginBottom: "2px" }}>
+                                                {entry.type === "Debit" ? "-" : "+"}₹{entry.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                            </div>
+                                            <div style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
+                                                Bal: ₹{entry.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -872,11 +1130,11 @@ export default function B2BAccountClient() {
                                 .map(order => {
                                     const isExpanded = expandedOrderId === order.id;
                                     const statusMap: Record<string, { color: string; bg: string; dot: string }> = {
-                                        Delivered:  { color: "#16a34a", bg: "#f0fdf4", dot: "#22c55e" },
+                                        Delivered: { color: "#16a34a", bg: "#f0fdf4", dot: "#22c55e" },
                                         Processing: { color: "#b45309", bg: "#fffbeb", dot: "#f59e0b" },
-                                        Shipped:    { color: "#0369a1", bg: "#eff6ff", dot: "#3b82f6" },
-                                        Pending:    { color: "#64748b", bg: "#f1f5f9", dot: "#94a3b8" },
-                                        Cancelled:  { color: "#dc2626", bg: "#fef2f2", dot: "#f87171" },
+                                        Shipped: { color: "#0369a1", bg: "#eff6ff", dot: "#3b82f6" },
+                                        Pending: { color: "#64748b", bg: "#f1f5f9", dot: "#94a3b8" },
+                                        Cancelled: { color: "#dc2626", bg: "#fef2f2", dot: "#f87171" },
                                     };
                                     const st = statusMap[order.status] || statusMap.Pending;
                                     return (
@@ -989,6 +1247,9 @@ export default function B2BAccountClient() {
             </div>
             {showOrdersOffcanvas && (
                 <div className="offcanvas-backdrop fade show" onClick={() => setShowOrdersOffcanvas(false)}></div>
+            )}
+            {showLedgerOffcanvas && (
+                <div className="offcanvas-backdrop fade show" onClick={() => setShowLedgerOffcanvas(false)}></div>
             )}
 
             {/* Reward Transactions Offcanvas */}
@@ -1112,7 +1373,7 @@ export default function B2BAccountClient() {
                                 .map(tx => {
                                     const isRedemption = tx.orderNo.toLowerCase().includes("redemption");
                                     const isEarned = tx.rewardsEarned > 0;
-                                    
+
                                     return (
                                         <div key={tx.id} style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", padding: "1rem 1.25rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                                             <div className="d-flex justify-content-between align-items-center gap-3">
@@ -1167,9 +1428,9 @@ export default function B2BAccountClient() {
 
             {/* Gift Voucher Detail Modal */}
             {viewingVoucher && (
-                <div 
-                    className="modal show d-block" 
-                    tabIndex={-1} 
+                <div
+                    className="modal show d-block"
+                    tabIndex={-1}
                     style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 1060 }}
                     onClick={() => setViewingVoucher(null)}
                 >
@@ -1191,9 +1452,9 @@ export default function B2BAccountClient() {
                                                     <span className={`giftcard-status ${viewingVoucher.status === 'Active' ? 'active' : 'inactive'}`}>
                                                         {viewingVoucher.status}
                                                     </span>
-                                                    <button 
-                                                        type="button" 
-                                                        className="btn-close btn-close-white" 
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close btn-close-white"
                                                         onClick={() => setViewingVoucher(null)}
                                                         style={{ fontSize: "0.75rem" }}
                                                     ></button>
@@ -1205,7 +1466,7 @@ export default function B2BAccountClient() {
                                                     <div className="giftcard-label mb-1">VOUCHER CODE</div>
                                                     <div className="d-flex align-items-center gap-2">
                                                         <code className="giftcard-code">{viewingVoucher.code}</code>
-                                                        <button 
+                                                        <button
                                                             className="giftcard-copy-btn"
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText(viewingVoucher.code);
@@ -1298,6 +1559,11 @@ export default function B2BAccountClient() {
                     overflow: hidden;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
                     border: 1px solid #f1f5f9;
+                    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                }
+                .account-card:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
                 }
                 .card-head {
                     background: linear-gradient(135deg, #1a1a2e, #0f3460);
@@ -1575,68 +1841,67 @@ export default function B2BAccountClient() {
                 }
 
                 .voucher-mini-box {
-                    flex: 1;
-                    min-width: 240px;
-                    max-width: 280px;
+                    width: 100%;
                     background: #fff;
                     border: 1px solid #e2e8f0;
                     border-radius: 16px;
-                    padding: 1rem;
+                    padding: 1.25rem;
                     display: flex;
-                    align-items: center;
-                    gap: 1rem;
+                    flex-direction: column;
+                    gap: 0;
                     cursor: pointer;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     position: relative;
                     overflow: hidden;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
                 }
-                .voucher-mini-box:hover {
-                    transform: translateY(-4px);
-                    border-color: #ffc451;
-                    box-shadow: 0 8px 24px rgba(255, 196, 81, 0.12);
+                .mini-box-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    width: 100%;
+                    margin-bottom: 0.75rem;
                 }
                 .mini-box-icon {
-                    width: 44px;
-                    height: 44px;
+                    width: 36px;
+                    height: 36px;
                     background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                    border-radius: 12px;
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 1.2rem;
+                    font-size: 1rem;
                     color: #ffc451;
                     border: 1px solid #e2e8f0;
                     transition: all 0.3s ease;
+                    flex-shrink: 0;
                 }
                 .voucher-mini-box:hover .mini-box-icon {
                     background: linear-gradient(135deg, #ffc451, #f8a623);
                     color: white;
                     border-color: transparent;
                 }
+                .voucher-mini-box:hover {
+                    transform: translateY(-4px);
+                    border-color: #ffc451;
+                    box-shadow: 0 8px 24px rgba(255, 196, 81, 0.12);
+                }
                 .mini-box-content {
-                    flex: 1;
-                    min-width: 0;
+                    width: 100%;
                 }
                 .mini-box-code {
                     font-weight: 700;
-                    font-size: 0.85rem;
+                    font-size: 0.9rem;
                     color: #1e293b;
                     letter-spacing: 0.5px;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
                 }
                 .mini-box-balance {
                     font-weight: 800;
-                    font-size: 1.1rem;
+                    font-size: 1.05rem;
                     color: #16a34a;
-                    margin-top: 1px;
+                    margin-top: 0;
                 }
                 .mini-box-badge {
-                    position: absolute;
-                    top: 10px;
-                    right: 12px;
                     font-size: 0.6rem;
                     font-weight: 800;
                     text-transform: uppercase;
