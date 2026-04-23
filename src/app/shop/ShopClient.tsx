@@ -607,7 +607,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
                                                                             <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
                                                                                 <span style={{ fontWeight: "500" }}>M.R.P.:</span>
                                                                                 <span style={{ textDecoration: "line-through" }}>₹{displayOldPrice.toLocaleString('en-IN')}</span>
-                                                                                <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100)}% off)</span>
+                                                                                <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((displayOldPrice - displayPrice) / displayPrice) * 100)}% Profit)</span>
                                                                             </div>
                                                                         )}
                                                                     </div>
