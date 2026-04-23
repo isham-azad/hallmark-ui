@@ -229,7 +229,7 @@ export default function ProductDetailClient() {
                         <div className="row d-flex justify-content-center text-center">
                             <div className="col-lg-8">
                                 <h1>{product.title}</h1>
-                                <p className="mb-0">{product.desc.slice(0, 120)}{product.desc.length > 120 ? "…" : ""}</p>
+                                {/* <p className="mb-0">{product.desc.slice(0, 120)}{product.desc.length > 120 ? "…" : ""}</p> */}
                             </div>
                         </div>
                     </div>
@@ -238,7 +238,7 @@ export default function ProductDetailClient() {
                     <div className="container">
                         <ol>
                             <li><Link href="/">Home</Link></li>
-                            <li><Link href="/shop">Shop</Link></li>
+                            <li><Link href="/shop">Order Online</Link></li>
                             <li className="current">{product.title}</li>
                         </ol>
                     </div>
@@ -390,7 +390,7 @@ export default function ProductDetailClient() {
                                             <div className="d-flex align-items-center gap-2 mb-1">
                                                 {displayWasPrice > displayPrice && (
                                                     <span style={{ color: "#ffc451", fontSize: "1.75rem", fontWeight: "350" }}>
-                                                        -{Math.round(((displayWasPrice - displayPrice) / displayWasPrice) * 100)}%
+                                                        -{Math.round(((displayWasPrice - displayPrice) / displayPrice) * 100)}%
                                                     </span>
                                                 )}
                                                 <div className="d-flex align-items-start" style={{ lineHeight: "1" }}>
@@ -559,7 +559,7 @@ export default function ProductDetailClient() {
                                             {pincodeStatus === "available" ? (
                                                 <div className="alert alert-success">
                                                     <i className="bi bi-check-circle me-2"></i>
-                                                    <strong>Available!</strong> Delivery in 3–5 business days.
+                                                    <strong>Available!</strong> Delivery in 1–3 business days.
                                                 </div>
                                             ) : (
                                                 <div className="alert alert-danger">
@@ -685,14 +685,14 @@ export default function ProductDetailClient() {
                                                                 <div className="d-flex" style={{ alignItems: 'flex-start' }}>
                                                                     <span style={{ fontSize: "0.75rem", fontWeight: "700", marginTop: "2px", marginRight: "1px", lineHeight: '1' }}>₹</span>
                                                                     <span style={{ fontSize: "1.8rem", fontWeight: "900", lineHeight: "1" }}>
-                                                                        {(parseFloat(p.price.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}
+                                                                        {displayPrice.toLocaleString('en-IN')}
                                                                     </span>
                                                                 </div>
-                                                                {p.wasPrice && (
+                                                                {p.wasPrice && parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) > displayPrice && (
                                                                     <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: "#64748b", paddingBottom: "2px" }}>
                                                                         <span style={{ fontWeight: "500" }}>M.R.P.:</span>
                                                                         <span style={{ textDecoration: "line-through" }}>₹{(parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}</span>
-                                                                        <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) - parseFloat(p.price.replace(/[^0-9.]/g, ""))) / parseFloat(p.wasPrice.replace(/[^0-9.]/g, ""))) * 100)}% off)</span>
+                                                                        <span style={{ color: "#ffc451", fontWeight: "700", marginLeft: "2px" }}>({Math.round(((parseFloat(p.wasPrice.replace(/[^0-9.]/g, "")) - displayPrice) / displayPrice) * 100)}% Profit)</span>
                                                                     </div>
                                                                 )}
                                                             </div>
