@@ -24,7 +24,7 @@ async function verifyAuth(permission?: string) {
     return session;
 }
 
-export async function createBrand(formData: { id: string; name: string; summary: string; image?: string; banner?: string; bannerMobile?: string }) {
+export async function createBrand(formData: { id: string; name: string; summary: string; shortDesc?: string; image?: string; banner?: string; bannerMobile?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         const docId = formData.id || formData.name.toLowerCase().replace(/\s+/g, "-");
@@ -32,6 +32,7 @@ export async function createBrand(formData: { id: string; name: string; summary:
         await db.collection("brands").doc(docId).set({
             name: formData.name,
             summary: formData.summary,
+            shortDesc: formData.shortDesc || "",
             image: formData.image || null,
             banner: formData.banner || null,
             bannerMobile: formData.bannerMobile || null,
@@ -49,12 +50,13 @@ export async function createBrand(formData: { id: string; name: string; summary:
     }
 }
 
-export async function updateBrand(id: string, formData: { name: string; summary: string; image?: string; banner?: string; bannerMobile?: string }) {
+export async function updateBrand(id: string, formData: { name: string; summary: string; shortDesc?: string; image?: string; banner?: string; bannerMobile?: string }) {
     try {
         const session = await verifyAuth(PERMISSIONS.MANAGE_BRANDS);
         await db.collection("brands").doc(id).update({
             name: formData.name,
             summary: formData.summary,
+            shortDesc: formData.shortDesc || "",
             image: formData.image || null,
             banner: formData.banner || null,
             bannerMobile: formData.bannerMobile || null,

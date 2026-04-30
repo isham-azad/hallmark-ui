@@ -13,6 +13,7 @@ export async function GET() {
                 return {
                     id: doc.id,
                     name: data.name as string,
+                    shortDesc: (data.shortDesc as string) ?? "",
                     summary: (data.summary as string) ?? "",
                     image: (data.image as string) ?? "",
                     banner: (data.banner as string) ?? "",

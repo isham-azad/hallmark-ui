@@ -9,6 +9,7 @@ import { useAdminToast } from "@/components/AdminToast";
 interface Brand {
   id: string;
   name: string;
+  shortDesc?: string;
   summary: string;
   image: string | null;
   banner: string | null;
@@ -27,6 +28,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
 
   const [formData, setFormData] = useState({
     name: brand.name,
+    shortDesc: brand.shortDesc || "",
     summary: brand.summary,
     website: "",
     status: "active",
@@ -103,6 +105,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
         const form = new FormData();
         form.set("id", brand.id);
         form.set("name", formData.name);
+        form.set("shortDesc", formData.shortDesc);
         form.set("summary", formData.summary);
         if (imageFile) form.set("image", imageFile);
         if (bannerFile) form.set("banner", bannerFile);
@@ -124,6 +127,7 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
       } else {
         const result = await updateBrand(brand.id, {
           name: formData.name,
+          shortDesc: formData.shortDesc,
           summary: formData.summary,
           image: formData.image || undefined,
           banner: formData.banner || undefined,
@@ -172,7 +176,19 @@ export default function BrandEditClient({ brand }: BrandEditClientProps) {
             </div>
 
             <div className="input-group">
-              <label>Brand Summary</label>
+              <label>Short Description (For Homepage Cards)</label>
+              <input
+                type="text"
+                placeholder="e.g. Quality essentials for your home..."
+                value={formData.shortDesc}
+                onChange={(e) => setFormData({ ...formData, shortDesc: e.target.value })}
+                maxLength={100}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label>Detailed Brand Summary</label>
               <textarea
                 placeholder="Brief description of the brand..."
                 rows={5}
