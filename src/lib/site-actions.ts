@@ -90,7 +90,7 @@ export async function getSiteBrands() {
             .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
-                return { id: doc.id, name: data.name, summary: data.summary || "", image: data.image || "" };
+                return { id: doc.id, name: data.name, shortDesc: data.shortDesc || "", summary: data.summary || "", image: data.image || "" };
             })
             .filter(Boolean);
     } catch (error) {

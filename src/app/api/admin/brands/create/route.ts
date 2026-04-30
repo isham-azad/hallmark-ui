@@ -11,6 +11,7 @@ import { z } from "zod";
 const BrandSchema = z.object({
     name: z.string().min(1).max(100),
     summary: z.string().optional(),
+    shortDesc: z.string().optional(),
 });
 
 function slugify(name: string): string {
@@ -27,11 +28,12 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const formData = await request.formData();
     const name = (formData.get("name") as string)?.trim();
     const summary = (formData.get("summary") as string)?.trim() ?? "";
+    const shortDesc = (formData.get("shortDesc") as string)?.trim() ?? "";
     const file = formData.get("image") as File | null;
     const bannerFile = formData.get("banner") as File | null;
     const bannerMobileFile = formData.get("bannerMobile") as File | null;
 
-    const validation = BrandSchema.safeParse({ name, summary });
+    const validation = BrandSchema.safeParse({ name, summary, shortDesc });
     if (!validation.success) {
         return NextResponse.json({ success: false, error: validation.error.issues[0].message }, { status: 400 });
     }
@@ -74,6 +76,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     await db.collection("brands").doc(id).set({
         name,
         summary,
+        shortDesc,
         image: imageUrl,
         banner: bannerUrl,
         bannerMobile: bannerMobileUrl,

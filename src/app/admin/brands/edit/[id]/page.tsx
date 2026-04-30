@@ -15,7 +15,7 @@ export default async function EditBrandPage(props: { params: Promise<{ id: strin
     }
 
     const data = doc.data()!;
-    const brand = { id: doc.id, name: data.name as string, summary: data.summary as string, image: (data.image as string | null) ?? null, banner: (data.banner as string | null) ?? null };
+    const brand = { id: doc.id, name: data.name as string, shortDesc: (data.shortDesc as string) ?? "", summary: data.summary as string, image: (data.image as string | null) ?? null, banner: (data.banner as string | null) ?? null };
 
     return <BrandEditClient brand={brand} />;
 }
