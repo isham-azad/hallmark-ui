@@ -13,6 +13,7 @@ export default function BrandAddClient() {
 
     const [formData, setFormData] = useState({
         name: "",
+        shortDesc: "",
         summary: "",
         website: "",
         status: "active",
@@ -77,6 +78,7 @@ export default function BrandAddClient() {
         try {
             const form = new FormData();
             form.set("name", formData.name);
+            form.set("shortDesc", formData.shortDesc);
             form.set("summary", formData.summary);
             if (imageFile) form.set("image", imageFile);
             if (bannerFile) form.set("banner", bannerFile);
@@ -123,7 +125,19 @@ export default function BrandAddClient() {
                         </div>
 
                         <div className="input-group">
-                            <label>Brand Summary</label>
+                            <label>Short Description (For Homepage Cards)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Quality essentials for your home..."
+                                value={formData.shortDesc}
+                                onChange={(e) => setFormData({ ...formData, shortDesc: e.target.value })}
+                                maxLength={100}
+                                required
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label>Detailed Brand Summary</label>
                             <textarea
                                 placeholder="Brief description of the brand and its core values..."
                                 rows={5}

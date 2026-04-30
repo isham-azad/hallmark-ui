@@ -23,6 +23,7 @@ interface SiteBrand {
   id: string;
   name: string;
   image?: string;
+  shortDesc?: string;
   summary?: string;
 }
 
@@ -493,13 +494,13 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
         </div>
       </section>
 
-      {/* Clients Section */}
-      <section id="clients" className="clients section">
+      {/* Brands Section */}
+      <section id="brands" className="brands section">
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="section-header">
             <h2>Our Brands</h2>
           </div>
-          <div className="swiper init-swiper">
+          <div key="brands-swiper-v2" className="swiper init-swiper">
             <script type="application/json" className="swiper-config">
               {`
               {
@@ -510,38 +511,39 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                 "autoplay": {
                   "delay": 5000
                 },
-                "slidesPerView": "auto",
+                "slidesPerView": 1,
+                "spaceBetween": 20,
                 "breakpoints": {
-                  "320": {
+                  "576": {
+                    "slidesPerView": 1,
+                    "spaceBetween": 20
+                  },
+                  "768": {
                     "slidesPerView": 2,
-                    "spaceBetween": 40
-                  },
-                  "480": {
-                    "slidesPerView": 3,
-                    "spaceBetween": 60
-                  },
-                  "640": {
-                    "slidesPerView": 4,
-                    "spaceBetween": 80
+                    "spaceBetween": 30
                   },
                   "992": {
-                    "slidesPerView": 6,
-                    "spaceBetween": 80
+                    "slidesPerView": 3,
+                    "spaceBetween": 30
+                  },
+                  "1200": {
+                    "slidesPerView": 4,
+                    "spaceBetween": 30
                   }
                 }
               }
               `}
             </script>
-            <div className="swiper-wrapper align-items-center">
+            <div className="swiper-wrapper">
               {brandsLoading ? (
                 <>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div key={i} className="swiper-slide d-flex align-items-center justify-content-center">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="swiper-slide py-3 h-auto">
                       <ShimmerBox
                         style={{
-                          width: "120px",
-                          height: "60px",
-                          borderRadius: "12px",
+                          width: "100%",
+                          height: "100px",
+                          borderRadius: "16px",
                         }}
                       />
                     </div>
@@ -549,10 +551,39 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                 </>
               ) : brands.length > 0 && (
                 brands.map((brand) => (
-                  <div key={brand.id} className="swiper-slide">
-                    {brand.image && (
-                      <img src={brand.image} className="img-fluid" alt={brand.name} />
-                    )}
+                  <div key={brand.id} className="swiper-slide py-3 h-auto">
+                    <div
+                      className="brand-card shadow-sm p-3 d-flex align-items-center h-100"
+                      style={{
+                        background: '#fff',
+                        border: '1px solid rgba(0,0,0,0.05)',
+                        borderRadius: '16px',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-5px)';
+                        e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.08)';
+                        e.currentTarget.style.borderColor = 'var(--accent-color)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.05)';
+                      }}
+                    >
+                      <div className="brand-logo flex-shrink-0" style={{ width: '75px', height: '75px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f9fa', borderRadius: '12px', padding: '10px', marginRight: '16px' }}>
+                        {brand.image ? (
+                          <img src={brand.image} alt={brand.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <i className="bi bi-shop fs-3 text-muted"></i>
+                        )}
+                      </div>
+                      <div className="brand-info flex-grow-1">
+                        <h4 className="mb-1" style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--heading-color)' }}>{brand.name}</h4>
+                        <p className="mb-0 text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{brand.shortDesc || "Discover premium quality essentials from " + brand.name + "."}</p>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}

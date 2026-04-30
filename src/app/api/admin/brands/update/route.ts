@@ -12,6 +12,7 @@ const BrandUpdateSchema = z.object({
     id: z.string().min(1),
     name: z.string().min(1).max(100),
     summary: z.string().optional(),
+    shortDesc: z.string().optional(),
 });
 
 async function handler(request: Request, { logAction }: { logAction: any }) {
@@ -19,11 +20,12 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const id = (formData.get("id") as string)?.trim();
     const name = (formData.get("name") as string)?.trim();
     const summary = (formData.get("summary") as string)?.trim() ?? "";
+    const shortDesc = (formData.get("shortDesc") as string)?.trim() ?? "";
     const file = formData.get("image") as File | null;
     const bannerFile = formData.get("banner") as File | null;
     const bannerMobileFile = formData.get("bannerMobile") as File | null;
 
-    const validation = BrandUpdateSchema.safeParse({ id, name, summary });
+    const validation = BrandUpdateSchema.safeParse({ id, name, summary, shortDesc });
     if (!validation.success) {
         return NextResponse.json({ success: false, error: validation.error.issues[0].message }, { status: 400 });
     }
@@ -31,6 +33,7 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     const updateData: any = {
         name,
         summary,
+        shortDesc,
         updatedAt: FieldValue.serverTimestamp(),
     };
 
