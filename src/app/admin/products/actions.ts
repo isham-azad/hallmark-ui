@@ -153,6 +153,9 @@ export async function createProductWithUpload(formData: FormData): Promise<{ suc
 
         revalidatePath("/admin/products");
         revalidatePath("/admin");
+        revalidatePath("/");
+        revalidatePath("/shop");
+        revalidatePath(`/product/${productId}`);
         return { success: true };
     } catch (error: any) {
         console.error("Failed to create product with upload:", error);
@@ -198,6 +201,9 @@ export async function createProduct(formData: {
 
         revalidatePath("/admin/products");
         revalidatePath("/admin");
+        revalidatePath("/");
+        revalidatePath("/shop");
+        revalidatePath(`/product/${docId}`);
         return { success: true };
     } catch (error: any) {
         console.error("Failed to create product:", error);
@@ -241,6 +247,9 @@ export async function updateProduct(id: string, formData: {
 
         revalidatePath("/admin/products");
         revalidatePath(`/admin/products/edit/${id}`);
+        revalidatePath("/");
+        revalidatePath("/shop");
+        revalidatePath(`/product/${id}`);
         return { success: true };
     } catch (error: any) {
         console.error("Failed to update product:", error);
@@ -281,6 +290,8 @@ export async function deleteProduct(id: string) {
 
         revalidatePath("/admin/products");
         revalidatePath("/admin");
+        revalidatePath("/");
+        revalidatePath("/shop");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete product:", error);

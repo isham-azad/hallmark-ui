@@ -43,6 +43,7 @@ export async function createBrand(formData: { id: string; name: string; summary:
         await logAction(session.email, session.name, "CREATE_BRAND", { name: formData.name, docId });
 
         revalidatePath("/admin/brands");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to create brand:", error);
@@ -67,6 +68,8 @@ export async function updateBrand(id: string, formData: { name: string; summary:
 
         revalidatePath("/admin/brands");
         revalidatePath(`/admin/brands/edit/${id}`);
+        revalidatePath(`/brand/${id}`);
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to update brand:", error);
@@ -105,8 +108,9 @@ export async function deleteBrand(id: string) {
         if (doc.exists) {
             const data = doc.data();
             const img = data?.image;
-            const banner = data?.banner;
-            const bannerMobile = data?.bannerMobile;
+            const banners = (data?.banner as string)?.split(',').filter(Boolean) || [];
+            const mobileBanners = (data?.bannerMobile as string)?.split(',').filter(Boolean) || [];
+
             if (img && typeof img === "string" && img.includes("cloudinary")) {
                 try {
                     await deleteImageByUrl(img);
@@ -114,18 +118,24 @@ export async function deleteBrand(id: string) {
                     console.warn("Could not delete brand image from Cloudinary:", err);
                 }
             }
-            if (banner && typeof banner === "string" && banner.includes("cloudinary")) {
-                try {
-                    await deleteImageByUrl(banner);
-                } catch (err) {
-                    console.warn("Could not delete brand banner from Cloudinary:", err);
+            
+            for (const banner of banners) {
+                if (banner.includes("cloudinary")) {
+                    try {
+                        await deleteImageByUrl(banner);
+                    } catch (err) {
+                        console.warn("Could not delete brand banner from Cloudinary:", err);
+                    }
                 }
             }
-            if (bannerMobile && typeof bannerMobile === "string" && bannerMobile.includes("cloudinary")) {
-                try {
-                    await deleteImageByUrl(bannerMobile);
-                } catch (err) {
-                    console.warn("Could not delete brand mobile banner from Cloudinary:", err);
+
+            for (const mobBanner of mobileBanners) {
+                if (mobBanner.includes("cloudinary")) {
+                    try {
+                        await deleteImageByUrl(mobBanner);
+                    } catch (err) {
+                        console.warn("Could not delete brand mobile banner from Cloudinary:", err);
+                    }
                 }
             }
             try {
@@ -140,6 +150,7 @@ export async function deleteBrand(id: string) {
         await logAction(session.email, session.name, "DELETE_BRAND", { id });
 
         revalidatePath("/admin/brands");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete brand:", error);

@@ -40,6 +40,7 @@ export async function createCategory(formData: { id: string; name: string; summa
         await logAction(session.email, session.name, "CREATE_CATEGORY", { name: formData.name, docId });
 
         revalidatePath("/admin/categories");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to create category:", error);
@@ -60,6 +61,7 @@ export async function updateCategory(id: string, formData: { name: string; summa
         await logAction(session.email, session.name, "UPDATE_CATEGORY", { id, name: formData.name });
 
         revalidatePath("/admin/categories");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to update category:", error);
@@ -117,6 +119,7 @@ export async function deleteCategory(id: string) {
         await logAction(session.email, session.name, "DELETE_CATEGORY", { id });
 
         revalidatePath("/admin/categories");
+        revalidatePath("/");
         return { success: true };
     } catch (error: any) {
         console.error("Failed to delete category:", error);

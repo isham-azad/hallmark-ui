@@ -155,6 +155,9 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
 
     revalidatePath("/admin/products");
     revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/product/" + productId);
 
     // Audit Log
     await logAction("CREATE_PRODUCT", {
