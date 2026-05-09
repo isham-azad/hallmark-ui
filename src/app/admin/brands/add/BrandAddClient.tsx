@@ -20,11 +20,11 @@ export default function BrandAddClient() {
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
-    const [bannerFile, setBannerFile] = useState<File | null>(null);
-    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
+    const [bannerFiles, setBannerFiles] = useState<File[]>([]);
+    const [bannerPreviewUrls, setBannerPreviewUrls] = useState<string[]>([]);
     const bannerInputRef = useRef<HTMLInputElement>(null);
-    const [bannerMobileFile, setBannerMobileFile] = useState<File | null>(null);
-    const [bannerMobilePreviewUrl, setBannerMobilePreviewUrl] = useState<string>("");
+    const [bannerMobileFiles, setBannerMobileFiles] = useState<File[]>([]);
+    const [bannerMobilePreviewUrls, setBannerMobilePreviewUrls] = useState<string[]>([]);
     const bannerMobileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,33 +43,39 @@ export default function BrandAddClient() {
     };
 
     const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !file.type.startsWith("image/")) return;
-        if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
-        setBannerFile(file);
-        setBannerPreviewUrl(URL.createObjectURL(file));
+        const files = Array.from(e.target.files || []);
+        const validFiles = files.filter(f => f.type.startsWith("image/")).slice(0, 5 - bannerFiles.length);
+
+        if (validFiles.length === 0) return;
+
+        const newUrls = validFiles.map(f => URL.createObjectURL(f));
+        setBannerFiles(prev => [...prev, ...validFiles]);
+        setBannerPreviewUrls(prev => [...prev, ...newUrls]);
         if (bannerInputRef.current) bannerInputRef.current.value = "";
     };
 
-    const removeBanner = () => {
-        if (bannerPreviewUrl) URL.revokeObjectURL(bannerPreviewUrl);
-        setBannerFile(null);
-        setBannerPreviewUrl("");
+    const removeBanner = (index: number) => {
+        URL.revokeObjectURL(bannerPreviewUrls[index]);
+        setBannerFiles(prev => prev.filter((_, i) => i !== index));
+        setBannerPreviewUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleBannerMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !file.type.startsWith("image/")) return;
-        if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
-        setBannerMobileFile(file);
-        setBannerMobilePreviewUrl(URL.createObjectURL(file));
+        const files = Array.from(e.target.files || []);
+        const validFiles = files.filter(f => f.type.startsWith("image/")).slice(0, 5 - bannerMobileFiles.length);
+
+        if (validFiles.length === 0) return;
+
+        const newUrls = validFiles.map(f => URL.createObjectURL(f));
+        setBannerMobileFiles(prev => [...prev, ...validFiles]);
+        setBannerMobilePreviewUrls(prev => [...prev, ...newUrls]);
         if (bannerMobileInputRef.current) bannerMobileInputRef.current.value = "";
     };
 
-    const removeBannerMobile = () => {
-        if (bannerMobilePreviewUrl) URL.revokeObjectURL(bannerMobilePreviewUrl);
-        setBannerMobileFile(null);
-        setBannerMobilePreviewUrl("");
+    const removeBannerMobile = (index: number) => {
+        URL.revokeObjectURL(bannerMobilePreviewUrls[index]);
+        setBannerMobileFiles(prev => prev.filter((_, i) => i !== index));
+        setBannerMobilePreviewUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,8 +87,9 @@ export default function BrandAddClient() {
             form.set("shortDesc", formData.shortDesc);
             form.set("summary", formData.summary);
             if (imageFile) form.set("image", imageFile);
-            if (bannerFile) form.set("banner", bannerFile);
-            if (bannerMobileFile) form.set("bannerMobile", bannerMobileFile);
+
+            bannerFiles.forEach(f => form.append("banner", f));
+            bannerMobileFiles.forEach(f => form.append("bannerMobile", f));
 
             const res = await fetch("/api/admin/brands/create", { method: "POST", body: form });
             const result = await res.json();
@@ -191,81 +198,75 @@ export default function BrandAddClient() {
                             </div>
 
                             <div className="input-group">
-                                <label>Desktop Banner (1920 x 450 px)</label>
-                                <div
-                                    className="upload-zone banner-zone"
-                                    onClick={() => bannerInputRef.current?.click()}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => e.key === "Enter" && bannerInputRef.current?.click()}
-                                >
-                                    <input
-                                        ref={bannerInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleBannerChange}
-                                        className="hidden-input"
-                                    />
-                                    {bannerPreviewUrl ? (
-                                        <>
-                                            <img src={bannerPreviewUrl} alt="Banner Preview" className="preview-img banner-preview" />
-                                            <span>Click to change desktop banner</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="bi bi-aspect-ratio"></i>
-                                            <span>Choose desktop banner</span>
-                                        </>
-                                    )}
+                                <label>Desktop Banners (Up to 5 images, 1920 x 650 px)</label>
+                                <div className="multi-banner-container">
+                                    <div className="banners-grid">
+                                        {bannerPreviewUrls.map((url, i) => (
+                                            <div key={i} className="banner-card">
+                                                <img src={url} alt={`Banner ${i + 1}`} className="banner-img" />
+                                                <button type="button" className="remove-banner-btn" onClick={(e) => { e.stopPropagation(); removeBanner(i); }}>
+                                                    <i className="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {bannerFiles.length < 5 && (
+                                            <div
+                                                className="add-banner-card"
+                                                onClick={() => bannerInputRef.current?.click()}
+                                                role="button"
+                                                tabIndex={0}
+                                            >
+                                                <input
+                                                    ref={bannerInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={handleBannerChange}
+                                                    className="hidden-input"
+                                                />
+                                                <i className="bi bi-plus-lg"></i>
+                                                <span>Add Banner</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                {bannerFile && (
-                                    <button
-                                        type="button"
-                                        className="remove-image-btn"
-                                        onClick={removeBanner}
-                                    >
-                                        Remove desktop banner
-                                    </button>
-                                )}
                             </div>
 
                             <div className="input-group">
-                                <label>Mobile Banner (800 x 500 px)</label>
-                                <div
-                                    className="upload-zone banner-zone"
-                                    onClick={() => bannerMobileInputRef.current?.click()}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => e.key === "Enter" && bannerMobileInputRef.current?.click()}
-                                >
-                                    <input
-                                        ref={bannerMobileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleBannerMobileChange}
-                                        className="hidden-input"
-                                    />
-                                    {bannerMobilePreviewUrl ? (
-                                        <>
-                                            <img src={bannerMobilePreviewUrl} alt="Mobile Banner Preview" className="preview-img banner-preview" />
-                                            <span>Click to change mobile banner</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="bi bi-phone"></i>
-                                            <span>Choose mobile banner</span>
-                                        </>
-                                    )}
+                                <label>Mobile Banners (Up to 5 images, 800 x 500 px)</label>
+                                <div className="multi-banner-container">
+                                    <div className="banners-grid">
+                                        {bannerMobilePreviewUrls.map((url, i) => (
+                                            <div key={i} className="banner-card mobile-banner-card">
+                                                <img src={url} alt={`Mobile Banner ${i + 1}`} className="banner-img" />
+                                                <button type="button" className="remove-banner-btn" onClick={(e) => { e.stopPropagation(); removeBannerMobile(i); }}>
+                                                    <i className="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {bannerMobileFiles.length < 5 && (
+                                            <div
+                                                className="add-banner-card mobile-banner-card"
+                                                onClick={() => bannerMobileInputRef.current?.click()}
+                                                role="button"
+                                                tabIndex={0}
+                                            >
+                                                <input
+                                                    ref={bannerMobileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={handleBannerMobileChange}
+                                                    className="hidden-input"
+                                                />
+                                                <i className="bi bi-plus-lg"></i>
+                                                <span>Add Mobile</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                {bannerMobileFile && (
-                                    <button
-                                        type="button"
-                                        className="remove-image-btn"
-                                        onClick={removeBannerMobile}
-                                    >
-                                        Remove mobile banner
-                                    </button>
-                                )}
                             </div>
 
                             <div className="side-inputs">
@@ -481,9 +482,97 @@ export default function BrandAddClient() {
           cursor: pointer;
         }
 
+        .multi-banner-container {
+            width: 100%;
+            grid-column: span 2;
+        }
+
+        .banners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .banner-card, .add-banner-card {
+            position: relative;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mobile-banner-card {
+            aspect-ratio: 8/5;
+        }
+
+        .add-banner-card {
+            border: 2px dashed #e2e8f0;
+            color: #64748b;
+            gap: 0.5rem;
+        }
+
+        .add-banner-card:hover {
+            border-color: #ffc451;
+            background: #fff;
+            color: #ffc451;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .add-banner-card i {
+            font-size: 1.5rem;
+        }
+
+        .add-banner-card span {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-banner-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+            z-index: 5;
+        }
+
+        .remove-banner-btn:hover {
+            background: #ef4444;
+            transform: scale(1.1);
+        }
+
         @media (max-width: 768px) {
           .grid-inputs {
             grid-template-columns: 1fr;
+          }
+          .banners-grid {
+            grid-template-columns: 1fr 1fr;
           }
         }
       `}</style>

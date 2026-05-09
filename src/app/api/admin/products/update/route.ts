@@ -154,6 +154,9 @@ async function handler(request: Request, { logAction }: { logAction: any }) {
     revalidatePath("/admin/products");
     revalidatePath("/admin/products/edit/" + id);
     revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/product/" + id);
 
     // Audit Log
     await logAction("UPDATE_PRODUCT", { productId: id, title });
