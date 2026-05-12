@@ -59,6 +59,20 @@ export default function Header() {
 
     if (isAdmin) return null;
 
+    // Close mobile nav after client-side navigation (no full page reload in Next.js)
+    const closeMobileNav = () => {
+        if (typeof window === 'undefined') return;
+        document.body.classList.remove('mobile-nav-active');
+        document.querySelectorAll('.navmenu .dropdown-active').forEach((el) => {
+            el.classList.remove('dropdown-active');
+        });
+        const toggle = document.querySelector('.mobile-nav-toggle');
+        if (toggle) {
+            toggle.classList.remove('bi-x');
+            toggle.classList.add('bi-list');
+        }
+    };
+
     // Combine scroll state with homepage logic for the background class
     const headerClass = `header d-flex flex-column fixed-top p-0 ${isScrolled || !isHomePage ? "scrolled" : ""}`;
 
@@ -130,13 +144,13 @@ export default function Header() {
 
                 <nav id="navmenu" className="navmenu">
                     <ul>
-                        <li><Link href="/#hero" className={pathname === "/" ? "active" : ""}>Home</Link></li>
-                        <li><Link href="/#about">About Us</Link></li>
+                        <li><Link href="/#hero" className={pathname === "/" ? "active" : ""} onClick={closeMobileNav}>Home</Link></li>
+                        <li><Link href="/#about" onClick={closeMobileNav}>About Us</Link></li>
                         <li className="dropdown">
                             <a href="#"><span>Our Brands</span> <i className="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
                                 {brands.map((b) => (
-                                    <li key={b.id}><Link href={`/brand/${b.id}`}>{b.name}</Link></li>
+                                    <li key={b.id}><Link href={`/brand/${b.id}`} onClick={closeMobileNav}>{b.name}</Link></li>
                                 ))}
                             </ul>
                         </li>
@@ -144,12 +158,12 @@ export default function Header() {
                             <a href="#"><span>Our Products</span> <i className="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
                                 {categories.map((c) => (
-                                    <li key={c.id}><Link href={`/category/${c.id}`}>{c.name}</Link></li>
+                                    <li key={c.id}><Link href={`/category/${c.id}`} onClick={closeMobileNav}>{c.name}</Link></li>
                                 ))}
                             </ul>
                         </li>
-                        <li><Link href="/#investors">Investors</Link></li>
-                        <li><Link href="/#contact">Contact Us</Link></li>
+                        <li><Link href="/#investors" onClick={closeMobileNav}>Investors</Link></li>
+                        <li><Link href="/#contact" onClick={closeMobileNav}>Contact Us</Link></li>
                     </ul>
                     <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
                 </nav>

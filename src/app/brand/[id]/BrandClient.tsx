@@ -108,24 +108,26 @@ export default function BrandClient() {
     };
 
     return (
-        <div className="brand-page" style={{ marginTop: '132px' }}>
+        <div className="brand-page" style={{ marginTop: 'clamp(100px, 12vw, 132px)' }}>
             {/* Desktop Banner Slider (Hidden on Mobile) */}
             {banners.length > 0 && (
-                <div className={`collection-banner overflow-hidden d-none d-md-block ${hasDesktopMultiple ? 'swiper init-swiper' : ''}`} style={{ minHeight: '200px' }}>
+                <div className={`collection-banner overflow-hidden d-none d-md-block ${hasDesktopMultiple ? 'swiper init-swiper' : ''}`}>
                     {hasDesktopMultiple && (
                         <script type="application/json" className="swiper-config">
                             {JSON.stringify(swiperConfig)}
                         </script>
                     )}
-                    
+
                     <div className={hasDesktopMultiple ? "swiper-wrapper" : ""}>
                         {banners.map((url, index) => (
-                            <div key={`desktop-${index}`} className={hasDesktopMultiple ? "swiper-slide" : ""}>
+                            <div
+                                key={`desktop-${index}`}
+                                className={hasDesktopMultiple ? "swiper-slide" : ""}
+                            >
                                 <img
                                     src={url}
                                     alt={`${brand.name} desktop banner ${index + 1}`}
-                                    className="w-100 object-fit-cover"
-                                    style={{ height: '650px' }}
+                                    style={{ width: '100%', height: 'auto', maxHeight: '700px', objectFit: 'cover', display: 'block' }}
                                 />
                             </div>
                         ))}
@@ -136,33 +138,36 @@ export default function BrandClient() {
 
             {/* Mobile Banner Slider (Hidden on Desktop) */}
             {(mobileBanners.length > 0 || banners.length > 0) && (
-                <div className={`collection-banner overflow-hidden d-block d-md-none ${hasMobileMultiple ? 'swiper init-swiper' : ''}`} style={{ minHeight: '200px' }}>
+                <div className={`collection-banner overflow-hidden d-block d-md-none ${hasMobileMultiple ? 'swiper init-swiper' : ''}`}>
                     {hasMobileMultiple && (
                         <script type="application/json" className="swiper-config">
                             {JSON.stringify(swiperConfig)}
                         </script>
                     )}
-                    
+
                     <div className={hasMobileMultiple ? "swiper-wrapper" : ""}>
                         {mobileBanners.length > 0 ? (
+                            // Dedicated mobile banners: respect natural aspect ratio, cap height
                             mobileBanners.map((url, index) => (
                                 <div key={`mobile-${index}`} className={hasMobileMultiple ? "swiper-slide" : ""}>
                                     <img
                                         src={url}
                                         alt={`${brand.name} mobile banner ${index + 1}`}
-                                        className="w-100 object-fit-cover"
-                                        style={{ aspectRatio: '8/12', height: 'auto', maxHeight: '500px' }}
+                                        style={{ width: '100%', height: 'auto', maxHeight: '80vh', display: 'block', objectFit: 'cover' }}
                                     />
                                 </div>
                             ))
                         ) : (
+                            // Fallback: desktop image shown on mobile — show naturally, cap height
                             banners.map((url, index) => (
-                                <div key={`fallback-${index}`} className={hasMobileMultiple ? "swiper-slide" : ""}>
+                                <div
+                                    key={`fallback-${index}`}
+                                    className={hasMobileMultiple ? "swiper-slide" : ""}
+                                >
                                     <img
                                         src={url}
                                         alt={`${brand.name} banner fallback ${index + 1}`}
-                                        className="w-100 object-fit-cover"
-                                        style={{ height: '250px' }}
+                                        style={{ width: '100%', height: 'auto', maxHeight: '60vw', objectFit: 'cover', display: 'block' }}
                                     />
                                 </div>
                             ))
