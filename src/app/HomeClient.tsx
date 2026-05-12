@@ -359,8 +359,8 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           transform: scale(1.1) !important;
           -webkit-transform: scale(1.1) !important;
         }
-        .about-card:hover i {
-          color: #fff !important;
+        .about-card:hover i, .investors-card:hover i, .stats-item:hover i {
+          color: #000 !important;
         }
         .icon-box i, .investors-card i, .stats-item i, .features-item i {
           color: #ffc451 !important;
@@ -406,7 +406,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           <div className="row flex-wrap flex-lg-nowrap justify-content-center mt-5 gx-2 gy-3 hero-icon-grid" data-aos="fade-up" data-aos-delay="200">
             {categories.map((c) => (
               <div key={c.id} className="col-4 col-md-4 col-lg" data-aos="fade-up" data-aos-delay="300">
-                <div className="icon-box">
+                <a href={`/category/${c.id}`} className="icon-box" style={{ cursor: 'pointer' }}>
                   {c.name === "Home Care" && <i className="bi bi-house-door-fill about-icon-anim icon-bounce"></i>}
                   {c.name === "Fabric Care" && <i className="fa fa-shirt about-icon-anim icon-vcard"></i>}
                   {c.name === "Cleaning Liquids" && <i className="bi bi-droplet-fill about-icon-anim icon-pulse"></i>}
@@ -414,16 +414,17 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                   {c.name === "Food & Beverages" && <i className="bi bi-cup-straw about-icon-anim icon-bounce"></i>}
                   {c.name === "Personal Care" && <i className="bi bi-person-hearts about-icon-anim icon-vcard"></i>}
                   {c.name === "Ritual Essentials" && <i className="bi bi-sun about-icon-anim icon-spin"></i>}
-                  <h3><a href={`/category/${c.id}`}>{c.name}</a></h3>
-                </div>
+                  <h3>{c.name}</h3>
+                </a>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </div >
+      </section >
 
       {/* About Section */}
-      <section id="about" className="about section" style={{ background: 'linear-gradient(to bottom, #fff, #fcfcfc)' }}>
+      < section id="about" className="about section" style={{ background: 'linear-gradient(to bottom, #fff, #fcfcfc)' }
+      }>
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="row gy-4 align-items-center">
             <div className="col-lg-6 content" data-aos="fade-right" data-aos-delay="200">
@@ -492,10 +493,10 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Brands Section */}
-      <section id="brands" className="brands section">
+      < section id="brands" className="brands section" >
         <div className="container" data-aos="fade-up" data-aos-delay="100">
           <div className="section-header">
             <h2>Our Brands</h2>
@@ -591,10 +592,10 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             <div className="swiper-pagination"></div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Features Section — Value, Satisfaction, Happiness */}
-      <section id="features" className="features section">
+      < section id="features" className="features section" >
         <div className="container">
           <div className="row gy-4 align-items-center">
             <div className="col-lg-6" data-aos="fade-up" data-aos-delay="100">
@@ -651,31 +652,32 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Products Section */}
-      {products.length > 0 && (
-        <section id="services" className="services section">
-          <div className="container section-title" data-aos="fade-up">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h2>Our Products</h2>
-                <p>Quality essentials for every home</p>
-              </div>
-              <div className="swiper-nav-buttons d-flex gap-2">
-                <div className="product-swiper-button-prev custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
-                  <i className="bi bi-chevron-left" style={{ fontSize: '1.2rem' }}></i>
+      {
+        products.length > 0 && (
+          <section id="services" className="services section">
+            <div className="container section-title" data-aos="fade-up">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h2>Our Products</h2>
+                  <p>Quality essentials for every home</p>
                 </div>
-                <div className="product-swiper-button-next custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
-                  <i className="bi bi-chevron-right" style={{ fontSize: '1.2rem' }}></i>
+                <div className="swiper-nav-buttons d-flex gap-2">
+                  <div className="product-swiper-button-prev custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
+                    <i className="bi bi-chevron-left" style={{ fontSize: '1.2rem' }}></i>
+                  </div>
+                  <div className="product-swiper-button-next custom-swiper-nav" style={{ position: 'static', width: '40px', height: '40px', border: '1px solid var(--accent-color)', borderRadius: '50%', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', zIndex: '10' }}>
+                    <i className="bi bi-chevron-right" style={{ fontSize: '1.2rem' }}></i>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="container" data-aos="fade-up" data-aos-delay="100">
-            <div className="swiper init-swiper">
-              <script type="application/json" className="swiper-config">
-                {`
+            <div className="container" data-aos="fade-up" data-aos-delay="100">
+              <div className="swiper init-swiper">
+                <script type="application/json" className="swiper-config">
+                  {`
               {
                 "loop": true,
                 "speed": 600,
@@ -708,32 +710,33 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                 }
               }
               `}
-              </script>
-              <div className="swiper-wrapper">
-                {products.length === 0 && !productsLoading ? (
-                  <div className="swiper-slide">
-                    <p className="text-center py-4 text-muted">No products at the moment.</p>
-                  </div>
-                ) : products.length === 0 ? (
-                  <>
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="swiper-slide h-auto p-2">
-                        <ProductCardShimmer />
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  products.map((product, i) => (
-                    <div key={product.id} className="swiper-slide h-auto p-2">
-                      <ProductCard product={product} index={i} />
+                </script>
+                <div className="swiper-wrapper">
+                  {products.length === 0 && !productsLoading ? (
+                    <div className="swiper-slide">
+                      <p className="text-center py-4 text-muted">No products at the moment.</p>
                     </div>
-                  ))
-                )}
+                  ) : products.length === 0 ? (
+                    <>
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="swiper-slide h-auto p-2">
+                          <ProductCardShimmer />
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    products.map((product, i) => (
+                      <div key={product.id} className="swiper-slide h-auto p-2">
+                        <ProductCard product={product} index={i} />
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )
+      }
 
       {/* Call To Action Section */}
       <section id="call-to-action" className="call-to-action section dark-background">
@@ -810,13 +813,14 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       </section>
 
       {/* Testimonials Section */}
-      {testimonials.length > 0 && (
-        <section id="testimonials" className="testimonials section dark-background">
-          <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566402/hallmark/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
-          <div className="container" data-aos="fade-up" data-aos-delay="100">
-            <div className="swiper init-swiper">
-              <script type="application/json" className="swiper-config">
-                {`
+      {
+        testimonials.length > 0 && (
+          <section id="testimonials" className="testimonials section dark-background">
+            <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566402/hallmark/assets/img/testimonials-bg.jpg" className="testimonials-bg img-fluid" alt="" />
+            <div className="container" data-aos="fade-up" data-aos-delay="100">
+              <div className="swiper init-swiper">
+                <script type="application/json" className="swiper-config">
+                  {`
               {
                 "loop": true,
                 "speed": 600,
@@ -833,51 +837,52 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                 }
               }
               `}
-              </script>
-              <div className="swiper-wrapper">
-                {testimonialsLoading ? (
-                  <div className="swiper-slide text-center py-5">
-                    <div className="spinner-border text-light" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  </div>
-                ) : testimonials.length > 0 ? (
-                  testimonials.map((t, i) => (
-                    <div key={t.id} className="swiper-slide">
-                      <div className="testimonial-item">
-                        <img src={[
-                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566396/hallmark/assets/img/testimonials/testimonials-1.jpg",
-                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566397/hallmark/assets/img/testimonials/testimonials-2.jpg",
-                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566398/hallmark/assets/img/testimonials/testimonials-3.jpg",
-                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566399/hallmark/assets/img/testimonials/testimonials-4.jpg",
-                          "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566401/hallmark/assets/img/testimonials/testimonials-5.jpg",
-                        ][i % 5]} className="testimonial-img" alt="" />
-                        <h3>{t.name}</h3>
-                        <h4>{t.role}</h4>
-                        <div className="stars">
-                          {[...Array(t.rating || 5)].map((_, j) => (
-                            <i key={j} className="bi bi-star-fill"></i>
-                          ))}
-                        </div>
-                        <p>
-                          <i className="bi bi-quote quote-icon-left"></i>
-                          <span>{t.quote}</span>
-                          <i className="bi bi-quote quote-icon-right"></i>
-                        </p>
+                </script>
+                <div className="swiper-wrapper">
+                  {testimonialsLoading ? (
+                    <div className="swiper-slide text-center py-5">
+                      <div className="spinner-border text-light" role="status">
+                        <span className="visually-hidden">Loading...</span>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="swiper-slide text-center py-5">
-                    <p className="text-light">No testimonials available at the moment.</p>
-                  </div>
-                )}
+                  ) : testimonials.length > 0 ? (
+                    testimonials.map((t, i) => (
+                      <div key={t.id} className="swiper-slide">
+                        <div className="testimonial-item">
+                          <img src={[
+                            "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566396/hallmark/assets/img/testimonials/testimonials-1.jpg",
+                            "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566397/hallmark/assets/img/testimonials/testimonials-2.jpg",
+                            "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566398/hallmark/assets/img/testimonials/testimonials-3.jpg",
+                            "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566399/hallmark/assets/img/testimonials/testimonials-4.jpg",
+                            "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566401/hallmark/assets/img/testimonials/testimonials-5.jpg",
+                          ][i % 5]} className="testimonial-img" alt="" />
+                          <h3>{t.name}</h3>
+                          <h4>{t.role}</h4>
+                          <div className="stars">
+                            {[...Array(t.rating || 5)].map((_, j) => (
+                              <i key={j} className="bi bi-star-fill"></i>
+                            ))}
+                          </div>
+                          <p>
+                            <i className="bi bi-quote quote-icon-left"></i>
+                            <span>{t.quote}</span>
+                            <i className="bi bi-quote quote-icon-right"></i>
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="swiper-slide text-center py-5">
+                      <p className="text-light">No testimonials available at the moment.</p>
+                    </div>
+                  )}
+                </div>
+                <div className="swiper-pagination"></div>
               </div>
-              <div className="swiper-pagination"></div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )
+      }
 
       {/* Investors Section */}
       <section id="investors" className="investors section position-relative" style={{ backgroundColor: '#111', color: '#fff', padding: '100px 0', borderTop: '4px solid #ffc451', overflow: 'hidden' }}>
@@ -921,13 +926,16 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
           </div>
 
           <div className="text-center" data-aos="zoom-in" data-aos-delay="400">
-            <div className="d-inline-block p-2 rounded-pill" style={{ backgroundColor: '#222', border: '1px solid #444' }}>
+            <div
+              className="d-inline-block p-2 rounded-pill"
+              style={{ backgroundColor: '#222', border: '2px solid #444', transition: 'all 0.3s ease' }}
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = '#ffc451'; e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(255, 196, 81, 0.45)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
               <button
                 onClick={() => setIsInvestOpen(true)}
                 className="btn btn-lg px-5 py-3 rounded-pill fw-bold text-dark d-inline-flex align-items-center justify-content-center gap-2 m-0"
                 style={{ backgroundColor: '#ffc451', border: 'none', transition: 'all 0.3s ease' }}
-                onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(255, 196, 81, 0.3)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 Express Your Interest <i className="bi bi-arrow-right fs-5"></i>
               </button>
