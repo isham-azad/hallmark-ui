@@ -173,7 +173,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
 
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [hasMore, displayedProducts.length]);
+    }, [hasMore, displayedProducts.length, authChecking, productsLoading]);
 
     // Refresh AOS on new products
     useEffect(() => {
