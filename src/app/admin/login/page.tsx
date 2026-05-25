@@ -6,16 +6,18 @@ import { useAdminToast } from "@/components/AdminToast";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+  const { showToast, ToastComponent } = useAdminToast();
+  const [loading, setLoading] = useState(false);
+
+  /* =========================================================================
+     [TEMPORARY DISABLED] - OLD OTP LOGIN STATE & LOGIC
+     =========================================================================
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
   const otp = digits.join("");
   const [step, setStep] = useState(1); // 1: Email, 2: OTP
-  const router = useRouter();
-  const { showToast, ToastComponent } = useAdminToast();
-
-  const [loading, setLoading] = useState(false);
-
-  // for testing purpose need to show the OTP in the OTP screen
   const [showOtp, setShowOtp] = useState(false);
   const [otpTest, setOtpTest] = useState("");
 
@@ -33,11 +35,9 @@ export default function AdminLogin() {
         setStep(2);
         showToast("OTP sent successfully", "success");
       } else {
-        // for testing purpose need to show the OTP in the OTP screen
         setStep(2);
         setOtpTest(data.otp);
         setShowOtp(true);
-
         showToast(data.error || "Failed to send OTP", "error");
       }
     } catch (error) {
@@ -47,7 +47,7 @@ export default function AdminLogin() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleVerifyOtpLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -58,7 +58,6 @@ export default function AdminLogin() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Store user info for client-side permissions check
         if (data.admin) {
           localStorage.setItem("admin_user", JSON.stringify(data.admin));
         }
@@ -66,6 +65,35 @@ export default function AdminLogin() {
         setTimeout(() => router.push("/admin"), 500);
       } else {
         showToast(data.error || "Invalid OTP", "error");
+      }
+    } catch (error) {
+      showToast("An error occurred. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  ========================================================================= */
+
+  // NEW PASSWORD-BASED LOGIN LOGIC
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Store user info for client-side permissions check
+        if (data.admin) {
+          localStorage.setItem("admin_user", JSON.stringify(data.admin));
+        }
+        showToast("Login successful!", "success");
+        setTimeout(() => router.push("/admin"), 500);
+      } else {
+        showToast(data.error || "Invalid credentials", "error");
       }
     } catch (error) {
       showToast("An error occurred. Please try again.", "error");
@@ -81,10 +109,40 @@ export default function AdminLogin() {
       <div className="login-card">
         <div className="login-header">
           <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark Logo" className="logo-img" />
-          <p>{step === 1 ? "Enter your email to receive OTP" : "Enter the 6-digit code sent to your email"}</p>
+          <p>Sign in to your admin account</p>
         </div>
 
-        <form onSubmit={step === 1 ? handleSendOtp : handleLogin} className="login-form">
+        {/* ACTIVE TEMPORARY PASSWORD LOGIN FORM */}
+        <form onSubmit={handleLogin} className="login-form">
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@hallmark.com"
+              required
+            />
+
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? "Logging in..." : "Log In"}
+            </button>
+          </div>
+        </form>
+
+        {/* =========================================================================
+            [TEMPORARY DISABLED] - OLD OTP LOGIN FORM UI
+            =========================================================================
+        <form onSubmit={step === 1 ? handleSendOtp : handleVerifyOtpLogin} className="login-form">
           {step === 1 ? (
             <div className="form-group">
               <label>Email Address</label>
@@ -149,6 +207,7 @@ export default function AdminLogin() {
             </div>
           )}
         </form>
+        ========================================================================= */}
       </div>
 
       <style jsx>{`

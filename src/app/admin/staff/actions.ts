@@ -5,6 +5,7 @@ import { Role, PERMISSIONS } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { getAdminSession, logAction } from "@/lib/auth";
 import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
+import crypto from "crypto";
 
 export interface AdminUser {
     id: string;
@@ -176,3 +177,41 @@ export async function deleteStaff(id: string) {
         return { success: false, error: "Internal Server Error" };
     }
 }
+
+function hashPassword(password: string) {
+    return crypto.createHash("sha256").update(password).digest("hex");
+}
+
+export async function setupStaffPassword(id: string, password: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const permissionMap = await getRolePermissionsMap();
+        const userPermissions = permissionMap[session.role] || [];
+        const isSuperAdmin = session.role === "Super Admin" || session.role === "super_admin";
+        
+        if (!isSuperAdmin && !userPermissions.includes(PERMISSIONS.MANAGE_ADMINS)) {
+            return { success: false, error: "Access Denied" };
+        }
+
+        const passwordHash = hashPassword(password);
+
+        await db.collection("admins").doc(id).update({
+            passwordHash,
+            updatedAt: new Date()
+        });
+
+        const adminDoc = await db.collection("admins").doc(id).get();
+        const adminEmail = adminDoc.data()?.email || "";
+
+        await logAction(session.email, session.name, "SETUP_STAFF_PASSWORD", { staffId: id, staffEmail: adminEmail });
+
+        revalidatePath("/admin/staff");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to setup staff password:", error);
+        return { success: false, error: "Internal Server Error" };
+    }
+}
+
