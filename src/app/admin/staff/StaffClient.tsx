@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { AdminUser, addStaff, editStaff, updateStaffRole, deleteStaff } from "./actions";
+import { AdminUser, addStaff, editStaff, updateStaffRole, deleteStaff, setupStaffPassword } from "./actions";
 import { RoleData } from "./roles/actions";
 import { useAdminToast } from "@/components/AdminToast";
 
@@ -21,6 +21,12 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
     const [editStaffId, setEditStaffId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { showToast, ToastComponent } = useAdminToast();
+
+    // Password modal states
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [passwordStaffId, setPasswordStaffId] = useState<string | null>(null);
+    const [passwordStaffName, setPasswordStaffName] = useState("");
+    const [newPassword, setNewPassword] = useState("");
 
     const [form, setForm] = useState({
         name: "",
@@ -70,6 +76,23 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
             } else {
                 showToast(res.error || "Failed to add staff", "error");
             }
+        }
+    };
+
+    const handleSetupPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!passwordStaffId || !newPassword) return;
+        setLoading(true);
+        const res = await setupStaffPassword(passwordStaffId, newPassword);
+        setLoading(false);
+        if (res.success) {
+            showToast("Password updated successfully", "success");
+            setIsPasswordModalOpen(false);
+            setNewPassword("");
+            setPasswordStaffId(null);
+            setPasswordStaffName("");
+        } else {
+            showToast(res.error || "Failed to update password", "error");
         }
     };
 
@@ -174,6 +197,18 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
                                     <td>{s.createdAt ? format(new Date(s.createdAt), "MMM dd, yyyy") : "—"}</td>
                                     <td>
                                         <div className="action-buttons">
+                                            <button 
+                                                className="password-btn" 
+                                                onClick={() => {
+                                                    setPasswordStaffId(s.id);
+                                                    setPasswordStaffName(s.name);
+                                                    setNewPassword("");
+                                                    setIsPasswordModalOpen(true);
+                                                }} 
+                                                title="Setup Password"
+                                            >
+                                                <i className="bi bi-key-fill"></i>
+                                            </button>
                                             <button className="edit-btn" onClick={() => handleOpenEditModal(s)} title="Edit Admin">
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
@@ -205,6 +240,18 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
                                             <div className="joined-text">Joined: {s.createdAt ? format(new Date(s.createdAt), "MMM dd, yyyy") : "—"}</div>
                                         </div>
                                         <div className="mobile-actions">
+                                            <button 
+                                                className="password-btn" 
+                                                onClick={() => {
+                                                    setPasswordStaffId(s.id);
+                                                    setPasswordStaffName(s.name);
+                                                    setNewPassword("");
+                                                    setIsPasswordModalOpen(true);
+                                                }}
+                                                title="Setup Password"
+                                            >
+                                                <i className="bi bi-key-fill"></i>
+                                            </button>
                                             <button className="edit-btn" onClick={() => handleOpenEditModal(s)}>
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
@@ -329,6 +376,33 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
                 </div>
             )}
 
+            {isPasswordModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Setup Password for {passwordStaffName}</h3>
+                        <form onSubmit={handleSetupPassword}>
+                            <div className="form-group">
+                                <label>New Password</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                    minLength={6}
+                                />
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="cancel-link" onClick={() => { setIsPasswordModalOpen(false); setPasswordStaffId(null); setPasswordStaffName(""); setNewPassword(""); }}>Cancel</button>
+                                <button type="submit" className="submit-btn" disabled={loading}>
+                                    {loading ? "Saving..." : "Set Password"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <style jsx>{`
                 .staff-container { animation: fadeIn 0.5s ease-out; }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -364,6 +438,8 @@ export default function StaffClient({ initialStaff, availableRoles }: StaffClien
                 .action-buttons { display: flex; gap: 0.5rem; }
                 .edit-btn { background: #fff; border: 1px solid #bfdbfe; color: #3b82f6; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
                 .edit-btn:hover { background: #3b82f6; color: #fff; }
+                .password-btn { background: #fff; border: 1px solid #fed7aa; color: #f97316; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+                .password-btn:hover { background: #f97316; color: #fff; }
                 .delete-btn { background: #fff; border: 1px solid #fee2e2; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
                 .delete-btn:hover { background: #ef4444; color: #fff; }
 
