@@ -237,6 +237,21 @@ export async function POST(request: NextRequest) {
 
         const docRef = await db.collection("orders").add(orderData);
 
+        // Decrement product inventory stock
+        for (const item of items) {
+            const itemId = item?.id != null ? String(item.id) : "";
+            const qty = Number(item.quantity) || 1;
+            if (itemId) {
+                try {
+                    await db.collection("products").doc(itemId).update({
+                        stock: FieldValue.increment(-qty)
+                    });
+                } catch (stockError) {
+                    console.warn(`Failed to update stock for item ${itemId}:`, stockError);
+                }
+            }
+        }
+
         if (isB2B && rewardsUsed > 0) {
             await db.collection("b2b_clients").doc(b2bSession.id).update({
                 rewardBalance: FieldValue.increment(-rewardsUsed)
