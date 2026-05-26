@@ -95,6 +95,7 @@ export default function AdminLayoutClient({
         { name: "OTP Verifications", href: "/admin/otp-verifications", permission: PERMISSIONS.VIEW_OTP_VERIFICATIONS },
         { name: "Testimonials", href: "/admin/staff/testimonials", permission: PERMISSIONS.MANAGE_TESTIMONIALS },
         { name: "Activity Logs", href: "/admin/staff/logs", permission: PERMISSIONS.VIEW_LOGS },
+        { name: "SEO Setup", href: "/admin/staff/seo", permission: PERMISSIONS.MANAGE_WEBSITE },
       ],
     },
     {
@@ -216,6 +217,8 @@ export default function AdminLayoutClient({
       setHeaderTitle("Payment Methods");
     } else if (pathname === "/admin/staff/logs") {
       setHeaderTitle("Activity Logs");
+    } else if (pathname === "/admin/staff/seo") {
+      setHeaderTitle("SEO Settings");
     } else if (pathname === "/admin/website/hero") {
       setHeaderTitle("Hero Banners");
     } else if (pathname === "/admin/website/about") {
