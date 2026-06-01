@@ -1,5 +1,6 @@
 import { getSeoSettings } from "./actions";
 import SeoClient from "./SeoClient";
+import db from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
 
@@ -24,5 +25,20 @@ function serialize(obj: any): any {
 
 export default async function SeoSetupPage() {
     const seoSettings = await getSeoSettings();
-    return <SeoClient initialData={serialize(seoSettings)} />;
+    
+    // Fetch products sorted by title
+    let products: any[] = [];
+    try {
+        const snapshot = await db.collection("products").orderBy("title").get();
+        products = snapshot.docs.map((doc: any) => ({
+            id: doc.id,
+            title: doc.data().title || "Untitled Product",
+            image: doc.data().image || "",
+            desc: doc.data().desc || "",
+        }));
+    } catch (e) {
+        console.error("Failed to fetch products for SEO page:", e);
+    }
+
+    return <SeoClient initialData={serialize(seoSettings)} products={serialize(products)} />;
 }
