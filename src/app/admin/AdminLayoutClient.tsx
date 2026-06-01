@@ -95,7 +95,6 @@ export default function AdminLayoutClient({
         { name: "OTP Verifications", href: "/admin/otp-verifications", permission: PERMISSIONS.VIEW_OTP_VERIFICATIONS },
         { name: "Testimonials", href: "/admin/staff/testimonials", permission: PERMISSIONS.MANAGE_TESTIMONIALS },
         { name: "Activity Logs", href: "/admin/staff/logs", permission: PERMISSIONS.VIEW_LOGS },
-        { name: "SEO Setup", href: "/admin/staff/seo", permission: PERMISSIONS.MANAGE_WEBSITE },
       ],
     },
     {
@@ -108,6 +107,7 @@ export default function AdminLayoutClient({
         { name: "Stats Section", href: "/admin/website/stats", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Investors Section", href: "/admin/website/investors", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Shop Banners", href: "/admin/website/shop-banners", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "SEO Setup", href: "/admin/staff/seo", permission: PERMISSIONS.MANAGE_WEBSITE },
       ],
     },
     {

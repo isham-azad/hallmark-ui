@@ -28,15 +28,43 @@ export async function generateMetadata(
     const images = imageRaw ? imageRaw.split(',').filter(Boolean) : [];
     const mainImage = images[0] || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566812/hallmark/favicon.png";
 
+    // Setup base fallback metadata
+    let seoTitle = `${title} | HallMark Enterprises`;
+    let seoDesc = description.slice(0, 160);
+    let seoKeywords = "wholesale, distributor, food processing, hallmark";
+    let seoOgTitle = seoTitle;
+    let seoOgDesc = seoDesc;
+    let seoOgImage = mainImage;
+
+    // Apply custom product-specific SEO overrides if they exist
+    try {
+      const seoDoc = await db.collection("website_settings").doc("seo").get();
+      if (seoDoc.exists) {
+        const seoData = seoDoc.data();
+        const pSeo = seoData?.products?.[id];
+        if (pSeo) {
+          if (pSeo.title) seoTitle = pSeo.title;
+          if (pSeo.description) seoDesc = pSeo.description;
+          if (pSeo.keywords) seoKeywords = pSeo.keywords;
+          seoOgTitle = pSeo.ogTitle || seoTitle;
+          seoOgDesc = pSeo.ogDescription || seoDesc;
+          if (pSeo.ogImage) seoOgImage = pSeo.ogImage;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch product SEO overrides:", e);
+    }
+
     return {
-      title: `${title} | HallMark Enterprises`,
-      description: description.slice(0, 160),
+      title: seoTitle,
+      description: seoDesc,
+      keywords: seoKeywords,
       openGraph: {
-        title: `${title} | HallMark Enterprises`,
-        description: description.slice(0, 160),
+        title: seoOgTitle,
+        description: seoOgDesc,
         images: [
           {
-            url: mainImage,
+            url: seoOgImage,
             width: 800,
             height: 600,
             alt: title,
@@ -46,9 +74,9 @@ export async function generateMetadata(
       },
       twitter: {
         card: "summary_large_image",
-        title: `${title} | HallMark Enterprises`,
-        description: description.slice(0, 160),
-        images: [mainImage],
+        title: seoOgTitle,
+        description: seoOgDesc,
+        images: [seoOgImage],
       },
     };
   } catch (error) {
