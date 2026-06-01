@@ -5,8 +5,16 @@ import { useRouter } from "next/navigation";
 import { updateSeoSettings, SeoSettings, PageSeo } from "./actions";
 import { useAdminToast } from "@/components/AdminToast";
 
+interface ProductItem {
+    id: string;
+    title: string;
+    image: string;
+    desc: string;
+}
+
 interface SeoClientProps {
     initialData: SeoSettings;
+    products: ProductItem[];
 }
 
 type TabType = 
@@ -18,69 +26,64 @@ type TabType =
     | "cart" 
     | "checkout" 
     | "orderSuccess" 
-    | "portfolioDetails" 
-    | "productDetails" 
+    | "products"
     | "scripts";
 
-export default function SeoClient({ initialData }: SeoClientProps) {
+export default function SeoClient({ initialData, products = [] }: SeoClientProps) {
     const router = useRouter();
     const { showToast, ToastComponent } = useAdminToast();
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>("global");
+    const [selectedProductId, setSelectedProductId] = useState<string>("");
+    const [searchTerm, setSearchTerm] = useState<string>("");
     
-    const [formData, setFormData] = useState<SeoSettings>(initialData);
+    const [formData, setFormData] = useState<SeoSettings>({
+        ...initialData,
+        products: initialData.products || {}
+    });
 
     // Single dynamic file input approach
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadingSection, setUploadingSection] = useState<string | null>(null);
 
-    const [imageFiles, setImageFiles] = useState<Record<string, File | null>>({
-        default: null,
-        home: null,
-        shop: null,
-        b2b: null,
-        b2bAccount: null,
-        cart: null,
-        checkout: null,
-        orderSuccess: null,
-        portfolioDetails: null,
-        productDetails: null
-    });
+    const [imageFiles, setImageFiles] = useState<Record<string, File | null>>({});
 
-    const [imagePreviews, setImagePreviews] = useState<Record<string, string>>({
-        default: initialData.default?.ogImage || "",
-        home: initialData.home?.ogImage || "",
-        shop: initialData.shop?.ogImage || "",
-        b2b: initialData.b2b?.ogImage || "",
-        b2bAccount: initialData.b2bAccount?.ogImage || "",
-        cart: initialData.cart?.ogImage || "",
-        checkout: initialData.checkout?.ogImage || "",
-        orderSuccess: initialData.orderSuccess?.ogImage || "",
-        portfolioDetails: initialData.portfolioDetails?.ogImage || "",
-        productDetails: initialData.productDetails?.ogImage || ""
-    });
+    const getInitialPreviews = (data: SeoSettings) => {
+        const previews: Record<string, string> = {
+            default: data.default?.ogImage || "",
+            home: data.home?.ogImage || "",
+            shop: data.shop?.ogImage || "",
+            b2b: data.b2b?.ogImage || "",
+            b2bAccount: data.b2bAccount?.ogImage || "",
+            cart: data.cart?.ogImage || "",
+            checkout: data.checkout?.ogImage || "",
+            orderSuccess: data.orderSuccess?.ogImage || ""
+        };
+        if (data.products) {
+            Object.entries(data.products).forEach(([pId, pSeo]) => {
+                if (pSeo?.ogImage) {
+                    previews[pId] = pSeo.ogImage;
+                }
+            });
+        }
+        return previews;
+    };
+
+    const [imagePreviews, setImagePreviews] = useState<Record<string, string>>(() => getInitialPreviews(initialData));
 
     // Update form state if initialData changes
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
-            setImagePreviews({
-                default: initialData.default?.ogImage || "",
-                home: initialData.home?.ogImage || "",
-                shop: initialData.shop?.ogImage || "",
-                b2b: initialData.b2b?.ogImage || "",
-                b2bAccount: initialData.b2bAccount?.ogImage || "",
-                cart: initialData.cart?.ogImage || "",
-                checkout: initialData.checkout?.ogImage || "",
-                orderSuccess: initialData.orderSuccess?.ogImage || "",
-                portfolioDetails: initialData.portfolioDetails?.ogImage || "",
-                productDetails: initialData.productDetails?.ogImage || ""
+            setFormData({
+                ...initialData,
+                products: initialData.products || {}
             });
+            setImagePreviews(getInitialPreviews(initialData));
         }
     }, [initialData]);
 
     const handleTextChange = (
-        section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript">,
+        section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript" | "products">,
         field: keyof PageSeo,
         value: string
     ) => {
@@ -91,6 +94,23 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                 [field]: value
             }
         }));
+    };
+
+    const handleProductTextChange = (productId: string, field: keyof PageSeo, value: string) => {
+        setFormData(prev => {
+            const currentProducts = prev.products || {};
+            const productSeo = currentProducts[productId] || { title: "", description: "", keywords: "", ogTitle: "", ogDescription: "", ogImage: "" };
+            return {
+                ...prev,
+                products: {
+                    ...currentProducts,
+                    [productId]: {
+                        ...productSeo,
+                        [field]: value
+                    }
+                }
+            };
+        });
     };
 
     const triggerImageUpload = (section: string) => {
@@ -126,10 +146,10 @@ export default function SeoClient({ initialData }: SeoClientProps) {
             const updatedData = { ...formData };
             const sections = [
                 "default", "home", "shop", "b2b", "b2bAccount", 
-                "cart", "checkout", "orderSuccess", "portfolioDetails", "productDetails"
+                "cart", "checkout", "orderSuccess"
             ] as const;
 
-            // Upload files that have been changed
+            // Upload files that have been changed for main sections
             for (const section of sections) {
                 const file = imageFiles[section];
                 if (file) {
@@ -138,13 +158,27 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                 }
             }
 
+            // Upload files for products
+            if (products && products.length > 0) {
+                const updatedProducts = { ...(updatedData.products || {}) };
+                for (const p of products) {
+                    const file = imageFiles[p.id];
+                    if (file) {
+                        const uploadedUrl = await handleUploadImage(file);
+                        const currentProductSeo = updatedProducts[p.id] || { title: "", description: "", keywords: "", ogTitle: "", ogDescription: "", ogImage: "" };
+                        updatedProducts[p.id] = {
+                            ...currentProductSeo,
+                            ogImage: uploadedUrl
+                        };
+                    }
+                }
+                updatedData.products = updatedProducts;
+            }
+
             const res = await updateSeoSettings(updatedData);
             if (res.success) {
                 showToast("SEO settings updated successfully", "success");
-                setImageFiles({
-                    default: null, home: null, shop: null, b2b: null, b2bAccount: null,
-                    cart: null, checkout: null, orderSuccess: null, portfolioDetails: null, productDetails: null
-                });
+                setImageFiles({});
                 router.refresh();
             } else {
                 showToast(res.error || "Failed to update SEO settings", "error");
@@ -174,14 +208,12 @@ export default function SeoClient({ initialData }: SeoClientProps) {
             case "cart": return "https://hallmarkworld.com/cart";
             case "checkout": return "https://hallmarkworld.com/checkout";
             case "orderSuccess": return "https://hallmarkworld.com/order-success";
-            case "portfolioDetails": return "https://hallmarkworld.com/portfolio-details";
-            case "productDetails": return "https://hallmarkworld.com/product-details";
             default: return "https://hallmarkworld.com/ [Default Fallback]";
         }
     };
 
-    const renderPreviews = (section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript">) => {
-        const data = formData[section];
+    const renderPreviews = (section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript" | "products">) => {
+        const data = formData[section] as PageSeo;
         const previewTitle = data?.title || "HallMark Enterprises";
         const previewDesc = data?.description || "A Wholesale Distributor & Food Processing Co.";
         const previewOgTitle = data?.ogTitle || previewTitle;
@@ -222,8 +254,8 @@ export default function SeoClient({ initialData }: SeoClientProps) {
         );
     };
 
-    const renderSeoInputs = (section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript">) => {
-        const data = formData[section] || { title: "", description: "", keywords: "", ogTitle: "", ogDescription: "" };
+    const renderSeoInputs = (section: keyof Omit<SeoSettings, "googleAnalyticsId" | "facebookPixelId" | "customHeadScript" | "customBodyScript" | "products">) => {
+        const data = (formData[section] as PageSeo) || { title: "", description: "", keywords: "", ogTitle: "", ogDescription: "" };
         return (
             <div className="seo-grid">
                 <div className="seo-form-fields">
@@ -322,6 +354,156 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                 <div className="seo-previews-sidebar">
                     {renderPreviews(section)}
                 </div>
+            </div>
+        );
+    };
+
+    const renderProductSeoInputs = (productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return null;
+
+        const productSeo = formData.products?.[productId] || { title: "", description: "", keywords: "", ogTitle: "", ogDescription: "", ogImage: "" };
+        
+        // Fallbacks for preview:
+        const previewTitle = productSeo.title || `${product.title} | HallMark Enterprises`;
+        const previewDesc = productSeo.description || (product.desc ? product.desc.slice(0, 150) : "A Wholesale Distributor & Food Processing Co.");
+        const previewOgTitle = productSeo.ogTitle || previewTitle;
+        const previewOgDesc = productSeo.ogDescription || previewDesc;
+        const firstImage = product.image ? product.image.split(',')[0] : "";
+        const previewOgImage = imagePreviews[productId] || firstImage || "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566363/hallmark/assets/img/hero-bg-2.png";
+        const mockUrl = `https://hallmarkworld.com/product/${productId}`;
+
+        return (
+            <div className="seo-grid">
+                <div className="seo-form-fields">
+                    <div className="form-section-card">
+                        <h5 className="card-sub-title">Search Appearance (for {product.title})</h5>
+                        
+                        <div className="input-group">
+                           <div className="label-with-meta">
+                               <label>Meta Title Tag</label>
+                               {renderLengthIndicator(productSeo.title?.length || 0, 30, 60)}
+                           </div>
+                           <input
+                               type="text"
+                               value={productSeo.title || ""}
+                               onChange={(e) => handleProductTextChange(productId, "title", e.target.value)}
+                               placeholder={`${product.title} | HallMark Enterprises`}
+                           />
+                           <p className="hint">The title displayed in search engines and browser tabs. If empty, falls back to product name.</p>
+                       </div>
+
+                       <div className="input-group">
+                           <div className="label-with-meta">
+                               <label>Meta Description</label>
+                               {renderLengthIndicator(productSeo.description?.length || 0, 120, 160)}
+                           </div>
+                           <textarea
+                               rows={4}
+                               value={productSeo.description || ""}
+                               onChange={(e) => handleProductTextChange(productId, "description", e.target.value)}
+                               placeholder={product.desc ? product.desc.slice(0, 150) : "Enter custom meta description snippet"}
+                           />
+                           <p className="hint">A concise summary of the page to attract search engine clicks. If empty, falls back to product description.</p>
+                       </div>
+
+                       <div className="input-group mb-0">
+                           <label>Meta Keywords</label>
+                           <input
+                               type="text"
+                               value={productSeo.keywords || ""}
+                               onChange={(e) => handleProductTextChange(productId, "keywords", e.target.value)}
+                               placeholder="comma, separated, tags, hallmark"
+                           />
+                           <p className="hint">Tags to help classify search content (comma separated).</p>
+                       </div>
+                   </div>
+
+                   <div className="form-section-card mt-4">
+                       <h5 className="card-sub-title">Social Sharing Customizations</h5>
+                       
+                       <div className="input-group">
+                           <label>OG Custom Title</label>
+                           <input
+                               type="text"
+                               value={productSeo.ogTitle || ""}
+                               onChange={(e) => handleProductTextChange(productId, "ogTitle", e.target.value)}
+                               placeholder="Enter custom share card title"
+                           />
+                           <p className="hint">Overrides the title when shared on platforms like WhatsApp or Facebook.</p>
+                       </div>
+
+                       <div className="input-group">
+                           <label>OG Custom Description</label>
+                           <textarea
+                               rows={3}
+                               value={productSeo.ogDescription || ""}
+                               onChange={(e) => handleProductTextChange(productId, "ogDescription", e.target.value)}
+                               placeholder="Enter custom share card description"
+                           />
+                           <p className="hint">Overrides the description in social share cards.</p>
+                       </div>
+
+                       <div className="social-image-upload">
+                           <label>OG Share Image Override</label>
+                           <div className="og-image-box" onClick={() => triggerImageUpload(productId)}>
+                               {imagePreviews[productId] ? (
+                                   <>
+                                       <img src={imagePreviews[productId]} alt="OG Share Preview" />
+                                       <div className="og-image-overlay">
+                                           <i className="bi bi-camera"></i> Change Image
+                                       </div>
+                                   </>
+                               ) : firstImage ? (
+                                   <>
+                                       <img src={firstImage} alt="Product Default" />
+                                       <div className="og-image-overlay">
+                                           <i className="bi bi-camera"></i> Override Image
+                                       </div>
+                                   </>
+                               ) : (
+                                   <div className="placeholder">
+                                       <i className="bi bi-cloud-arrow-up"></i>
+                                       <span>Click to Upload Share Image</span>
+                                   </div>
+                               )}
+                           </div>
+                           <p className="hint mt-2">Recommended: 1200 x 630 pixels. JPEG, PNG, WebP. (Falls back to the product's primary image if not set)</p>
+                       </div>
+                   </div>
+               </div>
+
+               <div className="seo-previews-sidebar">
+                   <div className="preview-section">
+                       <h5 className="preview-section-title"><i className="bi bi-eye"></i> Real-time Snippet Previews</h5>
+                       
+                       {/* Google Search Preview */}
+                       <div className="preview-card google-preview">
+                           <span className="preview-label">Google Search Result</span>
+                           <div className="google-url-row">
+                               <span className="google-favicon">G</span>
+                               <span className="google-url">{mockUrl}</span>
+                           </div>
+                           <div className="google-title">{previewTitle}</div>
+                           <div className="google-desc">{previewDesc}</div>
+                       </div>
+
+                       {/* Social Card Preview */}
+                       <div className="preview-card social-preview">
+                           <span className="preview-label">Social Media Card (OpenGraph)</span>
+                           <div className="social-card">
+                               <div className="social-img-wrap">
+                                   <img src={previewOgImage} alt="OG Card Preview" />
+                               </div>
+                               <div className="social-meta">
+                                   <div className="social-domain">HALLMARKWORLD.COM</div>
+                                   <div className="social-title">{previewOgTitle}</div>
+                                   <div className="social-desc">{previewOgDesc}</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
             </div>
         );
     };
@@ -455,29 +637,22 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                     </div>
 
                     <div className="sidebar-group mt-4">
-                        <span className="group-label">General Content Pages</span>
+                        <span className="group-label">Product Pages</span>
 
                         <button
                             type="button"
-                            className={`sidebar-tab-btn ${activeTab === "portfolioDetails" ? "active" : ""}`}
-                            onClick={() => setActiveTab("portfolioDetails")}
+                            className={`sidebar-tab-btn ${activeTab === "products" ? "active" : ""}`}
+                            onClick={() => {
+                                setActiveTab("products");
+                                if (products.length > 0 && !selectedProductId) {
+                                    setSelectedProductId(products[0].id);
+                                }
+                            }}
                         >
-                            <div className="tab-icon"><i className="bi bi-journal-album"></i></div>
+                            <div className="tab-icon"><i className="bi bi-box-seam-fill"></i></div>
                             <div className="tab-content">
-                                <span className="tab-title">Portfolio Details</span>
-                                <span className="tab-desc">(/portfolio-details) overrides</span>
-                            </div>
-                        </button>
-
-                        <button
-                            type="button"
-                            className={`sidebar-tab-btn ${activeTab === "productDetails" ? "active" : ""}`}
-                            onClick={() => setActiveTab("productDetails")}
-                        >
-                            <div className="tab-icon"><i className="bi bi-info-circle-fill"></i></div>
-                            <div className="tab-content">
-                                <span className="tab-title">Product Static Details</span>
-                                <span className="tab-desc">(/product-details) overrides</span>
+                                <span className="tab-title">Product Specific SEO</span>
+                                <span className="tab-desc">Configure SEO for each product</span>
                             </div>
                         </button>
                     </div>
@@ -596,26 +771,6 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                             </div>
                         )}
 
-                        {activeTab === "portfolioDetails" && (
-                            <div className="tab-pane-content">
-                                <div className="pane-header">
-                                    <h3>Portfolio Details SEO Customization</h3>
-                                    <p>Configure metadata for the main portfolio showreel/gallery detailed view (/portfolio-details).</p>
-                                </div>
-                                {renderSeoInputs("portfolioDetails")}
-                            </div>
-                        )}
-
-                        {activeTab === "productDetails" && (
-                            <div className="tab-pane-content">
-                                <div className="pane-header">
-                                    <h3>Product Static Details SEO Customization</h3>
-                                    <p>Configure metadata for the static dishwash display details showcase page (/product-details).</p>
-                                </div>
-                                {renderSeoInputs("productDetails")}
-                            </div>
-                        )}
-
                         {activeTab === "scripts" && (
                             <div className="tab-pane-content">
                                 <div className="pane-header">
@@ -681,6 +836,64 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "products" && (
+                            <div className="tab-pane-content">
+                                <div className="pane-header">
+                                    <h3>Product Specific SEO Customization</h3>
+                                    <p>Select any product from the catalog to define customized search snippets and OpenGraph overrides.</p>
+                                </div>
+                                
+                                <div className="product-seo-selector-card mb-4">
+                                    <div className="product-search-bar">
+                                        <i className="bi bi-search"></i>
+                                        <input
+                                            type="text"
+                                            placeholder="Search catalog products..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="products-list-scroll">
+                                        {products && products.length > 0 ? (
+                                            products
+                                                .filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(p => {
+                                                    const hasCustomSeo = formData.products?.[p.id]?.title || formData.products?.[p.id]?.description;
+                                                    return (
+                                                        <button
+                                                            key={p.id}
+                                                            type="button"
+                                                            className={`product-select-item ${selectedProductId === p.id ? "active" : ""}`}
+                                                            onClick={() => setSelectedProductId(p.id)}
+                                                        >
+                                                            <span className="product-select-title">{p.title}</span>
+                                                            {hasCustomSeo ? (
+                                                                <span className="badge-customized"><i className="bi bi-check-circle-fill"></i> Customized</span>
+                                                            ) : (
+                                                                <span className="badge-default">System Default</span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })
+                                        ) : (
+                                            <div className="p-3 text-center text-muted">No products found.</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    {selectedProductId ? (
+                                        renderProductSeoInputs(selectedProductId)
+                                    ) : (
+                                        <div className="empty-product-state">
+                                            <i className="bi bi-box-seam"></i>
+                                            <p>Select a product from the list above to customize its SEO attributes.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1272,6 +1485,120 @@ export default function SeoClient({ initialData }: SeoClientProps) {
                         position: static;
                         max-height: none;
                     }
+                }
+                /* Product SEO selector styles */
+                .product-seo-selector-card {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 20px;
+                    padding: 1.25rem;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                }
+                .product-search-bar {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: #f8fafc;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 12px;
+                    padding: 8px 14px;
+                    margin-bottom: 1rem;
+                }
+                .product-search-bar i {
+                    color: #94a3b8;
+                    font-size: 1rem;
+                }
+                .product-search-bar input {
+                    border: none;
+                    background: transparent;
+                    width: 100%;
+                    outline: none;
+                    font-size: 0.92rem;
+                    color: #0f172a;
+                }
+                .products-list-scroll {
+                    max-height: 240px;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                    padding-right: 4px;
+                }
+                .products-list-scroll::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .products-list-scroll::-webkit-scrollbar-thumb {
+                    background-color: #cbd5e1;
+                    border-radius: 4px;
+                }
+                .product-select-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 14px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: left;
+                    transition: all 0.2s ease;
+                }
+                .product-select-item:hover {
+                    background: #f1f5f9;
+                    border-color: #cbd5e1;
+                }
+                .product-select-item.active {
+                    background: #fff8eb;
+                    border-color: #ffe8cc;
+                    box-shadow: 0 0 0 3px rgba(255, 196, 81, 0.1);
+                }
+                .product-select-title {
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                    color: #334155;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 70%;
+                }
+                .badge-customized {
+                    background: #dcfce7;
+                    color: #15803d;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                .badge-default {
+                    background: #f1f5f9;
+                    color: #64748b;
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                }
+                .empty-product-state {
+                    background: #ffffff;
+                    border: 1px dashed #cbd5e1;
+                    border-radius: 20px;
+                    padding: 3rem 1.5rem;
+                    text-align: center;
+                    color: #64748b;
+                }
+                .empty-product-state i {
+                    font-size: 2.5rem;
+                    color: #cbd5e1;
+                    margin-bottom: 12px;
+                    display: block;
+                }
+                .empty-product-state p {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    margin: 0;
                 }
             ` }} />
         </div>

@@ -25,12 +25,11 @@ export interface SeoSettings {
     checkout: PageSeo;
     orderSuccess: PageSeo;
     b2bAccount: PageSeo;
-    portfolioDetails: PageSeo;
-    productDetails: PageSeo;
     googleAnalyticsId: string;
     facebookPixelId: string;
     customHeadScript: string;
     customBodyScript: string;
+    products?: Record<string, PageSeo>;
 }
 
 const DEFAULT_SEO: SeoSettings = {
@@ -98,26 +97,11 @@ const DEFAULT_SEO: SeoSettings = {
         ogDescription: "Manage your business account and orders.",
         ogImage: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566363/hallmark/assets/img/hero-bg-2.png",
     },
-    portfolioDetails: {
-        title: "Portfolio Details | HallMark Enterprises",
-        description: "A detailed look at our successful projects and processing facilities.",
-        keywords: "portfolio, processing facilities, showcase, hallmark projects",
-        ogTitle: "Portfolio Details | HallMark Enterprises",
-        ogDescription: "A detailed look at our successful projects and processing facilities.",
-        ogImage: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566363/hallmark/assets/img/hero-bg-2.png",
-    },
-    productDetails: {
-        title: "Soph Dishwash Liquid | HallMark Enterprises",
-        description: "Powerful grease-cutting action with refreshing fragrances including Lime, Orange, and Green Apple.",
-        keywords: "dishwash liquid, soph dishwash, hallmark clean, home care products",
-        ogTitle: "Soph Dishwash Liquid | HallMark Enterprises",
-        ogDescription: "Powerful grease-cutting action with refreshing fragrances.",
-        ogImage: "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg",
-    },
     googleAnalyticsId: "",
     facebookPixelId: "",
     customHeadScript: "",
     customBodyScript: "",
+    products: {},
 };
 
 async function verifyAuth(permission?: string) {
@@ -151,12 +135,11 @@ export async function getSeoSettings(): Promise<SeoSettings> {
                 checkout: { ...DEFAULT_SEO.checkout, ...(data?.checkout || {}) },
                 orderSuccess: { ...DEFAULT_SEO.orderSuccess, ...(data?.orderSuccess || {}) },
                 b2bAccount: { ...DEFAULT_SEO.b2bAccount, ...(data?.b2bAccount || {}) },
-                portfolioDetails: { ...DEFAULT_SEO.portfolioDetails, ...(data?.portfolioDetails || {}) },
-                productDetails: { ...DEFAULT_SEO.productDetails, ...(data?.productDetails || {}) },
                 googleAnalyticsId: data?.googleAnalyticsId || "",
                 facebookPixelId: data?.facebookPixelId || "",
                 customHeadScript: data?.customHeadScript || "",
                 customBodyScript: data?.customBodyScript || "",
+                products: data?.products || {},
             };
         }
         return DEFAULT_SEO;
@@ -183,8 +166,6 @@ export async function updateSeoSettings(data: SeoSettings) {
         revalidatePath("/cart");
         revalidatePath("/checkout");
         revalidatePath("/order-success");
-        revalidatePath("/portfolio-details");
-        revalidatePath("/product-details");
         
         return { success: true };
     } catch (error: any) {
