@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CartItem } from "@/context/CartContext";
 
-interface SiteProduct {
-    id: string;
-    title: string;
-    image?: string;
-    price?: string;
-    categoryName?: string;
-    wasPrice?: string;
-    b2bPricingTiers?: { minQty: number; price: string }[];
-}
+import { SiteProduct, B2BPricingTier } from "@/lib/types";
 
 export interface CartItemWithDetails extends CartItem {
     nameFromDb: string;

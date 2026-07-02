@@ -1,36 +1,7 @@
 "use server";
 import db from "@/lib/firebase";
 
-export interface SiteProduct {
-    id: string;
-    title: string;
-    desc: string;
-    image?: string;
-    price?: string;
-    wasPrice?: string;
-    category: string;
-    brand: string;
-    categoryName: string;
-    brandName: string;
-    howToUse: string;
-    b2bPricingTiers: any[];
-    updatedAt: number;
-}
-
-export interface SiteBrand {
-    id: string;
-    name: string;
-    shortDesc: string;
-    summary: string;
-    image: string;
-}
-
-export interface SiteCategory {
-    id: string;
-    name: string;
-    summary: string;
-    image: string;
-}
+import { SiteProduct, SiteBrand, SiteCategory, SiteTestimonial } from "@/lib/types";
 
 export async function getSiteWebsiteContent() {
     try {
@@ -121,7 +92,7 @@ export async function getSiteBrands(): Promise<SiteBrand[]> {
             .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
-                return { id: doc.id, name: data.name, shortDesc: data.shortDesc || "", summary: data.summary || "", image: data.image || "" };
+                return { id: doc.id, name: data.name, shortDesc: data.shortDesc || "", summary: data.summary || "", image: data.image || "" } as SiteBrand;
             })
             .filter((b: SiteBrand | null): b is SiteBrand => b !== null);
     } catch (error) {
@@ -137,7 +108,7 @@ export async function getSiteCategories(): Promise<SiteCategory[]> {
             .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
-                return { id: doc.id, name: data.name, summary: data.summary || "", image: data.image || "" };
+                return { id: doc.id, name: data.name, summary: data.summary || "", image: data.image || "" } as SiteCategory;
             })
             .filter((c: SiteCategory | null): c is SiteCategory => c !== null);
     } catch (error) {
@@ -146,7 +117,7 @@ export async function getSiteCategories(): Promise<SiteCategory[]> {
     }
 }
 
-export async function getSiteTestimonials() {
+export async function getSiteTestimonials(): Promise<SiteTestimonial[]> {
     try {
         const snapshot = await db.collection("testimonials").get();
         return snapshot.docs
@@ -160,10 +131,10 @@ export async function getSiteTestimonials() {
                     quote: data.quote, 
                     rating: data.rating || 5, 
                     createdAt: data.createdAt?.toMillis?.() || 0 
-                };
+                } as SiteTestimonial;
             })
-            .filter(Boolean)
-            .sort((a: any, b: any) => b.createdAt - a.createdAt);
+            .filter((t: SiteTestimonial | null): t is SiteTestimonial => t !== null)
+            .sort((a: SiteTestimonial, b: SiteTestimonial) => b.createdAt - a.createdAt);
     } catch (error) {
         console.error("Fetch site-testimonials error:", error);
         return [];

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getSiteProducts, getSiteCategories, getSiteBrands, SiteProduct, SiteCategory, SiteBrand } from '@/lib/site-actions';
+import { getSiteProducts, getSiteCategories, getSiteBrands } from '@/lib/site-actions';
+import { SiteProduct, SiteCategory, SiteBrand } from '@/lib/types';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hallmarkworld.com';
