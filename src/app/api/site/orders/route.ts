@@ -291,10 +291,10 @@ export async function POST(request: NextRequest) {
                     orderNo,
                     customer,
                     email: String(email).trim(),
-                    total: orderData.total,
-                    items: orderItems,
+                    total: orderData.total as string,
+                    items: orderItems as any,
                     paymentMethod,
-                });
+                } as any);
             } catch (emailError) {
                 console.warn("Failed to send order confirmation email:", emailError);
             }
