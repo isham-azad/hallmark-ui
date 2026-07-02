@@ -31,14 +31,14 @@ export default async function Page() {
   ]);
 
   return (
-    <HomeClient 
+    <HomeClient
       initialData={serializeData({
         websiteContent,
         products,
         brands,
         categories,
         testimonials
-      })} 
+      })}
     />
   );
 }
