@@ -3,35 +3,47 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { b2bLoginSchema, B2BLoginFormData } from "@/lib/schemas";
 
 export default function B2BLoginClient() {
     const router = useRouter();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<B2BLoginFormData>({
+        resolver: zodResolver(b2bLoginSchema),
+        defaultValues: {
+            username: "",
+            password: "",
+        },
+    });
+
+    const onSubmit = async (data: B2BLoginFormData) => {
         setLoading(true);
 
         try {
             const res = await fetch("/api/b2b/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify(data),
             });
 
-            const data = await res.json();
+            const result = await res.json();
 
-            if (data.success) {
-                toast.success(`Welcome back, ${data.companyName}!`);
+            if (result.success) {
+                toast.success(`Welcome back, ${result.companyName}!`);
                 setTimeout(() => {
                     window.location.href = "/b2b/account";
                 }, 1000);
             } else {
-                toast.error(data.error || "Login failed");
+                toast.error(result.error || "Login failed");
             }
         } catch (error) {
             toast.error("Something went wrong. Please try again.");
@@ -55,20 +67,19 @@ export default function B2BLoginClient() {
                     <p className="subtitle">Sign in to access wholesale pricing</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="login-form">
+                <form onSubmit={handleSubmit(onSubmit)} className="login-form">
                     <div className="form-group mb-3">
                         <label>Username</label>
                         <div className="input-with-icon">
                             <i className="bi bi-person"></i>
                             <input
                                 type="text"
-                                className="form-control"
+                                className={`form-control ${errors.username ? 'is-invalid' : ''}`}
                                 placeholder="Enter your username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                required
+                                {...register("username")}
                             />
                         </div>
+                        {errors.username && <div className="text-danger small mt-1">{errors.username.message}</div>}
                     </div>
 
                     <div className="form-group mb-4">
@@ -77,13 +88,12 @@ export default function B2BLoginClient() {
                             <i className="bi bi-lock"></i>
                             <input
                                 type="password"
-                                className="form-control"
+                                className={`form-control ${errors.password ? 'is-invalid' : ''}`}
                                 placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                                {...register("password")}
                             />
                         </div>
+                        {errors.password && <div className="text-danger small mt-1">{errors.password.message}</div>}
                     </div>
 
                     <button
