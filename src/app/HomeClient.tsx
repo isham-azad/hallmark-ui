@@ -9,31 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
 import AddressTabs from "@/components/AddressTabs";
 
-interface SiteProduct {
-  id: string;
-  title: string;
-  category: string;
-  brand: string;
-  desc: string;
-  image?: string;
-  price?: string;
-}
-
-interface SiteBrand {
-  id: string;
-  name: string;
-  image?: string;
-  shortDesc?: string;
-  summary?: string;
-}
-
-interface SiteTestimonial {
-  id: string;
-  name: string;
-  role: string;
-  quote: string;
-  rating: number;
-}
+import { SiteProduct, SiteBrand, SiteTestimonial } from "@/lib/types";
 
 interface NavCategory {
   id: string;
@@ -601,10 +577,11 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
             <div className="col-lg-6" data-aos="fade-up" data-aos-delay="100">
               <div className="features-image-container position-relative" style={{ background: 'var(--surface-color)', borderRadius: '20px', overflow: 'hidden' }}>
                 {featureImages.map((img, idx) => (
-                  <img
+                  <Image
                     key={idx}
                     src={img}
                     alt="Feature"
+                    fill
                     className="position-absolute top-0 start-0 w-100 h-100"
                     style={{
                       objectFit: 'cover',
@@ -613,6 +590,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
                       transform: currentFeature === idx ? 'scale(1.05)' : 'scale(1)',
                       zIndex: currentFeature === idx ? 2 : 1
                     }}
+                    sizes="(max-width: 992px) 100vw, 50vw"
                   />
                 ))}
               </div>

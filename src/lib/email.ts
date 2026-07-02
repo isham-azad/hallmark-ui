@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { Order, OrderItem } from "@/lib/types";
 
 /**
  * Email Service Helper
@@ -46,10 +47,10 @@ export async function sendEmail({ to, subject, html }: { to: string, subject: st
     }
 }
 
-export async function sendOrderConfirmationEmail(orderData: any) {
+export async function sendOrderConfirmationEmail(orderData: Order) {
     const { orderNo, customer, email, total, items, paymentMethod } = orderData;
 
-    const itemsHtml = items.map((item: any) => `
+    const itemsHtml = items.map((item: OrderItem) => `
         <tr>
             <td style="padding: 10px; border-bottom: 1px solid #edf2f7;">
                 <p style="margin: 0; font-weight: 600; color: #2d3748;">${item.name}</p>

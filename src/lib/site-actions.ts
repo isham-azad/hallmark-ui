@@ -1,6 +1,8 @@
 "use server";
 import db from "@/lib/firebase";
 
+import { SiteProduct, SiteBrand, SiteCategory, SiteTestimonial } from "@/lib/types";
+
 export async function getSiteWebsiteContent() {
     try {
         const heroBannersSnap = await db.collection("hero_banners").orderBy("order", "asc").get();
@@ -35,7 +37,7 @@ export async function getSiteWebsiteContent() {
     }
 }
 
-export async function getSiteProducts(limitCount?: number) {
+export async function getSiteProducts(limitCount?: number): Promise<SiteProduct[]> {
     try {
         let query = db.collection("products").orderBy("updatedAt", "desc");
         
@@ -74,48 +76,48 @@ export async function getSiteProducts(limitCount?: number) {
                     updatedAt: data.updatedAt?.toMillis?.() || 0,
                 };
             })
-            .filter((p: any): p is any => p !== null)
+            .filter((p: SiteProduct | null): p is SiteProduct => p !== null)
             // Sort by updatedAt descending in memory
-            .sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            .sort((a: SiteProduct, b: SiteProduct) => (b.updatedAt || 0) - (a.updatedAt || 0));
     } catch (error) {
         console.error("Fetch site-products error:", error);
         return [];
     }
 }
 
-export async function getSiteBrands() {
+export async function getSiteBrands(): Promise<SiteBrand[]> {
     try {
         const snapshot = await db.collection("brands").get();
         return snapshot.docs
             .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
-                return { id: doc.id, name: data.name, shortDesc: data.shortDesc || "", summary: data.summary || "", image: data.image || "" };
+                return { id: doc.id, name: data.name, shortDesc: data.shortDesc || "", summary: data.summary || "", image: data.image || "" } as SiteBrand;
             })
-            .filter(Boolean);
+            .filter((b: SiteBrand | null): b is SiteBrand => b !== null);
     } catch (error) {
         console.error("Fetch site-brands error:", error);
         return [];
     }
 }
 
-export async function getSiteCategories() {
+export async function getSiteCategories(): Promise<SiteCategory[]> {
     try {
         const snapshot = await db.collection("categories").get();
         return snapshot.docs
             .map((doc: any) => {
                 const data = doc.data();
                 if (data.status === "disabled") return null;
-                return { id: doc.id, name: data.name, summary: data.summary || "", image: data.image || "" };
+                return { id: doc.id, name: data.name, summary: data.summary || "", image: data.image || "" } as SiteCategory;
             })
-            .filter(Boolean);
+            .filter((c: SiteCategory | null): c is SiteCategory => c !== null);
     } catch (error) {
         console.error("Fetch site-categories error:", error);
         return [];
     }
 }
 
-export async function getSiteTestimonials() {
+export async function getSiteTestimonials(): Promise<SiteTestimonial[]> {
     try {
         const snapshot = await db.collection("testimonials").get();
         return snapshot.docs
@@ -129,10 +131,10 @@ export async function getSiteTestimonials() {
                     quote: data.quote, 
                     rating: data.rating || 5, 
                     createdAt: data.createdAt?.toMillis?.() || 0 
-                };
+                } as SiteTestimonial;
             })
-            .filter(Boolean)
-            .sort((a: any, b: any) => b.createdAt - a.createdAt);
+            .filter((t: SiteTestimonial | null): t is SiteTestimonial => t !== null)
+            .sort((a: SiteTestimonial, b: SiteTestimonial) => b.createdAt - a.createdAt);
     } catch (error) {
         console.error("Fetch site-testimonials error:", error);
         return [];

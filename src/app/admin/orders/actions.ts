@@ -7,40 +7,7 @@ import { getAdminSession, logAction } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 
-interface OrderItem {
-    id: string;
-    name: string;
-    sku: string | null;
-    qty: number;
-    price: string;
-    image?: string | null;
-    createdAt: string;
-}
-
-interface Order {
-    id: string;
-    orderNo: string;
-    customer: string;
-    email: string;
-    phone?: string | null;
-    address?: string | null;
-    city?: string | null;
-    zip?: string | null;
-    shippingName?: string | null;
-    shippingAddress?: string | null;
-    date: string;
-    total: string;
-    status: string;
-    payment: string;
-    paymentMethod?: string;
-    paymentStatus?: string;
-    rewardsUsed?: number;
-    rewardsEarned?: number;
-    voucherAmount?: number;
-    createdAt: string;
-    updatedAt: string;
-    items: OrderItem[];
-}
+import { Order, OrderItem } from "@/lib/types";
 
 function toISO(val: unknown): string {
     if (val && typeof val === "object" && "toDate" in val) return (val as { toDate: () => Date }).toDate().toISOString();
