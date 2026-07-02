@@ -37,10 +37,10 @@ export async function getSiteWebsiteContent() {
 
 export async function getSiteProducts(limitCount?: number) {
     try {
-        let query = db.collection("products");
+        let query = db.collection("products").orderBy("updatedAt", "desc");
         
         if (limitCount) {
-            query = query.limit(limitCount * 2); // Fetch slightly more to account for in-memory filtering
+            query = query.limit(limitCount);
         }
 
         const snapshot = await query.get();
