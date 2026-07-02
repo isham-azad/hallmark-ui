@@ -10,6 +10,9 @@ import { ProductCardShimmer, ShimmerBox } from "@/components/Shimmer";
 import AddressTabs from "@/components/AddressTabs";
 
 import { SiteProduct, SiteBrand, SiteTestimonial } from "@/lib/types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { contactSchema, ContactFormData } from "@/lib/schemas";
 
 interface NavCategory {
   id: string;
@@ -68,6 +71,21 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   const [contactState, setContactState] = useState({ loading: false, success: false, error: "" });
   const [b2bUser, setB2bUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+    },
+  });
 
   useEffect(() => {
     fetch("/api/b2b/me")
@@ -252,16 +270,8 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
     return () => clearInterval(heroInterval);
   }, [websiteContent?.heroBanners]);
 
-  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onContactSubmit = async (data: ContactFormData) => {
     setContactState({ loading: true, success: false, error: "" });
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-      message: formData.get("message") as string,
-    };
 
     try {
       const res = await fetch("/api/site/enquiry", {
@@ -272,7 +282,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
       const result = await res.json();
       if (result.success) {
         setContactState({ loading: false, success: true, error: "" });
-        (e.target as HTMLFormElement).reset();
+        reset();
 
         // Hide success message after 5 seconds
         setTimeout(() => setContactState(prev => ({ ...prev, success: false })), 5000);
@@ -960,19 +970,23 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
               </div>
             </div>
             <div className="col-lg-8">
-              <form onSubmit={handleContactSubmit} className="php-email-form">
+              <form onSubmit={handleSubmit(onContactSubmit)} className="php-email-form">
                 <div className="row gy-4">
                   <div className="col-md-6">
-                    <input type="text" name="name" className="form-control" placeholder="Your Name" required />
+                    <input type="text" className={`form-control ${errors.name ? 'is-invalid' : ''}`} placeholder="Your Name" {...register("name")} />
+                    {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
                   </div>
                   <div className="col-md-6">
-                    <input type="email" className="form-control" name="email" placeholder="Your Email" required />
+                    <input type="email" className={`form-control ${errors.email ? 'is-invalid' : ''}`} placeholder="Your Email" {...register("email")} />
+                    {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
                   </div>
                   <div className="col-md-12">
-                    <input type="text" className="form-control" name="phone" placeholder="Phone Number" required />
+                    <input type="text" className={`form-control ${errors.phone ? 'is-invalid' : ''}`} placeholder="Phone Number" {...register("phone")} />
+                    {errors.phone && <div className="invalid-feedback">{errors.phone.message}</div>}
                   </div>
                   <div className="col-md-12">
-                    <textarea className="form-control" name="message" rows={6} placeholder="Message" required></textarea>
+                    <textarea className={`form-control ${errors.message ? 'is-invalid' : ''}`} rows={6} placeholder="Message" {...register("message")}></textarea>
+                    {errors.message && <div className="invalid-feedback">{errors.message.message}</div>}
                   </div>
                   <div className="col-md-12">
                     {contactState.error && <div className="alert alert-danger p-2 mb-3">{contactState.error}</div>}

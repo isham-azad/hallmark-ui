@@ -2,14 +2,27 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAdminToast } from "@/components/AdminToast";
+import { adminLoginSchema, AdminLoginFormData } from "@/lib/schemas";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const router = useRouter();
   const { showToast, ToastComponent } = useAdminToast();
   const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AdminLoginFormData>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   /* =========================================================================
      [TEMPORARY DISABLED] - OLD OTP LOGIN STATE & LOGIC
@@ -75,25 +88,24 @@ export default function AdminLogin() {
   ========================================================================= */
 
   // NEW PASSWORD-BASED LOGIN LOGIC
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: AdminLoginFormData) => {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(data),
       });
-      const data = await res.json();
+      const result = await res.json();
       if (res.ok) {
         // Store user info for client-side permissions check
-        if (data.admin) {
-          localStorage.setItem("admin_user", JSON.stringify(data.admin));
+        if (result.admin) {
+          localStorage.setItem("admin_user", JSON.stringify(result.admin));
         }
         showToast("Login successful!", "success");
         setTimeout(() => router.push("/admin"), 500);
       } else {
-        showToast(data.error || "Invalid credentials", "error");
+        showToast(result.error || "Invalid credentials", "error");
       }
     } catch (error) {
       showToast("An error occurred. Please try again.", "error");
@@ -113,25 +125,25 @@ export default function AdminLogin() {
         </div>
 
         {/* ACTIVE TEMPORARY PASSWORD LOGIN FORM */}
-        <form onSubmit={handleLogin} className="login-form">
+        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
           <div className="form-group">
             <label>Email Address</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@hallmark.com"
-              required
+              className={errors.email ? 'invalid' : ''}
+              placeholder="info@hallmark.com"
+              {...register("email")}
             />
+            {errors.email && <div className="error-text">{errors.email.message}</div>}
 
             <label>Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              className={errors.password ? 'invalid' : ''}
               placeholder="••••••••"
-              required
+              {...register("password")}
             />
+            {errors.password && <div className="error-text">{errors.password.message}</div>}
 
             <button type="submit" className="login-btn" disabled={loading}>
               {loading ? "Logging in..." : "Log In"}
@@ -317,6 +329,17 @@ export default function AdminLogin() {
           border-radius: 12px;
           padding: 0 !important;
           caret-color: #38bdf8;
+        }
+
+        .error-text {
+          color: #ef4444;
+          font-size: 0.8rem;
+          margin-top: -1rem;
+          margin-bottom: 0.5rem;
+        }
+
+        input.invalid {
+          border-color: #ef4444;
         }
 
         .login-header .logo-img {
