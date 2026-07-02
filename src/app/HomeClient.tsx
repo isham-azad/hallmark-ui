@@ -369,7 +369,7 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
               >
                 <Image
                   src={banner.image}
-                  alt={`Banner ${idx + 1}`}
+                  alt={`Hallmark Enterprises - Premium Wholesale Food & Products Banner ${idx + 1}`}
                   fill
                   priority={idx === 0}
                   style={{ objectFit: 'cover' }}
@@ -385,6 +385,9 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div className="row justify-content-center text-center" data-aos="fade-up" data-aos-delay="100">
             <div className="col-xl-6 col-lg-8">
+              <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: '0', margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: '0' }}>
+                Hallmark Enterprises - Premium Wholesale Food & Products
+              </h1>
               <h2 className="responsive-h2"><span>Hallmark</span> Enterprises</h2>
               <p className="responsive-p">"All because we understand you better"</p>
             </div>

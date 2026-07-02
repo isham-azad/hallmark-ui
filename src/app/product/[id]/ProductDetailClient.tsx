@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useEnquiry } from "@/context/EnquiryContext";
 import { ProductDetailShimmer } from "@/components/Shimmer";
+import JsonLd from "@/components/JsonLd";
 
 interface SiteProduct {
     id: string;
@@ -76,12 +77,59 @@ export default function ProductDetailClient() {
     const images = product.image ? product.image.split(',').filter(Boolean) : ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566376/hallmark/assets/img/masonry-portfolio/masonry-portfolio-1.jpg"];
     const category = categories.find((c) => c.id === product.category);
     const brand = brands.find((b) => b.id === product.brand);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hallmarkworld.com';
 
     const nextImage = () => setActiveImageIndex((prev) => (prev + 1) % images.length);
     const prevImage = () => setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
+    const productSchema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.title,
+        "image": images,
+        "description": product.desc,
+        "brand": {
+            "@type": "Brand",
+            "name": brand?.name || product.brandName || "Hallmark"
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": `${baseUrl}/product/${product.id}`,
+            "priceCurrency": "INR",
+            "price": product.price || "0",
+            "availability": "https://schema.org/InStock"
+        }
+    };
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": baseUrl
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": category?.name ?? product.categoryName ?? product.category,
+                "item": `${baseUrl}/category/${product.category}`
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": product.title,
+                "item": `${baseUrl}/product/${product.id}`
+            }
+        ]
+    };
+
     return (
         <div className="product-detail-page mt-5 pt-5">
+            <JsonLd data={productSchema} />
+            <JsonLd data={breadcrumbSchema} />
             <div className="container py-5">
                 <nav aria-label="breadcrumb" className="mb-4">
                     <ol className="breadcrumb">
@@ -146,7 +194,7 @@ export default function ProductDetailClient() {
                                                 transition: 'all 0.2s'
                                             }}
                                         >
-                                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <img src={img} alt={`${product.title} view ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
                                     ))}
                                 </div>

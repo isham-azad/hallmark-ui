@@ -78,10 +78,10 @@ export default function Footer() {
                                 <p><strong>Email:</strong> <span>care@hallmarkworld.com</span></p>
                             </div>
                             <div className="social-links d-flex mt-4">
-                                <a href=""><i className="bi bi-facebook"></i></a>
-                                <a href=""><i className="bi bi-instagram"></i></a>
-                                <a href=""><i className="bi bi-whatsapp"></i></a>
-                                <a href=""><i className="bi bi-linkedin"></i></a>
+                                <a href="https://facebook.com/hallmarkworld" target="_blank" rel="noopener noreferrer"><i className="bi bi-facebook"></i></a>
+                                <a href="https://instagram.com/hallmarkworld" target="_blank" rel="noopener noreferrer"><i className="bi bi-instagram"></i></a>
+                                <a href="https://wa.me/918943051632" target="_blank" rel="noopener noreferrer"><i className="bi bi-whatsapp"></i></a>
+                                <a href="https://linkedin.com/company/hallmarkworld" target="_blank" rel="noopener noreferrer"><i className="bi bi-linkedin"></i></a>
                             </div>
                         </div>
 
