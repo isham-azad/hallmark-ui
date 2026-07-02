@@ -61,6 +61,7 @@ import { InvestProvider } from "@/context/InvestContext";
 import EnquiryOffcanvas from "@/components/EnquiryOffcanvas";
 import InvestOffcanvas from "@/components/InvestOffcanvas";
 import DistributorOffcanvas from "@/components/DistributorOffcanvas";
+import JsonLd from "@/components/JsonLd";
 
 export default async function RootLayout({
   children,
@@ -68,9 +69,32 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const seo = await getSiteSeoSettings();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hallmarkworld.com';
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Hallmark Enterprises",
+    "url": baseUrl,
+    "logo": "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566812/hallmark/favicon.png",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+91-894-3051-632",
+      "contactType": "customer service",
+      "email": "care@hallmarkworld.com",
+      "availableLanguage": "English"
+    },
+    "sameAs": [
+      "https://facebook.com/hallmarkworld",
+      "https://instagram.com/hallmarkworld",
+      "https://linkedin.com/company/hallmarkworld"
+    ]
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <JsonLd data={organizationSchema} />
         <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
         <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
         <link href="/assets/vendor/aos/aos.css" rel="stylesheet" />

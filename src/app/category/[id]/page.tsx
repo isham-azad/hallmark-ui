@@ -29,6 +29,10 @@ export async function generateMetadata(
     return {
       title: `${name} | HallMark Enterprises`,
       description: summary.slice(0, 160),
+      keywords: `${name}, wholesale, distributor, food products, hallmark`,
+      alternates: {
+        canonical: `/category/${id}`,
+      },
       openGraph: {
         title: `${name} | HallMark Enterprises`,
         description: summary.slice(0, 160),
