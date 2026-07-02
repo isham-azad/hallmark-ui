@@ -59,6 +59,9 @@ export async function generateMetadata(
       title: seoTitle,
       description: seoDesc,
       keywords: seoKeywords,
+      alternates: {
+        canonical: `/product/${id}`,
+      },
       openGraph: {
         title: seoOgTitle,
         description: seoOgDesc,

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useInvest } from "@/context/InvestContext";
+import Image from "next/image";
 
 interface NavBrand {
     id: string;
@@ -116,12 +117,20 @@ export default function Header() {
 
             <div className="container-fluid container-xl position-relative d-flex align-items-center justify-content-between header-main-area flex-grow-1 w-100 py-3">
                 <Link href="/" className="logo d-flex align-items-center me-auto me-lg-0">
-                    <img src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" alt="HallMark" className="img-fluid" style={{ width: "150px", height: "50px" }} />
+                    <Image 
+                        src="https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566375/hallmark/assets/img/logo-white.png" 
+                        alt="HallMark Enterprises" 
+                        width={150} 
+                        height={50} 
+                        priority 
+                        className="img-fluid" 
+                    />
                 </Link>
 
                 {isShopFlow ? (
                     <button
                         className="header-icon-btn ms-auto border-0 bg-transparent"
+                        aria-label="View Shopping Cart"
                         title="Shopping Cart"
                         onClick={toggleCart}
                         style={{ zIndex: 1001 }}
@@ -130,12 +139,12 @@ export default function Header() {
                         <span className="cart-badge">{cartCount}</span>
                     </button>
                 ) : mounted && b2bUser ? (
-                    <Link className="btn-getstarted d-inline-flex position-relative ms-auto" href="/shop" style={{ zIndex: 1001 }}>
+                    <Link className="btn-getstarted d-inline-flex position-relative ms-auto" href="/shop" style={{ zIndex: 1001 }} aria-label="Order Online">
                         Order Online
                     </Link>
                 ) : (
                     <>
-                        <a className="btn-getstarted d-inline-flex position-relative ms-auto" role="button" tabIndex={0} onClick={() => setIsDistributorOpen(true)} style={{ zIndex: 1001, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        <a className="btn-getstarted d-inline-flex position-relative ms-auto" role="button" tabIndex={0} onClick={() => setIsDistributorOpen(true)} style={{ zIndex: 1001, cursor: 'pointer', whiteSpace: 'nowrap' }} aria-label="Become A Distributor">
                             <span className="d-none d-sm-inline">Become A Distributor</span>
                             <span className="d-inline d-sm-none">Distributor</span>
                         </a>
@@ -165,7 +174,12 @@ export default function Header() {
                         <li><Link href="/#investors" onClick={closeMobileNav}>Investors</Link></li>
                         <li><Link href="/#contact" onClick={closeMobileNav}>Contact Us</Link></li>
                     </ul>
-                    <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
+                    <i 
+                        className="mobile-nav-toggle d-xl-none bi bi-list" 
+                        role="button" 
+                        aria-label="Toggle Navigation Menu"
+                        tabIndex={0}
+                    ></i>
                 </nav>
             </div>
         </header>
