@@ -33,10 +33,16 @@ const raleway = Raleway({
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSiteSeoSettings();
   const def = seo?.default;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hallmarkworld.com';
+  
   return {
+    metadataBase: new URL(baseUrl),
     title: def?.title || "HallMark Enterprises",
     description: def?.description || "A Wholesale Distributor & Food Processing Co.",
     keywords: def?.keywords,
+    alternates: {
+      canonical: "./",
+    },
     openGraph: {
       title: def?.ogTitle || def?.title,
       description: def?.ogDescription || def?.description,
