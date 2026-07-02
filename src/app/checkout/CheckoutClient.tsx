@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/context/CartContext";
 import { PaymentMethodsShimmer } from "@/components/Shimmer";
 import { useCartWithProducts } from "@/hooks/useCartWithProducts";
-
+import { checkoutSchema, CheckoutFormData } from "@/lib/schemas";
 
 interface PaymentMethodOption {
     id: string;
@@ -47,6 +49,29 @@ export default function CheckoutClient() {
     const { cart, clearCart } = useCart();
     const { cartWithDetails, cartTotalFromDb, totalSavings, loading: cartLoading, isB2B } = useCartWithProducts(cart);
 
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors },
+    } = useForm<CheckoutFormData>({
+        resolver: zodResolver(checkoutSchema),
+        defaultValues: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            address: "",
+            city: "",
+            zip: "",
+            shippingName: "",
+            shippingAddress: "",
+        },
+    });
+
+    const formValues = watch();
+
     useEffect(() => {
         if (!cartLoading && !isB2B) {
             router.push("/b2b/login");
@@ -65,17 +90,6 @@ export default function CheckoutClient() {
     const [mobileStatus, setMobileStatus] = useState<string | null>(null);
     const [showOtp, setShowOtp] = useState(false);
     const [otpTest, setOtpTest] = useState("");
-    const [form, setForm] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        zip: "",
-        shippingName: "",
-        shippingAddress: "",
-    });
     const [rewardBalance, setRewardBalance] = useState(0);
     const [applyRewards, setApplyRewards] = useState(false);
     const [rewardAmount, setRewardAmount] = useState<string>("");
@@ -115,16 +129,13 @@ export default function CheckoutClient() {
                         setRewardBalance(res.user.rewardBalance);
                     }
                     // Pre-fill form with B2B data
-                    setForm(prev => ({
-                        ...prev,
-                        firstName: res.user.firstName || res.user.companyName || prev.firstName,
-                        lastName: res.user.lastName || prev.lastName,
-                        email: res.user.email || prev.email,
-                        phone: res.user.phone || prev.phone,
-                        address: res.user.address || prev.address,
-                        city: res.user.city || prev.city,
-                        zip: res.user.zip || prev.zip,
-                    }));
+                    if (res.user.firstName || res.user.companyName) setValue("firstName", res.user.firstName || res.user.companyName);
+                    if (res.user.lastName) setValue("lastName", res.user.lastName);
+                    if (res.user.email) setValue("email", res.user.email);
+                    if (res.user.phone) setValue("phone", res.user.phone);
+                    if (res.user.address) setValue("address", res.user.address);
+                    if (res.user.city) setValue("city", res.user.city);
+                    if (res.user.zip) setValue("zip", res.user.zip);
                 }
             }).catch(console.error);
         }
@@ -161,14 +172,9 @@ export default function CheckoutClient() {
     const total = totalBeforeVoucher - voucherDeducted;
     const paymentMethodLabel = paymentMethods.find((pm) => pm.id === paymentMethod)?.name ?? paymentMethod;
 
-    const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setForm((prev) => ({ ...prev, [field]: e.target.value }));
-        setSubmitError(null);
-        if (field === "zip") setPincodeStatus("none");
-    };
 
     const checkPincode = async () => {
-        const zip = form.zip.trim().replace(/\D/g, "");
+        const zip = formValues.zip.trim().replace(/\D/g, "");
         if (zip.length !== 6) {
             setSubmitError("Please enter a valid 6-digit pincode to check delivery.");
             return;
@@ -185,11 +191,11 @@ export default function CheckoutClient() {
     };
 
     const sendMobileOtp = async () => {
-        if (!form.phone.trim()) {
+        if (!formValues.phone.trim()) {
             setSubmitError("Please enter your mobile number.");
             return;
         }
-        const zip = form.zip.trim().replace(/\D/g, "");
+        const zip = formValues.zip.trim().replace(/\D/g, "");
         if (zip.length !== 6) {
             setSubmitError("Please enter a valid 6-digit pincode to check delivery availability.");
             return;
@@ -213,7 +219,7 @@ export default function CheckoutClient() {
             const res = await fetch("/api/site/otp/send-mobile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone: form.phone.trim() }),
+                body: JSON.stringify({ phone: formValues.phone.trim() }),
             });
             const data = await res.json();
             if (res.ok && data.success) {
@@ -248,23 +254,20 @@ export default function CheckoutClient() {
             const res = await fetch("/api/site/otp/verify-mobile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone: form.phone.trim(), otp: otp.trim() }),
+                body: JSON.stringify({ phone: formValues.phone.trim(), otp: otp.trim() }),
             });
             const data = await res.json();
             if (res.ok && data.success) {
                 setCheckoutStep("billing");
                 if (data.customerData) {
-                    setForm((prev) => ({
-                        ...prev,
-                        firstName: data.customerData.firstName || prev.firstName,
-                        lastName: data.customerData.lastName || prev.lastName,
-                        email: data.customerData.email || prev.email,
-                        address: data.customerData.address || prev.address,
-                        city: data.customerData.city || prev.city,
-                        zip: data.customerData.zip || prev.zip,
-                        shippingName: data.customerData.shippingName || prev.shippingName,
-                        shippingAddress: data.customerData.shippingAddress || prev.shippingAddress,
-                    }));
+                    if (data.customerData.firstName) setValue("firstName", data.customerData.firstName);
+                    if (data.customerData.lastName) setValue("lastName", data.customerData.lastName);
+                    if (data.customerData.email) setValue("email", data.customerData.email);
+                    if (data.customerData.address) setValue("address", data.customerData.address);
+                    if (data.customerData.city) setValue("city", data.customerData.city);
+                    if (data.customerData.zip) setValue("zip", data.customerData.zip);
+                    if (data.customerData.shippingName) setValue("shippingName", data.customerData.shippingName);
+                    if (data.customerData.shippingAddress) setValue("shippingAddress", data.customerData.shippingAddress);
                     if (data.customerData.shippingAddress && data.customerData.shippingAddress !== data.customerData.address) {
                         setShowShipping(true);
                     }
@@ -279,12 +282,11 @@ export default function CheckoutClient() {
         }
     };
 
-    const zipDigits = form.zip.trim().replace(/\D/g, "").length;
+    const zipDigits = formValues.zip.trim().replace(/\D/g, "").length;
     const pincodeRequired = zipDigits === 6;
     const canPlaceOrder = isB2B || !pincodeRequired || pincodeStatus === "available";
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: CheckoutFormData) => {
         if (!canPlaceOrder) {
             setSubmitError("Please check delivery availability for your pincode before placing the order.");
             return;
@@ -296,15 +298,15 @@ export default function CheckoutClient() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    firstName: form.firstName.trim(),
-                    lastName: form.lastName.trim(),
-                    email: form.email.trim(),
-                    phone: form.phone.trim(),
-                    address: form.address.trim(),
-                    city: form.city.trim(),
-                    zip: form.zip.trim(),
-                    shippingName: showShipping ? form.shippingName.trim() : undefined,
-                    shippingAddress: showShipping ? form.shippingAddress.trim() : undefined,
+                    firstName: data.firstName.trim(),
+                    lastName: data.lastName.trim(),
+                    email: data.email.trim(),
+                    phone: data.phone.trim(),
+                    address: data.address.trim(),
+                    city: data.city.trim(),
+                    zip: data.zip.trim(),
+                    shippingName: showShipping ? data.shippingName?.trim() : undefined,
+                    shippingAddress: showShipping ? data.shippingAddress?.trim() : undefined,
                     paymentMethodId: paymentMethod,
                     paymentMethodName: paymentMethodLabel,
                     subtotal: cartTotalFromDb,
@@ -323,20 +325,20 @@ export default function CheckoutClient() {
                     })),
                 }),
             });
-            const data = await res.json();
-            if (!res.ok || !data.success) {
-                setSubmitError(data.error || "Failed to place order.");
+            const responseData = await res.json();
+            if (!res.ok || !responseData.success) {
+                setSubmitError(responseData.error || "Failed to place order.");
                 setSubmitting(false);
                 return;
             }
             clearCart();
             const params = new URLSearchParams({
-                orderNo: data.orderNo || "",
-                total: String(data.total ?? total.toFixed(2)),
-                payment: data.payment || paymentMethodLabel,
-                rewardsEarned: String(data.rewardsEarned || 0),
-                rewardsUsed: String(data.rewardsUsed || 0),
-                voucherUsed: String(data.voucherAmount || 0),
+                orderNo: responseData.orderNo || "",
+                total: String(responseData.total ?? total.toFixed(2)),
+                payment: responseData.payment || paymentMethodLabel,
+                rewardsEarned: String(responseData.rewardsEarned || 0),
+                rewardsUsed: String(responseData.rewardsUsed || 0),
+                voucherUsed: String(responseData.voucherAmount || 0),
             });
             router.push(`/order-success?${params.toString()}`);
         } catch {
@@ -399,7 +401,7 @@ export default function CheckoutClient() {
                             <p className="mt-3 text-muted">Preparing checkout...</p>
                         </div>
                     ) : (
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="row">
                             <div className="col-lg-8">
                                 <div className="checkout-form bg-white p-4 rounded shadow-sm border">
@@ -419,11 +421,11 @@ export default function CheckoutClient() {
                                                         <input
                                                             type="text"
                                                             inputMode="numeric"
-                                                            className="form-control form-control-lg"
-                                                            required
+                                                            className={`form-control form-control-lg ${errors.zip ? 'is-invalid' : ''}`}
                                                             style={{ backgroundColor: "#fff", flex: "1", minWidth: "120px" }}
-                                                            value={form.zip}
-                                                            onChange={handleChange("zip")}
+                                                            {...register("zip", { 
+                                                                onChange: () => { setPincodeStatus("none"); setSubmitError(null); } 
+                                                            })}
                                                             placeholder="679577"
                                                             maxLength={6}
                                                             disabled={pincodeStatus === "available"}
@@ -433,7 +435,7 @@ export default function CheckoutClient() {
                                                                 type="button"
                                                                 className="btn btn-primary px-4 text-nowrap flex-shrink-0"
                                                                 onClick={checkPincode}
-                                                                disabled={form.zip.length !== 6 || pincodeStatus === "checking"}
+                                                                disabled={formValues.zip.length !== 6 || pincodeStatus === "checking"}
                                                                 style={{ height: "48px" }}
                                                             >
                                                                 {pincodeStatus === "checking" ? (
@@ -447,7 +449,7 @@ export default function CheckoutClient() {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-outline-secondary btn-sm ms-2"
-                                                                onClick={() => { setPincodeStatus("none"); setForm(prev => ({ ...prev, zip: "" })); }}
+                                                                onClick={() => { setPincodeStatus("none"); setValue("zip", ""); }}
                                                             >
                                                                 Change
                                                             </button>
@@ -463,7 +465,8 @@ export default function CheckoutClient() {
                                                         <div className="alert alert-danger py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2 rounded-2">
                                                             <i className="bi bi-x-circle-fill" />
                                                             <span>Sorry, we don’t deliver to this area.</span>
-                                                        </div>
+                                                            {errors.zip && <div className="text-danger small mt-2">{errors.zip.message}</div>}
+                                                </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -476,11 +479,11 @@ export default function CheckoutClient() {
                                                             <span className="input-group-text bg-light">+91</span>
                                                             <input
                                                                 type="tel"
-                                                                className="form-control form-control-lg"
+                                                                className={`form-control form-control-lg ${errors.phone ? 'is-invalid' : ''}`}
                                                                 placeholder="9876543210"
-                                                                value={form.phone}
-                                                                onChange={handleChange("phone")}
-                                                                required
+                                                                {...register("phone", {
+                                                                    onChange: () => setSubmitError(null)
+                                                                })}
                                                             />
                                                         </div>
                                                         <p className="small text-muted mt-2">We'll send an OTP to verify your number.</p>
@@ -489,7 +492,7 @@ export default function CheckoutClient() {
                                                         type="button"
                                                         className="btn btn-primary btn-lg w-100 fw-bold py-3"
                                                         onClick={sendMobileOtp}
-                                                        disabled={isVerifyingMobile || !form.phone}
+                                                        disabled={isVerifyingMobile || !formValues.phone}
                                                     >
                                                         {isVerifyingMobile ? <span className="spinner-border spinner-border-sm me-2" /> : null}
                                                         Send OTP
@@ -505,7 +508,7 @@ export default function CheckoutClient() {
                                             {submitError && <div className="alert alert-danger mb-4">{submitError}</div>}
                                             {mobileStatus && <div className="alert alert-success mb-4 small">{mobileStatus}</div>}
                                             <div className="mb-4 text-center">
-                                                <p className="mb-3">Enter the 6-digit OTP sent to <strong>+91 {form.phone}</strong></p>
+                                                <p className="mb-3">Enter the 6-digit OTP sent to <strong>+91 {formValues.phone}</strong></p>
                                                 <input
                                                     type="text"
                                                     className="form-control form-control-lg text-center fw-bold letter-spacing-lg"
@@ -554,7 +557,7 @@ export default function CheckoutClient() {
                                             <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
                                                 <h3 className="mb-0 fw-bold">Billing Information</h3>
                                                 <div className="text-success small d-flex align-items-center gap-1">
-                                                    <i className="bi bi-patch-check-fill" /> Verified: {form.phone}
+                                                    <i className="bi bi-patch-check-fill" /> Verified: {formValues.phone}
                                                 </div>
                                             </div>
                                             {submitError && (
@@ -565,27 +568,32 @@ export default function CheckoutClient() {
                                             <div className="row">
                                                 <div className="col-md-6 mb-3">
                                                     <label className="form-label fw-semibold">First Name <span className="text-danger">*</span></label>
-                                                    <input type="text" className="form-control" placeholder="John" required style={{ backgroundColor: "#fff" }} value={form.firstName} onChange={handleChange("firstName")} />
+                                                    <input type="text" className={`form-control ${errors.firstName ? 'is-invalid' : ''}`} placeholder="John" style={{ backgroundColor: "#fff" }} {...register("firstName")} />
+                                                    {errors.firstName && <div className="invalid-feedback">{errors.firstName.message}</div>}
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="form-label fw-semibold">Last Name <span className="text-danger">*</span></label>
-                                                    <input type="text" className="form-control" placeholder="Doe" required style={{ backgroundColor: "#fff" }} value={form.lastName} onChange={handleChange("lastName")} />
+                                                    <input type="text" className={`form-control ${errors.lastName ? 'is-invalid' : ''}`} placeholder="Doe" style={{ backgroundColor: "#fff" }} {...register("lastName")} />
+                                                    {errors.lastName && <div className="invalid-feedback">{errors.lastName.message}</div>}
                                                 </div>
                                                 <div className="col-md-12 mb-3">
                                                     <label className="form-label fw-semibold">Email Address <span className="text-danger">*</span></label>
-                                                    <input type="email" className="form-control" placeholder="john@example.com" required style={{ backgroundColor: "#fff" }} value={form.email} onChange={handleChange("email")} />
+                                                    <input type="email" className={`form-control ${errors.email ? 'is-invalid' : ''}`} placeholder="john@example.com" style={{ backgroundColor: "#fff" }} {...register("email")} />
+                                                    {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
                                                 </div>
                                                 <div className="col-md-12 mb-3">
                                                     <label className="form-label fw-semibold">Phone Number <span className="text-danger">*</span></label>
-                                                    <input type="tel" className="form-control" placeholder="+91 98765 43210" required disabled style={{ backgroundColor: "#f8fafc" }} value={form.phone} />
+                                                    <input type="tel" className="form-control" placeholder="+91 98765 43210" disabled style={{ backgroundColor: "#f8fafc" }} {...register("phone")} />
                                                 </div>
                                                 <div className="col-md-12 mb-3">
                                                     <label className="form-label fw-semibold">Delivery Address <span className="text-danger">*</span></label>
-                                                    <textarea className="form-control" rows={3} placeholder="Apartment, Street, Area" required style={{ backgroundColor: "#fff" }} value={form.address} onChange={handleChange("address")}></textarea>
+                                                    <textarea className={`form-control ${errors.address ? 'is-invalid' : ''}`} rows={3} placeholder="Apartment, Street, Area" style={{ backgroundColor: "#fff" }} {...register("address")}></textarea>
+                                                    {errors.address && <div className="invalid-feedback">{errors.address.message}</div>}
                                                 </div>
                                                 <div className="col-md-6 mb-3">
                                                     <label className="form-label fw-semibold">City <span className="text-danger">*</span></label>
-                                                    <input type="text" className="form-control" required style={{ backgroundColor: "#fff" }} value={form.city} onChange={handleChange("city")} />
+                                                    <input type="text" className={`form-control ${errors.city ? 'is-invalid' : ''}`} style={{ backgroundColor: "#fff" }} {...register("city")} />
+                                                    {errors.city && <div className="invalid-feedback">{errors.city.message}</div>}
                                                 </div>
                                                 <div className="col-12 mb-3">
                                                     <div className="pincode-check-card rounded-3 border p-4" style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}>
@@ -597,12 +605,12 @@ export default function CheckoutClient() {
                                                             <input
                                                                 type="text"
                                                                 inputMode="numeric"
-                                                                className="form-control"
-                                                                required
+                                                                className={`form-control ${errors.zip ? 'is-invalid' : ''}`}
                                                                 disabled={pincodeStatus === "available" && !isB2B}
                                                                 style={{ backgroundColor: (pincodeStatus === "available" && !isB2B) ? "#f1f5f9" : "#fff", flex: "1", minWidth: "80px" }}
-                                                                value={form.zip}
-                                                                onChange={handleChange("zip")}
+                                                                {...register("zip", { 
+                                                                    onChange: () => { setPincodeStatus("none"); setSubmitError(null); } 
+                                                                })}
                                                                 placeholder="679577"
                                                                 maxLength={6}
                                                             />
@@ -638,11 +646,11 @@ export default function CheckoutClient() {
                                                     <div className="row">
                                                         <div className="col-md-12 mb-3">
                                                             <label className="form-label">Full Name</label>
-                                                            <input type="text" className="form-control" style={{ backgroundColor: "#fff" }} value={form.shippingName} onChange={handleChange("shippingName")} />
+                                                            <input type="text" className="form-control" style={{ backgroundColor: "#fff" }} {...register("shippingName")} />
                                                         </div>
                                                         <div className="col-md-12 mb-3">
                                                             <label className="form-label">Shipping Address</label>
-                                                            <textarea className="form-control" rows={2} style={{ backgroundColor: "#fff" }} value={form.shippingAddress} onChange={handleChange("shippingAddress")}></textarea>
+                                                            <textarea className="form-control" rows={2} style={{ backgroundColor: "#fff" }} {...register("shippingAddress")}></textarea>
                                                         </div>
                                                     </div>
                                                 </div>
