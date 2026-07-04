@@ -72,6 +72,27 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
   const [b2bUser, setB2bUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
 
+  const [currentFeature, setCurrentFeature] = useState(0);
+  const [currentHero, setCurrentHero] = useState(0);
+
+  const [products, setProducts] = useState<SiteProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [allProducts, setAllProducts] = useState<SiteProduct[]>(initialData?.products ?? []);
+
+  const [brands, setBrands] = useState<SiteBrand[]>(initialData?.brands ?? []);
+  const [brandsLoading, setBrandsLoading] = useState(initialData?.brands ? false : true);
+
+  const [testimonials, setTestimonials] = useState<SiteTestimonial[]>(initialData?.testimonials ?? []);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(!initialData?.testimonials);
+
+  const [categories, setCategories] = useState<NavCategory[]>(initialData?.categories ?? []);
+  const [categoriesLoading, setCategoriesLoading] = useState(initialData?.categories ? false : true);
+
+  const [websiteContent, setWebsiteContent] = useState<WebsiteContent | null>(initialData?.websiteContent ?? null);
+  const [websiteLoading, setWebsiteLoading] = useState(initialData?.websiteContent ? false : true);
+
+  const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
+
   const {
     register,
     handleSubmit,
@@ -124,36 +145,57 @@ export default function HomeClient({ initialData }: { initialData?: any }) {
     initSwiper();
     const timer = setTimeout(initSwiper, 500);
     return () => clearTimeout(timer);
-  }, []);
-
-  const [currentFeature, setCurrentFeature] = useState(0);
-  const [currentHero, setCurrentHero] = useState(0);
-
-  const [products, setProducts] = useState<SiteProduct[]>(initialData?.products ?? []);
-  const [productsLoading, setProductsLoading] = useState(initialData?.products ? false : true);
-
-  const [brands, setBrands] = useState<SiteBrand[]>(initialData?.brands ?? []);
-  const [brandsLoading, setBrandsLoading] = useState(initialData?.brands ? false : true);
-
-  const [testimonials, setTestimonials] = useState<SiteTestimonial[]>(initialData?.testimonials ?? []);
-  const [testimonialsLoading, setTestimonialsLoading] = useState(!initialData?.testimonials);
-
-  const [categories, setCategories] = useState<NavCategory[]>(initialData?.categories ?? []);
-  const [categoriesLoading, setCategoriesLoading] = useState(initialData?.categories ? false : true);
-
-  const [websiteContent, setWebsiteContent] = useState<WebsiteContent | null>(initialData?.websiteContent ?? null);
-  const [websiteLoading, setWebsiteLoading] = useState(initialData?.websiteContent ? false : true);
-
-  const featureImages = ["https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566403/hallmark/assets/img/value.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566390/hallmark/assets/img/satisfaction.png", "https://res.cloudinary.com/dif9yrwp2/image/upload/v1773566365/hallmark/assets/img/happiness.png"];
+  }, [productsLoading]);
 
   useEffect(() => {
     // Only fetch if initialData is missing (fallback for direct client navigation)
-    if (!initialData?.products) {
+    const processProducts = (data: SiteProduct[]) => {
+      if (!data || data.length === 0) {
+        setProducts([]);
+        setProductsLoading(false);
+        return;
+      }
+
+      // Get last index from storage
+      const storageKey = 'home_product_cycle_index';
+      const lastIdxStr = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+      const lastIdx = lastIdxStr ? parseInt(lastIdxStr, 10) : 0;
+
+      const itemsPerPage = 10;
+      const total = data.length;
+      const start = (lastIdx * itemsPerPage) % total;
+      
+      // Select 10 items (or fewer if total < 10)
+      let selected = data.slice(start, start + itemsPerPage);
+      
+      // If we don't have 10 and want to cycle back for the rest (optional, but let's keep it simple as requested)
+      // If the user wants strictly 10 and we have 15, page 2 will have 5.
+      
+      setProducts(selected);
+      setProductsLoading(false);
+
+      // Update index for NEXT refresh
+      const nextIdx = (lastIdx + 1) % Math.ceil(total / itemsPerPage);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, nextIdx.toString());
+      }
+    };
+
+    if (initialData?.products) {
+      processProducts(initialData.products);
+    } else {
       setProductsLoading(true);
       fetch("/api/site/products")
         .then((r) => r.json())
-        .then((data) => setProducts(data.products || []))
-        .finally(() => setProductsLoading(false));
+        .then((data) => {
+          const fetched = data.products || [];
+          setAllProducts(fetched);
+          processProducts(fetched);
+        })
+        .catch((err) => {
+          console.error("Error fetching products:", err);
+          setProductsLoading(false);
+        });
     }
 
     if (!initialData?.brands) {
