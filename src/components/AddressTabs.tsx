@@ -33,10 +33,9 @@ const addresses = [
         content: (
             <>
                 <strong>Hallmark Enterprises</strong><br />
-                Door No : 304<br />
-                Kairali Apts<br />
-                Dwarka Sec - 3<br />
-                New Delhi - 110078
+                Door No : 106<br />
+                Kairali, Sector - 3<br />
+                Dwarka, New Delhi - 78
             </>
         )
     }
