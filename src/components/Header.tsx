@@ -74,6 +74,28 @@ export default function Header() {
         }
     };
 
+    const handleDropdownToggle = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.nativeEvent.stopImmediatePropagation();
+
+        const currentTarget = e.currentTarget;
+        
+        // Close all other active dropdowns in the navmenu
+        document.querySelectorAll('.navmenu .dropdown > a.active').forEach((el) => {
+            if (el !== currentTarget) {
+                el.classList.remove('active');
+                if (el.nextElementSibling) {
+                    el.nextElementSibling.classList.remove('dropdown-active');
+                }
+            }
+        });
+
+        // Toggle the clicked one
+        currentTarget.classList.toggle('active');
+        currentTarget.nextElementSibling?.classList.toggle('dropdown-active');
+    };
+
     // Combine scroll state with homepage logic for the background class
     const headerClass = `header d-flex flex-column fixed-top p-0 ${isScrolled || !isHomePage ? "scrolled" : ""}`;
 
@@ -156,7 +178,9 @@ export default function Header() {
                         <li><Link href="/#hero" className={pathname === "/" ? "active" : ""} onClick={closeMobileNav}>Home</Link></li>
                         <li><Link href="/#about" onClick={closeMobileNav}>About Us</Link></li>
                         <li className="dropdown">
-                            <a href="#"><span>Our Brands</span> <i className="bi bi-chevron-down toggle-dropdown"></i></a>
+                            <a href="#" onClickCapture={handleDropdownToggle}>
+                                <span>Our Brands</span> <i className="bi bi-chevron-down toggle-dropdown"></i>
+                            </a>
                             <ul>
                                 {brands.map((b) => (
                                     <li key={b.id}><Link href={`/brand/${b.id}`} onClick={closeMobileNav}>{b.name}</Link></li>
@@ -164,7 +188,9 @@ export default function Header() {
                             </ul>
                         </li>
                         <li className="dropdown">
-                            <a href="#"><span>Our Products</span> <i className="bi bi-chevron-down toggle-dropdown"></i></a>
+                            <a href="#" onClickCapture={handleDropdownToggle}>
+                                <span>Our Products</span> <i className="bi bi-chevron-down toggle-dropdown"></i>
+                            </a>
                             <ul>
                                 {categories.map((c) => (
                                     <li key={c.id}><Link href={`/category/${c.id}`} onClick={closeMobileNav}>{c.name}</Link></li>
