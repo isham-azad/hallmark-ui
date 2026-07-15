@@ -108,6 +108,7 @@ export default function AdminLayoutClient({
         { name: "Investors Section", href: "/admin/website/investors", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "Shop Banners", href: "/admin/website/shop-banners", permission: PERMISSIONS.MANAGE_WEBSITE },
         { name: "SEO Setup", href: "/admin/staff/seo", permission: PERMISSIONS.MANAGE_WEBSITE },
+        { name: "QR Codes", href: "/admin/website/qr-codes", permission: PERMISSIONS.MANAGE_QR_CODES },
       ],
     },
     {
@@ -229,6 +230,8 @@ export default function AdminLayoutClient({
       setHeaderTitle("Investors Section");
     } else if (pathname === "/admin/website/shop-banners") {
       setHeaderTitle("Shop Banners");
+    } else if (pathname === "/admin/website/qr-codes") {
+      setHeaderTitle("QR Codes");
     } else if (pathname === "/admin/rewards") {
       setHeaderTitle("Reward Points History");
     } else if (pathname === "/admin/rewards/redemptions") {
