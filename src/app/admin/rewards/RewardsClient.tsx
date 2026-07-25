@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-    format, 
-    startOfMonth, 
-    endOfMonth, 
-    startOfWeek, 
-    endOfWeek, 
-    eachDayOfInterval, 
-    isSameMonth, 
-    isSameDay, 
-    addMonths, 
-    subMonths 
+import {
+    format,
+    startOfMonth,
+    endOfMonth,
+    startOfWeek,
+    endOfWeek,
+    eachDayOfInterval,
+    isSameMonth,
+    isSameDay,
+    addMonths,
+    subMonths
 } from "date-fns";
-import { addManualPoints, getB2BClients } from "./actions";
+import { addManualPoints, getB2BClients, editManualPoints, deleteManualPoints } from "./actions";
 import { useRouter } from "next/navigation";
 
 const PAGE_SIZE = 10;
@@ -30,6 +30,7 @@ interface RewardTransaction {
     isManual?: boolean;
     invoiceDate?: string;
     invoiceAmount?: number | string;
+    rawAmount?: number;
 }
 
 export default function RewardsClient({ initialTransactions }: { initialTransactions: RewardTransaction[] }) {
@@ -39,6 +40,10 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
 
     // Manual Points Modal State
     const [showAddModal, setShowAddModal] = useState(false);
+    const [txToDelete, setTxToDelete] = useState<string | null>(null);
+    const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+    const [editingTxId, setEditingTxId] = useState("");
+
     const [clients, setClients] = useState<any[]>([]);
     const [selectedClient, setSelectedClient] = useState("");
     const [clientSearchTerm, setClientSearchTerm] = useState("");
@@ -49,7 +54,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
     const [invoiceDate, setInvoiceDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [fetchingClients, setFetchingClients] = useState(false);
-    
+
     // Auto-calculate points when amount or client changes
     useEffect(() => {
         if (selectedClient && invoiceAmountInput) {
@@ -116,6 +121,18 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
         }
     }, []);
 
+    const openAddModal = () => {
+        setModalMode('add');
+        setEditingTxId("");
+        setSelectedClient("");
+        setClientSearchTerm("");
+        setInvoiceAmountInput("");
+        setPointsAmount("");
+        setInvoiceNo("");
+        setInvoiceDate("");
+        setShowAddModal(true);
+    };
+
     const handleAddPoints = async () => {
         if (!selectedClient || !pointsAmount) {
             alert("Please select a client and enter points amount.");
@@ -130,9 +147,16 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
 
         setSubmitting(true);
         const invAmt = parseFloat(invoiceAmountInput) || 0;
-        const res = await addManualPoints(selectedClient, amt, invoiceNo || "Internal Adjustment", invoiceDate, invAmt);
-        setSubmitting(false);
         
+        let res;
+        if (modalMode === 'edit' && editingTxId) {
+            res = await editManualPoints(editingTxId, amt, invoiceNo || "Internal Adjustment", invoiceDate, invAmt);
+        } else {
+            res = await addManualPoints(selectedClient, amt, invoiceNo || "Internal Adjustment", invoiceDate, invAmt);
+        }
+        
+        setSubmitting(false);
+
         if (res.success) {
             setShowAddModal(false);
             setSelectedClient("");
@@ -140,13 +164,28 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
             setPointsAmount("");
             setInvoiceNo("");
             setInvoiceDate("");
+            setModalMode('add');
+            setEditingTxId("");
             router.refresh();
         } else {
-            alert(res.error || "Failed to add points.");
+            alert(res.error || "Failed to save points.");
         }
     };
 
-    const filteredTransactions = initialTransactions.filter(t => 
+    const handleDeletePoints = async (txId: string) => {
+        setSubmitting(true);
+        const res = await deleteManualPoints(txId);
+        setSubmitting(false);
+        if (res.success) {
+            setTxToDelete(null);
+            router.refresh();
+        } else {
+            alert(res.error || "Failed to delete points.");
+        }
+    };
+
+
+    const filteredTransactions = initialTransactions.filter(t =>
         t.orderNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.b2bClientCompany.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -208,7 +247,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     <p>Track all reward point transactions, including earnings and redemptions.</p>
                 </div>
                 <div className="header-actions">
-                    <button 
+                    <button
                         className="export-btn"
                         onClick={exportToCSV}
                         title="Export filtered history to CSV"
@@ -216,9 +255,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                         <i className="bi bi-download"></i>
                         <span>Export Data</span>
                     </button>
-                    <button 
+                    <button
                         className="add-points-btn"
-                        onClick={() => setShowAddModal(true)}
+                        onClick={openAddModal}
                     >
                         <i className="bi bi-plus-lg"></i>
                         <span>Add Points Manual</span>
@@ -243,8 +282,9 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                     <table className="rewards-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '120px' }}>Date</th>
-                                <th style={{ width: '150px' }}>Reference</th>
+                                <th style={{ width: '120px' }}>Added Date</th>
+                                <th style={{ width: '150px' }}>Invoice No</th>
+                                <th style={{ width: '120px' }}>Invoice Date</th>
                                 <th style={{ width: '200px' }}>B2B Client</th>
                                 <th style={{ width: '120px' }}>Type</th>
                                 <th style={{ width: '120px' }}>Invoice Amt</th>
@@ -269,13 +309,17 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                         <td>
                                             <div className="ref-cell">
                                                 <span className="order-no">{tx.orderNo}</span>
-                                                {tx.invoiceDate && (
-                                                    <span className="invoice-date-sub">{format(new Date(tx.invoiceDate), 'MMM dd, yyyy')}</span>
-                                                )}
                                                 {tx.status && (
                                                     <span className={`status-badge ${getStatusClass(tx.status)}`}>
                                                         {tx.status}
                                                     </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="date-cell">
+                                                {tx.invoiceDate && (
+                                                    <span className="main-date">{format(new Date(tx.invoiceDate), 'MMM dd, yyyy')}</span>
                                                 )}
                                             </div>
                                         </td>
@@ -301,12 +345,43 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                         </td>
                                         <td>
                                             {(tx.type === 'Earned' || tx.type === 'Used') && !tx.isManual ? (
-                                                <Link 
-                                                    href={`/admin/orders/${tx.id.replace('_used', '')}`} 
+                                                <Link
+                                                    href={`/admin/orders/${tx.id.replace('_used', '')}`}
                                                     className="view-btn"
                                                 >
                                                     <i className="bi bi-eye"></i> View Order
                                                 </Link>
+                                            ) : tx.isManual ? (
+                                                <div className="d-flex gap-2">
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-primary py-0 px-2"
+                                                        onClick={() => {
+                                                            setModalMode('edit');
+                                                            setEditingTxId(tx.id);
+                                                            // find client id from clients list based on company name (or ideally we should have b2bClientId in tx)
+                                                            // For now we set points, invoice, etc.
+                                                            setPointsAmount(tx.rawAmount !== undefined ? String(tx.rawAmount) : (tx.type === 'Used' ? `-${tx.amount}` : String(tx.amount)));
+                                                            setInvoiceAmountInput(tx.invoiceAmount ? String(tx.invoiceAmount).replace('₹', '').replace(',', '') : "");
+                                                            setInvoiceNo(tx.orderNo);
+                                                            setInvoiceDate(tx.invoiceDate || "");
+                                                            // Set selected client if we can find it
+                                                            const client = clients.find(c => c.companyName === tx.b2bClientCompany);
+                                                            if (client) {
+                                                                setSelectedClient(client.id);
+                                                            }
+                                                            setClientSearchTerm(tx.b2bClientCompany);
+                                                            setShowAddModal(true);
+                                                        }}
+                                                    >
+                                                        <i className="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-danger py-0 px-2"
+                                                        onClick={() => setTxToDelete(tx.id)}
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <span className="no-action-label">-</span>
                                             )}
@@ -412,7 +487,30 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
             </div>
 
             {/* Add Points Modal */}
+
+            {/* Delete Confirmation Modal */}
+            {txToDelete && (
+                <div className="modal-overlay" style={{ justifyContent: 'center' }} onClick={() => !submitting && setTxToDelete(null)}>
+                    <div className="confirm-modal-panel" onClick={e => e.stopPropagation()}>
+                        <div className="confirm-icon-wrapper">
+                            <i className="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h4>Delete Manual Adjustment</h4>
+                        <p>Are you sure you want to delete this manual adjustment? The points will be reverted from the client's balance.</p>
+                        <div className="confirm-actions">
+                            <button className="cancel-btn" onClick={() => setTxToDelete(null)} disabled={submitting}>Cancel</button>
+                            <button className="confirm-delete-btn" onClick={() => handleDeletePoints(txToDelete)} disabled={submitting}>
+                                {submitting ? (
+                                    <><span className="spinner-border spinner-border-sm me-2"></span>Deleting...</>
+                                ) : "Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Add Points Offcanvas */}
+
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => !submitting && setShowAddModal(false)}>
                     <div className="offcanvas-panel-admin" onClick={e => e.stopPropagation()}>
@@ -431,7 +529,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 <div className="searchable-select-container" onClick={e => e.stopPropagation()}>
                                     <div className="search-input-wrapper">
                                         <i className="bi bi-search search-icon"></i>
-                                        <input 
+                                        <input
                                             type="text"
                                             placeholder="Type company name or username..."
                                             value={clientSearchTerm}
@@ -440,12 +538,12 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                                 setShowClientList(true);
                                             }}
                                             onFocus={() => setShowClientList(true)}
-                                            disabled={fetchingClients || submitting}
+                                            disabled={fetchingClients || submitting || modalMode === 'edit'}
                                             className="search-input-fancy"
                                         />
                                         {(selectedClient || clientSearchTerm) && (
-                                            <button 
-                                                className="clear-selection" 
+                                            <button
+                                                className="clear-selection"
                                                 onClick={() => {
                                                     setSelectedClient("");
                                                     setClientSearchTerm("");
@@ -456,7 +554,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                             </button>
                                         )}
                                     </div>
-                                    
+
                                     {showClientList && (
                                         <div className="client-dropdown-list shadow-lg">
                                             {fetchingClients ? (
@@ -467,13 +565,13 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                             ) : (
                                                 <div className="list-scroll">
                                                     {clients
-                                                        .filter(c => 
-                                                            c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) || 
+                                                        .filter(c =>
+                                                            c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
                                                             c.username?.toLowerCase().includes(clientSearchTerm.toLowerCase())
                                                         )
                                                         .map(c => (
-                                                            <div 
-                                                                key={c.id} 
+                                                            <div
+                                                                key={c.id}
                                                                 className={`list-item-fancy ${selectedClient === c.id ? 'active' : ''}`}
                                                                 onClick={() => {
                                                                     setSelectedClient(c.id);
@@ -489,15 +587,15 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                                             </div>
                                                         ))
                                                     }
-                                                    {clients.filter(c => 
-                                                        c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) || 
+                                                    {clients.filter(c =>
+                                                        c.companyName?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
                                                         c.username?.toLowerCase().includes(clientSearchTerm.toLowerCase())
                                                     ).length === 0 && (
-                                                        <div className="list-item-fancy empty text-center py-4">
-                                                            <i className="bi bi-search text-muted d-block mb-2" style={{ fontSize: '1.5rem' }}></i>
-                                                            No clients found
-                                                        </div>
-                                                    )}
+                                                            <div className="list-item-fancy empty text-center py-4">
+                                                                <i className="bi bi-search text-muted d-block mb-2" style={{ fontSize: '1.5rem' }}></i>
+                                                                No clients found
+                                                            </div>
+                                                        )}
                                                 </div>
                                             )}
                                         </div>
@@ -514,8 +612,8 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 <label>Invoice Amount (₹)</label>
                                 <div className="amount-input-wrapper">
                                     <span className="currency-prefix">₹</span>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         placeholder="0.00"
                                         className="amount-input-fancy"
                                         value={invoiceAmountInput}
@@ -534,8 +632,8 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                 <label>Reward Points</label>
                                 <div className="amount-input-wrapper">
                                     <span className="currency-prefix" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>PTS</span>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         placeholder="0.00"
                                         className="amount-input-fancy"
                                         style={{ color: '#10b981' }}
@@ -551,7 +649,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                             </div>
                             <div className="form-group-admin">
                                 <label>Order / Invoice No</label>
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="e.g. INV-2024-001"
                                     className="search-input-fancy"
@@ -564,7 +662,7 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                             <div className="form-group-admin">
                                 <label>Invoice Date</label>
                                 <div className="calendar-picker-container">
-                                    <div 
+                                    <div
                                         className={`calendar-trigger-fancy ${showCalendar ? 'active' : ''}`}
                                         onClick={() => setShowCalendar(!showCalendar)}
                                     >
@@ -596,8 +694,8 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                                                 ))}
                                             </div>
                                             <div className="cal-footer">
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     className="today-btn"
                                                     onClick={() => handleDateSelect(new Date())}
                                                 >
@@ -610,19 +708,19 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                             </div>
                         </div>
                         <div className="modal-footer-admin-fancy">
-                            <button 
-                                className="submit-btn-fancy" 
+                            <button
+                                className="submit-btn-fancy"
                                 onClick={handleAddPoints}
                                 disabled={submitting || !selectedClient || !pointsAmount}
                             >
                                 {submitting ? (
                                     <><span className="spinner-border spinner-border-sm me-2"></span>Processing...</>
                                 ) : (
-                                    <><i className="bi bi-plus-circle me-2"></i>Apply Points</>
+                                    modalMode === 'edit' ? <><i className="bi bi-save me-2"></i>Save Changes</> : <><i className="bi bi-plus-circle me-2"></i>Apply Points</>
                                 )}
                             </button>
-                            <button 
-                                className="cancel-btn-fancy" 
+                            <button
+                                className="cancel-btn-fancy"
                                 onClick={() => setShowAddModal(false)}
                                 disabled={submitting}
                             >
@@ -685,6 +783,75 @@ export default function RewardsClient({ initialTransactions }: { initialTransact
                 .header-info p { color: #64748b; margin: 0; margin-top: 0.25rem; }
 
                 /* Modal Style */
+
+                .confirm-modal-panel {
+                    background: white;
+                    padding: 2.5rem 2rem;
+                    border-radius: 20px;
+                    width: 90%;
+                    max-width: 400px;
+                    text-align: center;
+                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+                    animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                @keyframes scaleUp {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .confirm-icon-wrapper {
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    background: #fee2e2;
+                    color: #ef4444;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 2.5rem;
+                    margin: 0 auto 1.5rem;
+                }
+                .confirm-modal-panel h4 {
+                    margin-bottom: 0.75rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                }
+                .confirm-modal-panel p {
+                    color: #64748b;
+                    margin-bottom: 2rem;
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                }
+                .confirm-actions {
+                    display: flex;
+                    gap: 1rem;
+                }
+                .confirm-actions button {
+                    flex: 1;
+                    padding: 0.85rem;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .confirm-actions .cancel-btn {
+                    background: #f1f5f9;
+                    color: #64748b;
+                    border: none;
+                }
+                .confirm-actions .cancel-btn:hover {
+                    background: #e2e8f0;
+                    color: #0f172a;
+                }
+                .confirm-actions .confirm-delete-btn {
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                }
+                .confirm-actions .confirm-delete-btn:hover {
+                    background: #dc2626;
+                }
                 .modal-overlay {
                     position: fixed;
                     inset: 0;
