@@ -330,7 +330,7 @@ export default function ShopClient({ initialData }: { initialData?: any }) {
             `}</style>
 
             {/* Breadcrumbs (Refined) */}
-            <div className="page-title mt-2" data-aos="fade">
+            <div className={`page-title ${shopBanners.length > 0 ? "mt-2" : ""}`} style={{ marginTop: shopBanners.length === 0 ? "160px" : undefined }} data-aos="fade">
                 <nav className="breadcrumbs" style={{ background: "transparent", borderBottom: "none", padding: "15px 0" }}>
                     <div className="container">
                         <ol style={{ display: 'flex', listStyle: 'none', padding: 0, margin: 0, gap: '5px', fontSize: '14px', color: '#64748b' }}>
