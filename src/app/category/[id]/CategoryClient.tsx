@@ -37,8 +37,18 @@ export default function CategoryClient() {
         ]).then(([categoriesRes, productsRes]) => {
             const categoriesList = categoriesRes.categories ?? [];
             const productsList = (productsRes.products ?? []) as SiteProduct[];
-            setCategory(categoriesList.find((c: Category) => c.id === id) ?? null);
-            setProducts(productsList.filter((p) => p.category === id));
+            if (id === 'all') {
+                setCategory({
+                    id: 'all',
+                    name: 'All Products',
+                    summary: 'Explore our complete range of premium products',
+                    image: ''
+                });
+                setProducts(productsList);
+            } else {
+                setCategory(categoriesList.find((c: Category) => c.id === id) ?? null);
+                setProducts(productsList.filter((p) => p.category === id));
+            }
         }).catch(() => {
             setCategory(null);
             setProducts([]);

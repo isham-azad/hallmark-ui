@@ -192,6 +192,7 @@ export default function Header() {
                                 <span>Our Products</span> <i className="bi bi-chevron-down toggle-dropdown"></i>
                             </a>
                             <ul>
+                                <li><Link href={`/category/all`} onClick={closeMobileNav}>All Products</Link></li>
                                 {categories.map((c) => (
                                     <li key={c.id}><Link href={`/category/${c.id}`} onClick={closeMobileNav}>{c.name}</Link></li>
                                 ))}
