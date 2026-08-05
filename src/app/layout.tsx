@@ -40,9 +40,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: def?.title || "HallMark Enterprises",
     description: def?.description || "A Wholesale Distributor & Food Processing Co.",
     keywords: def?.keywords,
-    alternates: {
-      canonical: "./",
-    },
     openGraph: {
       title: def?.ogTitle || def?.title,
       description: def?.ogDescription || def?.description,
