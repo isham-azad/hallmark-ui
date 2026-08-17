@@ -2,10 +2,9 @@
 
 import db from "@/lib/firebase";
 import { revalidatePath } from "next/cache";
-import { getAdminSession, logAction } from "@/lib/auth";
+import { getAdminSession, logAction, hashPassword } from "@/lib/auth";
 import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
 import { PERMISSIONS } from "@/lib/permissions";
-import crypto from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 
 export interface B2BClient {
@@ -24,9 +23,7 @@ export interface B2BClient {
     createdAt?: string;
 }
 
-function hashPassword(password: string) {
-    return crypto.createHash("sha256").update(password).digest("hex");
-}
+
 
 export async function getB2BClients(): Promise<B2BClient[]> {
     try {
@@ -108,7 +105,7 @@ export async function addB2BClient(data: any) {
             zip: zip?.trim() || "",
             rewardPercentage: rewardPercentage !== undefined ? Number(rewardPercentage) : 2,
             rewardBalance: 0,
-            passwordHash: hashPassword(password),
+            passwordHash: await hashPassword(password),
             status: "active",
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
@@ -183,7 +180,7 @@ export async function resetB2BClientPassword(id: string, newPassword: string) {
         }
 
         await db.collection("b2b_clients").doc(id).update({
-            passwordHash: hashPassword(newPassword),
+            passwordHash: await hashPassword(newPassword),
             updatedAt: FieldValue.serverTimestamp(),
         });
 

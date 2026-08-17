@@ -45,13 +45,12 @@ export async function POST(request: Request) {
             otpAttempts: 0, // Reset attempts for the new OTP
         });
 
-        console.log(`[AUTH] Generating OTP ${otp} for ${email} (${phone})`);
+        console.log(`[AUTH] OTP generated for ${email} — sending to phone ending in ${phone.slice(-3)}`);
 
         const smsSent = await sendSmsOtp(phone, otp);
 
         if (!smsSent) {
-            // for testing purpose need to show the OTP in the OTP screen
-            return NextResponse.json({ error: "Failed to send OTP SMS", otp }, { status: 500 });
+            return NextResponse.json({ error: "Failed to send OTP SMS. Please try again." }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, message: "OTP sent successfully" });

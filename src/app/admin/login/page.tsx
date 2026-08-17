@@ -131,7 +131,7 @@ export default function AdminLogin() {
             <input
               type="email"
               className={errors.email ? 'invalid' : ''}
-              placeholder="info@hallmark.com"
+              placeholder="Enter your username"
               {...register("email")}
             />
             {errors.email && <div className="error-text">{errors.email.message}</div>}

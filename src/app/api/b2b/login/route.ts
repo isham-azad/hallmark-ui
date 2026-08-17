@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { createB2BSession } from "@/lib/b2b-auth";
-import crypto from "crypto";
+import { verifyPassword } from "@/lib/auth";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limiter";
 import { z } from "zod";
 
 const LoginSchema = z.object({
@@ -9,12 +10,12 @@ const LoginSchema = z.object({
     password: z.string().min(1),
 });
 
-function hashPassword(password: string) {
-    return crypto.createHash("sha256").update(password).digest("hex");
-}
-
 export async function POST(req: Request) {
     try {
+        // ── Rate limiting ─────────────────────────────────────────────────────
+        const forwarded = req.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
+
         const body = await req.json();
         const validation = LoginSchema.safeParse(body);
 
@@ -26,6 +27,28 @@ export async function POST(req: Request) {
         }
 
         const { username, password } = validation.data;
+
+        const rateLimitKey = `b2b-login:${ip}:${username.trim().toLowerCase()}`;
+        const rateLimit = checkRateLimit(rateLimitKey, {
+            maxAttempts: 5,
+            windowMs: 15 * 60 * 1000,
+            blockDurationMs: 30 * 60 * 1000,
+        });
+
+        if (!rateLimit.allowed) {
+            const retryAfterSec = Math.ceil(rateLimit.retryAfterMs / 1000);
+            return NextResponse.json(
+                { success: false, error: "Too many login attempts. Please try again later." },
+                {
+                    status: 429,
+                    headers: {
+                        "Retry-After": String(retryAfterSec),
+                        "X-RateLimit-Remaining": "0",
+                    },
+                }
+            );
+        }
+        // ─────────────────────────────────────────────────────────────────────
         
         // Find user by username
         const snapshot = await db.collection("b2b_clients").where("username", "==", username.trim()).get();
@@ -40,12 +63,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "Your account is disabled. Contact admin." }, { status: 403 });
         }
 
-        const hashedPassword = hashPassword(password);
-        if (clientData.passwordHash !== hashedPassword) {
+        const isValid = await verifyPassword(password, clientData.passwordHash);
+        if (!isValid) {
             return NextResponse.json({ success: false, error: "Invalid credentials." }, { status: 401 });
         }
 
-        // Credentials match, create session
+        // Credentials match — clear rate limit and create session.
+        resetRateLimit(rateLimitKey);
         await createB2BSession({
             id: clientDoc.id,
             username: clientData.username,
