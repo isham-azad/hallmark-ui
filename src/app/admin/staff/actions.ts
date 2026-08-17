@@ -3,9 +3,8 @@
 import db from "@/lib/firebase";
 import { Role, PERMISSIONS } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
-import { getAdminSession, logAction } from "@/lib/auth";
+import { getAdminSession, logAction, hashPassword } from "@/lib/auth";
 import { getRolePermissionsMap } from "@/app/admin/staff/roles/permissions-map";
-import crypto from "crypto";
 
 export interface AdminUser {
     id: string;
@@ -178,9 +177,7 @@ export async function deleteStaff(id: string) {
     }
 }
 
-function hashPassword(password: string) {
-    return crypto.createHash("sha256").update(password).digest("hex");
-}
+
 
 export async function setupStaffPassword(id: string, password: string) {
     try {
@@ -195,7 +192,7 @@ export async function setupStaffPassword(id: string, password: string) {
             return { success: false, error: "Access Denied" };
         }
 
-        const passwordHash = hashPassword(password);
+        const passwordHash = await hashPassword(password);
 
         await db.collection("admins").doc(id).update({
             passwordHash,

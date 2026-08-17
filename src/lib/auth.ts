@@ -1,9 +1,27 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
 
-const SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || "hallmark-admin-secret-key-change-me-in-production"
-);
+/**
+ * Hashes a plain-text password using bcrypt (cost factor 12).
+ * Use when creating or updating an admin/B2B password.
+ */
+export async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
+}
+
+/**
+ * Securely compares a plain-text password against a stored bcrypt hash.
+ * Returns true if they match.
+ */
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
+}
+
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) throw new Error("[SECURITY] JWT_SECRET environment variable is not set.");
+
+const SECRET = new TextEncoder().encode(jwtSecret);
 
 export const COOKIE_NAME = "admin_session";
 
