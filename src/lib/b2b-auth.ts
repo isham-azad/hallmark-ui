@@ -1,9 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const SECRET = new TextEncoder().encode(
-    process.env.B2B_JWT_SECRET || "hallmark-b2b-secret-key-change-me-in-production"
-);
+const b2bJwtSecret = process.env.B2B_JWT_SECRET;
+if (!b2bJwtSecret) throw new Error("[SECURITY] B2B_JWT_SECRET environment variable is not set.");
+
+const SECRET = new TextEncoder().encode(b2bJwtSecret);
 
 export const B2B_COOKIE_NAME = "b2b_session";
 
@@ -17,14 +18,14 @@ export async function createB2BSession(payload: B2BSessionPayload) {
     const token = await new SignJWT({ ...payload })
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
-        .setExpirationTime("30d") // 30 days
+        .setExpirationTime("7d") // 7 days
         .sign(SECRET);
 
     (await cookies()).set(B2B_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
+        maxAge: 60 * 60 * 24 * 7, // 7 days
         path: "/",
     });
 
