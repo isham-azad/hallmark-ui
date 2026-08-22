@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
 
         const cspHeader = `
           default-src 'self';
-          script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https: http:;
+          script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:;
           style-src 'self' 'unsafe-inline' data: blob: https:;
           font-src 'self' data: https:;
           img-src 'self' data: blob: https:;
