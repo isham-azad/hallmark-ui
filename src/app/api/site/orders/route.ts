@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
-import { sendSms } from "@/lib/sms";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { getB2BSession } from "@/lib/b2b-auth";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 
 export const dynamic = "force-dynamic";
@@ -107,9 +107,17 @@ export async function POST(request: NextRequest) {
             try {
                 const productDoc = await db.collection("products").doc(itemId).get();
                 const data = productDoc.exists ? productDoc.data() : null;
-                let priceStr = data?.price as string | undefined;
+                
+                if (!data) {
+                    return NextResponse.json(
+                        { success: false, error: `Product with ID ${itemId} not found in catalog.` },
+                        { status: 400 }
+                    );
+                }
 
-                if (isB2B && data?.b2bPricingTiers && Array.isArray(data.b2bPricingTiers) && data.b2bPricingTiers.length > 0) {
+                let priceStr = data.price as string | undefined;
+
+                if (isB2B && data.b2bPricingTiers && Array.isArray(data.b2bPricingTiers) && data.b2bPricingTiers.length > 0) {
                     const sortedTiers = [...data.b2bPricingTiers].sort((a, b) => b.minQty - a.minQty);
                     const appliedTier = sortedTiers.find(t => qty >= t.minQty);
                     if (appliedTier) {
@@ -118,17 +126,18 @@ export async function POST(request: NextRequest) {
                 }
 
                 priceNum = priceStr != null ? parseFloat(String(priceStr).replace(/[^0-9.]/g, "")) || 0 : 0;
-
-                // Use the string price from the DB for display in admin
-                const displayPrice = priceStr && priceNum > 0 ? `₹${priceNum.toFixed(2)}` : (item.price != null ? `₹${item.price}` : "₹0");
-                const sku = (data?.sku as string) || (item as any).sku || item.packSize || null;
-
-                if (priceNum <= 0 && item.price != null) {
-                    const fromItem = typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price);
-                    priceNum = fromItem || 0;
+                
+                if (priceNum <= 0) {
+                    return NextResponse.json(
+                        { success: false, error: `Invalid price for product ${data.title || itemId}.` },
+                        { status: 400 }
+                    );
                 }
-                name = (data?.title as string) || item.name || "Product";
-                const image = (data?.image as string)?.split(',')[0] || item.image || null;
+
+                const displayPrice = `₹${priceNum.toFixed(2)}`;
+                const sku = (data.sku as string) || (item as any).sku || item.packSize || null;
+                name = (data.title as string) || item.name || "Product";
+                const image = (data.image as string)?.split(',')[0] || item.image || null;
 
                 orderItems.push({
                     id: itemId,
@@ -140,21 +149,11 @@ export async function POST(request: NextRequest) {
                     createdAt: itemCreatedAt,
                 });
             } catch (e) {
-                console.warn("Product lookup for item:", itemId, e);
-                const fromItem = item.price != null ? (typeof item.price === "string" ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")) : Number(item.price)) : 0;
-                priceNum = fromItem || 0;
-                const displayPrice = item.price != null ? `₹${item.price}` : "₹0";
-                const sku = (item as any).sku || item.packSize || null;
-
-                orderItems.push({
-                    id: itemId,
-                    name: item.name || "Product",
-                    sku,
-                    qty,
-                    price: displayPrice,
-                    image: item.image || null,
-                    createdAt: itemCreatedAt,
-                });
+                console.error("Product lookup error for item:", itemId, e);
+                return NextResponse.json(
+                    { success: false, error: "Failed to verify product prices. Please try again." },
+                    { status: 500 }
+                );
             }
             subtotalNum += priceNum * qty;
         }
@@ -354,6 +353,25 @@ export async function GET(request: NextRequest) {
 
         if (!n) {
             return NextResponse.json({ success: false, error: "Missing order number" }, { status: 400 });
+        }
+
+        // --- Rate Limiting ---
+        const forwarded = request.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
+        
+        // Key on IP address for order tracking
+        const rateLimitKey = `order-track:${ip}`;
+        const rateLimit = checkRateLimit(rateLimitKey, {
+            maxAttempts: 10,
+            windowMs: 60 * 60 * 1000, // 10 requests per hour
+            blockDurationMs: 60 * 60 * 1000, // block for 1 hour
+        });
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { success: false, error: "Too many tracking requests. Please try again later." },
+                { status: 429 }
+            );
         }
 
         const queryValue = n.startsWith("#") ? n : `#${n}`;

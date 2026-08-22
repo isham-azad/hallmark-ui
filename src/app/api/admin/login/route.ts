@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import db from "@/lib/firebase";
-import { createSession, verifyPassword } from "@/lib/auth";
+import { verifyPassword } from "@/lib/auth";
 import { checkRateLimit, resetRateLimit } from "@/lib/rate-limiter";
 
 export async function POST(request: Request) {
@@ -72,12 +72,10 @@ export async function POST(request: Request) {
         // Successful login — clear the rate limit for this key.
         resetRateLimit(rateLimitKey);
 
-        // Create secure HTTP-only cookie
-        await createSession(admin);
-
         return NextResponse.json({
             success: true,
-            admin
+            email: adminData.email,
+            requiresOtp: true,
         });
     } catch (error) {
         console.error("Login Error:", error);
