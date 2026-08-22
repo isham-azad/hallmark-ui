@@ -35,12 +35,12 @@ export async function proxy(request: NextRequest) {
 
         const cspHeader = `
           default-src 'self';
-          script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval';
-          style-src 'self' 'unsafe-inline' data: blob: https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-          font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-          img-src 'self' data: blob: https://res.cloudinary.com;
-          connect-src 'self' ws: wss:;
-          frame-src 'none';
+          script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https: http:;
+          style-src 'self' 'unsafe-inline' data: blob: https:;
+          font-src 'self' data: https:;
+          img-src 'self' data: blob: https:;
+          connect-src 'self' https: ws: wss:;
+          frame-src 'self' https:;
           object-src 'none';
           base-uri 'self';
           form-action 'self';
