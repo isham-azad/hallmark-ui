@@ -11,6 +11,13 @@ export default function AdminLogin() {
   const router = useRouter();
   const { showToast, ToastComponent } = useAdminToast();
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1); // 1: Password, 2: OTP
+  const [emailForOtp, setEmailForOtp] = useState("");
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const otp = digits.join("");
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpTest, setOtpTest] = useState("");
 
   const {
     register,
@@ -24,42 +31,6 @@ export default function AdminLogin() {
     },
   });
 
-  /* =========================================================================
-     [TEMPORARY DISABLED] - OLD OTP LOGIN STATE & LOGIC
-     =========================================================================
-  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const otp = digits.join("");
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpTest, setOtpTest] = useState("");
-
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/login/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setStep(2);
-        showToast("OTP sent successfully", "success");
-      } else {
-        setStep(2);
-        setOtpTest(data.otp);
-        setShowOtp(true);
-        showToast(data.error || "Failed to send OTP", "error");
-      }
-    } catch (error) {
-      showToast("An error occurred. Please try again.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleVerifyOtpLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,7 +38,7 @@ export default function AdminLogin() {
       const res = await fetch("/api/admin/login/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({ email: emailForOtp, otp }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -85,9 +56,7 @@ export default function AdminLogin() {
       setLoading(false);
     }
   };
-  ========================================================================= */
 
-  // NEW PASSWORD-BASED LOGIN LOGIC
   const onSubmit = async (data: AdminLoginFormData) => {
     setLoading(true);
     try {
@@ -97,13 +66,26 @@ export default function AdminLogin() {
         body: JSON.stringify(data),
       });
       const result = await res.json();
-      if (res.ok) {
-        // Store user info for client-side permissions check
-        if (result.admin) {
-          localStorage.setItem("admin_user", JSON.stringify(result.admin));
+      if (res.ok && result.requiresOtp) {
+        setEmailForOtp(data.email);
+        
+        // Auto trigger send OTP
+        const otpRes = await fetch("/api/admin/login/send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email }),
+        });
+        const otpData = await otpRes.json();
+        
+        if (otpRes.ok) {
+          setStep(2);
+          showToast("OTP sent successfully", "success");
+        } else {
+          setStep(2);
+          setOtpTest(otpData.otp); // Only for local test/dev if enabled
+          setShowOtp(true);
+          showToast(otpData.error || "Failed to send OTP", "error");
         }
-        showToast("Login successful!", "success");
-        setTimeout(() => router.push("/admin"), 500);
       } else {
         showToast(result.error || "Invalid credentials", "error");
       }
@@ -124,53 +106,34 @@ export default function AdminLogin() {
           <p>Sign in to your admin account</p>
         </div>
 
-        {/* ACTIVE TEMPORARY PASSWORD LOGIN FORM */}
-        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              className={errors.email ? 'invalid' : ''}
-              placeholder="Enter your username"
-              {...register("email")}
-            />
-            {errors.email && <div className="error-text">{errors.email.message}</div>}
-
-            <label>Password</label>
-            <input
-              type="password"
-              className={errors.password ? 'invalid' : ''}
-              placeholder="••••••••"
-              {...register("password")}
-            />
-            {errors.password && <div className="error-text">{errors.password.message}</div>}
-
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? "Logging in..." : "Log In"}
-            </button>
-          </div>
-        </form>
-
-        {/* =========================================================================
-            [TEMPORARY DISABLED] - OLD OTP LOGIN FORM UI
-            =========================================================================
-        <form onSubmit={step === 1 ? handleSendOtp : handleVerifyOtpLogin} className="login-form">
-          {step === 1 ? (
+        {step === 1 ? (
+          <form onSubmit={handleSubmit(onSubmit)} className="login-form">
             <div className="form-group">
               <label>Email Address</label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@hallmark.com"
-                required
+                className={errors.email ? 'invalid' : ''}
+                placeholder="Enter your username"
+                {...register("email")}
               />
+              {errors.email && <div className="error-text">{errors.email.message}</div>}
+
+              <label>Password</label>
+              <input
+                type="password"
+                className={errors.password ? 'invalid' : ''}
+                placeholder="••••••••"
+                {...register("password")}
+              />
+              {errors.password && <div className="error-text">{errors.password.message}</div>}
 
               <button type="submit" className="login-btn" disabled={loading}>
-                {loading ? "Processing..." : "Send OTP"}
+                {loading ? "Logging in..." : "Log In"}
               </button>
             </div>
-          ) : (
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtpLogin} className="login-form">
             <div className="form-group">
               <label>OTP Code</label>
               <div className="otp-inputs">
@@ -215,11 +178,10 @@ export default function AdminLogin() {
               <button type="submit" className="login-btn" disabled={loading || otp.length < 6}>
                 {loading ? "Verifying..." : "Verify & Login"}
               </button>
-              <button type="button" className="back-btn" onClick={() => { setStep(1); setDigits(["", "", "", "", "", ""]); }} disabled={loading}>Back to Email</button>
+              <button type="button" className="back-btn" onClick={() => { setStep(1); setDigits(["", "", "", "", "", ""]); }} disabled={loading}>Back to Password</button>
             </div>
-          )}
-        </form>
-        ========================================================================= */}
+          </form>
+        )}
       </div>
 
       <style jsx>{`

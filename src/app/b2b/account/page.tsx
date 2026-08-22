@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { getSiteSeoSettings } from "@/lib/site-actions";
+import { getB2BSession } from "@/lib/b2b-auth";
+import { redirect } from "next/navigation";
 import B2BAccountClient from "./B2BAccountClient";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,6 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-export default function B2BAccountPage() {
+export default async function B2BAccountPage() {
+    const session = await getB2BSession();
+    if (!session) {
+        redirect("/b2b/login");
+    }
+
     return <B2BAccountClient />;
 }

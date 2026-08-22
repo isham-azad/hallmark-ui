@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import db from "@/lib/firebase";
-import { sendSmsOtp } from "@/lib/sms";
+import { sendOtpEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
     try {
@@ -20,12 +20,6 @@ export async function POST(request: Request) {
         const adminDoc = adminsSnap.docs[0];
 
         const adminData = adminDoc.data();
-        const phone = adminData.phone;
-
-        if (!phone) {
-            return NextResponse.json({ error: "No mobile number registered for this admin" }, { status: 400 });
-        }
-
         // Rate limiting: 60 seconds between OTP requests
         const lastRequested = adminData.otpRequestedAt?.toDate?.() || new Date(0);
         const secondsSinceLast = (Date.now() - lastRequested.getTime()) / 1000;
@@ -45,12 +39,12 @@ export async function POST(request: Request) {
             otpAttempts: 0, // Reset attempts for the new OTP
         });
 
-        console.log(`[AUTH] OTP generated for ${email} — sending to phone ending in ${phone.slice(-3)}`);
+        console.log(`[AUTH] OTP generated for ${email} — sending to email`);
 
-        const smsSent = await sendSmsOtp(phone, otp);
+        const emailSent = await sendOtpEmail(email, otp);
 
-        if (!smsSent) {
-            return NextResponse.json({ error: "Failed to send OTP SMS. Please try again." }, { status: 500 });
+        if (!emailSent) {
+            return NextResponse.json({ error: "Failed to send OTP email. Please try again." }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, message: "OTP sent successfully" });
