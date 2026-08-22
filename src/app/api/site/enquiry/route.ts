@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/firebase";
 import { FieldValue } from "firebase-admin/firestore";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export const dynamic = "force-dynamic";
+
+function sanitizeHtml(str: string): string {
+    return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -35,11 +40,30 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // --- Rate Limiting ---
+        const forwarded = request.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
+        
+        // Key on IP address
+        const rateLimitKey = `enquiry:${ip}`;
+        const rateLimit = checkRateLimit(rateLimitKey, {
+            maxAttempts: 5,
+            windowMs: 60 * 60 * 1000, // 5 requests per hour
+            blockDurationMs: 60 * 60 * 1000, // block for 1 hour
+        });
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { success: false, error: "Too many enquiries submitted. Please try again later." },
+                { status: 429 }
+            );
+        }
+
         const enquiryData = {
-            name: name.trim(),
-            email: email ? email.trim() : null,
-            phone: phone.trim(),
-            message: message.trim(),
+            name: sanitizeHtml(name.trim()),
+            email: email ? sanitizeHtml(email.trim()) : null,
+            phone: sanitizeHtml(phone.trim()),
+            message: sanitizeHtml(message.trim()),
             product: product || null,
             type: type || null,
             status: "New",

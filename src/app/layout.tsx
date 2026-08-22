@@ -98,7 +98,7 @@ export default async function RootLayout({
         <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet" />
         <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
         <link href="/assets/css/main.css" rel="stylesheet" />
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossOrigin="anonymous" referrerPolicy="no-referrer" />
         {/* Dynamic GA4 Tracking */}
         {seo?.googleAnalyticsId && (
           <>

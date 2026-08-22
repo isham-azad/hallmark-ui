@@ -166,3 +166,19 @@ export async function sendVoucherEmail(email: string, clientName: string, vouche
     return sendEmail({ to: email, subject, html });
 }
 
+export async function sendOtpEmail(email: string, otp: string) {
+    const subject = `Your Admin Login OTP: ${otp}`;
+    const html = `
+        <div style="font-family: 'Inter', system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <h2 style="color: #0f172a;">Admin Login Verification</h2>
+            <p style="color: #475569; font-size: 16px;">Here is your one-time password to log in to the HallMark admin panel:</p>
+            <div style="background: #f8fafc; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                <code style="font-size: 32px; font-weight: 700; color: #38bdf8; letter-spacing: 0.2em;">${otp}</code>
+            </div>
+            <p style="color: #64748b; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+        </div>
+    `;
+
+    return sendEmail({ to: email, subject, html });
+}
+
