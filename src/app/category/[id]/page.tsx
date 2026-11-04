@@ -11,7 +11,22 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { id } = await params;
-  
+
+  // "all" is a virtual category (no Firestore document)
+  if (id === "all") {
+    const description = "Browse all Hallmark products and categories.";
+    return {
+      title: "Hallmark Products | Hallmark Enterprises",
+      description,
+      alternates: { canonical: "/category/all" },
+      openGraph: {
+        title: "Hallmark Products | Hallmark Enterprises",
+        description,
+        type: "website",
+      },
+    };
+  }
+
   try {
     const doc = await db.collection("categories").doc(id).get();
     
