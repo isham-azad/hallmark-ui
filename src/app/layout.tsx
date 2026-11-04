@@ -59,6 +59,7 @@ import EnquiryOffcanvas from "@/components/EnquiryOffcanvas";
 import InvestOffcanvas from "@/components/InvestOffcanvas";
 import DistributorOffcanvas from "@/components/DistributorOffcanvas";
 import JsonLd from "@/components/JsonLd";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export default async function RootLayout({
   children,
@@ -156,6 +157,7 @@ export default async function RootLayout({
               <DistributorOffcanvas />
               <SpeedInsights />
               <Analytics />
+              <ServiceWorkerRegister />
             </InvestProvider>
           </EnquiryProvider>
         </CartProvider>
