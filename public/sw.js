@@ -1,6 +1,6 @@
 /* HallMark service worker: offline support for category pages.
  * Bump VERSION on changes to purge old caches. */
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC_CACHE = `hm-static-${VERSION}`; // JS/CSS/fonts/images
 const PAGE_CACHE = `hm-pages-${VERSION}`; // HTML documents
 const DATA_CACHE = `hm-data-${VERSION}`; // /api/site/* JSON
@@ -21,6 +21,9 @@ self.addEventListener("install", (event) => {
       await pages.add(OFFLINE_URL);
       // Best-effort warmup; failures must not block install.
       await Promise.allSettled(PRECACHE_PAGES.map((u) => pages.add(u)));
+      // Also cache the JS/CSS/fonts the cached pages reference, so the app can
+      // hydrate offline even if the page was never visited under this worker.
+      await Promise.allSettled(PRECACHE_PAGES.map((u) => precacheAssetsOf(u)));
       const data = await caches.open(DATA_CACHE);
       await Promise.allSettled(PRECACHE_API.map((u) => data.add(u)));
       await self.skipWaiting();
@@ -62,6 +65,22 @@ self.addEventListener("message", (event) => {
     })()
   );
 });
+
+async function precacheAssetsOf(pageUrl) {
+  const res = await fetch(pageUrl);
+  if (!res.ok) return;
+  const html = await res.text();
+  const found = html.match(/\/(?:_next\/static|assets)\/[^"'\s\\)<>]+/g) || [];
+  const cache = await caches.open(STATIC_CACHE);
+  await Promise.allSettled(
+    Array.from(new Set(found)).map(async (path) => {
+      const u = new URL(path, self.location.origin).href;
+      if (await cache.match(u)) return;
+      const r = await fetch(u);
+      if (r.ok) await cache.put(u, r);
+    })
+  );
+}
 
 function isCacheableStatic(url) {
   if (url.origin === self.location.origin) {
