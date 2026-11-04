@@ -1,6 +1,6 @@
 /* HallMark service worker: offline support for category pages.
  * Bump VERSION on changes to purge old caches. */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `hm-static-${VERSION}`; // JS/CSS/fonts/images
 const PAGE_CACHE = `hm-pages-${VERSION}`; // HTML documents
 const DATA_CACHE = `hm-data-${VERSION}`; // /api/site/* JSON
@@ -39,6 +39,42 @@ self.addEventListener("activate", (event) => {
     })()
   );
 });
+
+// The page reports every resource it already loaded (CSS, JS, fonts, images),
+// because those were fetched before this worker controlled the page.
+self.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== "CACHE_URLS") return;
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      const urls = Array.from(new Set(event.data.urls || [])).slice(0, MAX_STATIC_ENTRIES);
+      await Promise.allSettled(
+        urls.map(async (u) => {
+          const url = new URL(u);
+          if (!isCacheableStatic(url)) return;
+          if (await cache.match(u)) return;
+          const sameOrigin = url.origin === self.location.origin;
+          const cors = sameOrigin || url.hostname !== "res.cloudinary.com";
+          const res = await fetch(u, { mode: cors ? "cors" : "no-cors" });
+          if (res.ok || res.type === "opaque") await cache.put(u, res);
+        })
+      );
+    })()
+  );
+});
+
+function isCacheableStatic(url) {
+  if (url.origin === self.location.origin) {
+    return (
+      url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/_next/image") ||
+      url.pathname.startsWith("/assets/")
+    );
+  }
+  return ["res.cloudinary.com", "cdnjs.cloudflare.com", "fonts.gstatic.com", "fonts.googleapis.com"].includes(
+    url.hostname
+  );
+}
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
